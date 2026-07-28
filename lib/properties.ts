@@ -144,7 +144,7 @@ export async function getProperty(slug: string): Promise<Property | null> {
 
 // Resolve the best available web image for a photo basename (prefers per-property folder).
 export function imageUrl(imgKey: string, base: string, width = 1400): string {
-  if (/^https?:\/\//.test(base)) return base; // uploaded photo (full URL)
+  if (/^(https?:\/\/|\/)/.test(base)) return base; // uploaded photo (full URL or proxy path)
   const dirs = [
     { dir: `assets/img/${imgKey}`, fsdir: path.join(process.cwd(), "public", "assets", "img", imgKey) },
     { dir: `assets/img`, fsdir: path.join(process.cwd(), "public", "assets", "img") },
@@ -166,7 +166,7 @@ export function priceLabel(p: Property): string {
 
 // Build a responsive srcset (existing widths only), plus a jpg fallback src.
 export function imageSet(imgKey: string, base: string): { src: string; srcSet?: string } {
-  if (/^https?:\/\//.test(base)) return { src: base }; // uploaded photo (full URL)
+  if (/^(https?:\/\/|\/)/.test(base)) return { src: base }; // uploaded photo (full URL or proxy path)
   const dirs = [
     { dir: `assets/img/${imgKey}`, fsdir: path.join(process.cwd(), "public", "assets", "img", imgKey) },
     { dir: `assets/img`, fsdir: path.join(process.cwd(), "public", "assets", "img") },
