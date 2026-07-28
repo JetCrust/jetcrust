@@ -28,7 +28,7 @@ const WD = ["S", "M", "T", "W", "T", "F", "S"];
 
 type Drag = { id: string; mode: "move" | "resize"; startX: number; startIdx: number; endIdx: number; delta: number } | null;
 
-export default function CalendarGrid({ monthKey, properties, items }: { monthKey: string; properties: Prop[]; items: CalItem[] }) {
+export default function CalendarGrid({ monthKey, properties, items, prices, currencySymbol = "€" }: { monthKey: string; properties: Prop[]; items: CalItem[]; prices?: Record<string, number[]>; currencySymbol?: string }) {
   const router = useRouter();
   const [y, mo] = monthKey.split("-").map(Number);
   const monthStartMs = Date.UTC(y, mo - 1, 1);
@@ -185,7 +185,12 @@ export default function CalendarGrid({ monthKey, properties, items }: { monthKey
                   {Array.from({ length: N }, (_, i) => {
                     const wd = (firstWeekday + i) % 7;
                     const dateIso = `${monthKey}-${String(i + 1).padStart(2, "0")}`;
-                    return <div key={i} className={`cal-cell${wd === 0 || wd === 6 ? " is-weekend" : ""}${dateIso === todayIso ? " is-today" : ""}`} style={{ left: `${(i / N) * 100}%`, width: `${(1 / N) * 100}%` }} />;
+                    const rate = prices?.[p.slug]?.[i];
+                    return (
+                      <div key={i} className={`cal-cell${wd === 0 || wd === 6 ? " is-weekend" : ""}${dateIso === todayIso ? " is-today" : ""}`} style={{ left: `${(i / N) * 100}%`, width: `${(1 / N) * 100}%` }}>
+                        {rate ? <span className="cal-price">{currencySymbol}{rate.toLocaleString("en-US")}</span> : null}
+                      </div>
+                    );
                   })}
                   {/* bars */}
                   {laid.map(({ it, s, span, lane }) => {
@@ -224,7 +229,7 @@ export default function CalendarGrid({ monthKey, properties, items }: { monthKey
         {rows.length === 0 && <p style={{ color: "var(--stone)", padding: "1rem" }}>No properties to show.</p>}
       </div>
 
-      <p className="cal-hint">Click a card for details. Drag a booking to move it; drag its right edge to extend. Overlaps ask before saving.</p>
+      <p className="cal-hint">Nightly rack rates shown per day (seasonal / weekend / base) — quote straight off the calendar. Demand pricing may adjust the final quote. Click a card for details; drag a booking to move it, or its right edge to extend.</p>
 
       {selected && <DetailPopover item={selected} properties={properties} onClose={() => setSelected(null)} onMove={patchDates} onRemoveBlock={removeBlock} />}
       {modal === "block" && <BlockModal properties={properties} defaultSlug={propFilter !== "all" ? propFilter : properties[0]?.slug} monthKey={monthKey} onClose={() => setModal(null)} onDone={() => { setModal(null); router.refresh(); }} />}

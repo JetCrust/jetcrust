@@ -5,6 +5,7 @@ import CalendarGrid, { type CalItem } from "../../components/CalendarGrid";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
+import { nightlyBase } from "@/lib/pricing";
 
 const day = (d: Date) => new Date(d).toISOString().slice(0, 10);
 
@@ -33,10 +34,20 @@ export default async function AdminCalendar({ searchParams }: { searchParams: Pr
   }
 
   const sp = await searchParams;
-  const { start, end, key } = monthWindow(sp.m);
+  const { start, end, key, y, mo } = monthWindow(sp.m);
+  const N = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
 
   const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
   const properties = await getProperties(true);
+
+  // Per-night rack rate for every day of the month (seasonal / weekend / base).
+  // Lets the team quote straight off the calendar; this is the rate that will
+  // feed the OTAs (Booking.com, VRBO, ...) once the channel manager is connected.
+  const pricesBySlug: Record<string, number[]> = {};
+  for (const p of properties) {
+    pricesBySlug[p.slug] = Array.from({ length: N }, (_, i) => nightlyBase(p, new Date(Date.UTC(y, mo, i + 1))).rate);
+  }
+  const currencySymbol = (properties[0]?.pricing?.currency || "eur").toUpperCase() === "EUR" ? "€" : "";
 
   // Bookings overlapping the month (confirmed + pending).
   const bookings = await prisma.booking.findMany({
@@ -84,6 +95,8 @@ export default async function AdminCalendar({ searchParams }: { searchParams: Pr
                 monthKey={key}
                 properties={properties.map((p) => ({ slug: p.slug, name: p.name }))}
                 items={items}
+                prices={pricesBySlug}
+                currencySymbol={currencySymbol}
               />
             </div>
           </div>

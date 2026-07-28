@@ -848,3 +848,7 @@ p { margin: 0 0 1em; }
 .co-actions .btn { flex: 0 0 auto; }
 .co-complete { flex: 1; background: var(--forest); color: var(--cream); border: none; border-radius: 12px; padding: 1.05rem; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; font-weight: 500; }
 .co-complete:disabled { opacity: 0.6; }
+
+/* Nightly rate shown in each empty calendar cell */
+.cal-price { position: absolute; top: 3px; left: 4px; font-size: 0.6rem; line-height: 1; color: var(--stone); pointer-events: none; white-space: nowrap; }
+.cal-cell.is-weekend .cal-price { color: #7d6132; }
