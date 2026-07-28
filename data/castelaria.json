@@ -1,0 +1,348 @@
+{
+  "slug": "castelaria",
+  "name": "Castelaria",
+  "status": "live",
+  "order": 1,
+  "location": "Bran · Transylvania",
+  "region": "Transylvania",
+  "img_key": "castelaria",
+  "seo": {
+    "title": "Castelaria — A Transylvanian Estate in Bran | Jet Crust",
+    "description": "Castelaria is an 800 sqm private estate in Bran, Transylvania. Endless marble pool, 165-inch cinema, dual saunas, wine cellar and a river garden, a 12-minute walk from Bran Castle. Sleeps 16."
+  },
+  "tagline": "An 800 square metre estate where centuries of Transylvanian legend meet a private, modern sanctuary, a short walk from Bran Castle.",
+  "hero_image": "castelaria-hero",
+  "pricing": {
+    "base_nightly_eur": 1895,
+    "currency": "EUR",
+    "min_nights": 3,
+    "dynamic": {
+      "enabled": true,
+      "floor_eur": 1600,
+      "ceiling_eur": 3400,
+      "occupancy": {
+        "enabled": true,
+        "window_days": 30,
+        "max_uplift_pct": 20
+      }
+    },
+    "seasonal": [
+      {
+        "name": "Festive season",
+        "from": "12-20",
+        "to": "01-05",
+        "nightly_eur": 2600
+      }
+    ],
+    "weekend_nightly_eur": 2300
+  },
+  "capacity": {
+    "sleeps": 16,
+    "max_adults": 12,
+    "max_children": 6,
+    "bedrooms": 5,
+    "bathrooms": 7
+  },
+  "size": {
+    "interior_sqm": 800,
+    "grounds_sqm": 1900,
+    "floors": 3
+  },
+  "hours": {
+    "check_in": "16:00",
+    "check_out": "11:00"
+  },
+  "hero_stats": [
+    {
+      "n": "16",
+      "label": "Guests"
+    },
+    {
+      "n": "5",
+      "label": "Suites"
+    },
+    {
+      "n": "7",
+      "label": "Bathrooms"
+    },
+    {
+      "n": "800",
+      "label": "Sq Metres"
+    },
+    {
+      "n": "2023",
+      "label": "Fully Remodelled"
+    }
+  ],
+  "aside_facts": [
+    {
+      "label": "Guests",
+      "value": "Up to 16"
+    },
+    {
+      "label": "Bedrooms",
+      "value": "5 suites"
+    },
+    {
+      "label": "Bathrooms",
+      "value": "7"
+    },
+    {
+      "label": "Interior",
+      "value": "800 m²"
+    },
+    {
+      "label": "Grounds",
+      "value": "1,900 m²"
+    },
+    {
+      "label": "Nearest",
+      "value": "Bran Castle, 12 min walk"
+    }
+  ],
+  "story_heading": "Where legend keeps its distance, and comfort comes close",
+  "story": [
+    "Some houses are built. Castelaria was composed. Set on nearly two thousand square metres of private grounds in the heart of Bran, the estate looks out on the same mountains and the same castle that have drawn travellers to Transylvania for generations.",
+    "Inside, the story turns quiet and modern. An endless marble pool rests beneath an illuminated ceiling and two chandeliers. A private cinema stretches across a hundred and sixty five inches. A river wraps the garden, a koi pond catches the evening light, and a separate study house waits at the far end for anyone who wants to disappear with a book.",
+    "Remodelled in full in 2023 with nothing left ordinary, Castelaria sleeps sixteen across five suites, and asks only that you stay long enough to feel it."
+  ],
+  "features": [
+    {
+      "title": "The Marble Pool",
+      "image": "castelaria-02",
+      "text": "An endless pool for continuous swimming, finished in marble inside and out, under an illuminated Barisol ceiling and two chandeliers."
+    },
+    {
+      "title": "A 165-Inch Cinema",
+      "image": "castelaria-07",
+      "text": "A true private theatre with 7+1 surround sound and Italian sofas long enough to seat the whole party in comfort."
+    },
+    {
+      "title": "Spa & Saunas",
+      "image": "castelaria-05",
+      "text": "Dry and steam saunas with a cold plunge and ice bucket, a commercial-grade gym, and a marble jacuzzi for slow evenings."
+    },
+    {
+      "title": "Cellar & Cigars",
+      "image": "castelaria-08",
+      "text": "A temperature-controlled wine cellar in premium oak, a private cigar lounge, and a poker and games room beside it."
+    }
+  ],
+  "gallery": {
+    "max": 18,
+    "images": [
+      {
+        "file": "castelaria-01",
+        "caption": "The estate beneath the Carpathians"
+      },
+      {
+        "file": "castelaria-02",
+        "caption": "The indoor marble pool"
+      },
+      {
+        "file": "castelaria-03",
+        "caption": "Evening light on the water"
+      },
+      {
+        "file": "castelaria-04",
+        "caption": "An endless pool for year-round swimming"
+      },
+      {
+        "file": "castelaria-05",
+        "caption": "Cedar sauna and cold plunge"
+      },
+      {
+        "file": "castelaria-06",
+        "caption": "A room for slowing down"
+      },
+      {
+        "file": "castelaria-07",
+        "caption": "The 165-inch private cinema"
+      },
+      {
+        "file": "castelaria-08",
+        "caption": "The wine cellar"
+      },
+      {
+        "file": "castelaria-09",
+        "caption": "Spirits and cigars"
+      },
+      {
+        "file": "castelaria-10",
+        "caption": "The billiard room"
+      },
+      {
+        "file": "castelaria-11",
+        "caption": "A table set for fourteen"
+      },
+      {
+        "file": "castelaria-12",
+        "caption": "The oak kitchen"
+      },
+      {
+        "file": "castelaria-13",
+        "caption": "A master suite"
+      },
+      {
+        "file": "castelaria-14",
+        "caption": "The family room by the fire"
+      },
+      {
+        "file": "castelaria-15",
+        "caption": "Patios above the river"
+      },
+      {
+        "file": "castelaria-16",
+        "caption": "Grounds, gardens and mountain air"
+      },
+      {
+        "file": "castelaria-17",
+        "caption": "The estate from above"
+      },
+      {
+        "file": "castelaria-18",
+        "caption": "Castelaria at dusk"
+      }
+    ]
+  },
+  "videos": [],
+  "amenities": [
+    {
+      "category": "Wellness & Water",
+      "items": [
+        "Endless marble pool",
+        "Illuminated Barisol ceiling",
+        "Dry sauna and steam sauna",
+        "Cold plunge with ice",
+        "Large marble jacuzzi",
+        "Commercial-grade gym",
+        "Year-round climate control"
+      ]
+    },
+    {
+      "category": "Entertainment",
+      "items": [
+        "165-inch home cinema",
+        "7+1 surround sound",
+        "Temperature-controlled wine cellar",
+        "Private cigar lounge",
+        "Poker and games room",
+        "Billiard table",
+        "Ping pong and darts"
+      ]
+    },
+    {
+      "category": "Interiors",
+      "items": [
+        "Five en-suite bedrooms",
+        "21 ft living room ceiling",
+        "Venetian plaster and stone",
+        "Floor-to-ceiling Schüco glass",
+        "Custom Italian furniture",
+        "Oak dining table for fourteen",
+        "Hardwood floors throughout"
+      ]
+    },
+    {
+      "category": "Grounds & Nature",
+      "items": [
+        "River around the property",
+        "Koi pond with 50+ fish",
+        "The River Room retreat",
+        "Outdoor fire pit",
+        "Travertine patios",
+        "Separate study house and library",
+        "Playground and treehouse"
+      ]
+    },
+    {
+      "category": "Kitchen & Dining",
+      "items": [
+        "High-end kitchen and pantry",
+        "Soft-close open shelving",
+        "Custom 14-person oak table",
+        "Outdoor dining and summer kitchen",
+        "Cozy secondary kitchen"
+      ]
+    },
+    {
+      "category": "Comfort & Security",
+      "items": [
+        "Full property alarm system",
+        "Two gated entrances, private road",
+        "Grand pivot entrance door",
+        "Parking for 15 cars",
+        "Full privacy behind a 15 m screen"
+      ]
+    }
+  ],
+  "setting": {
+    "heading": "A twelve minute walk from a legend",
+    "lead": "Castelaria sits in the folds of the Carpathians, with mountain and river views from nearly every room, and the towers of Bran Castle within sight. Full seclusion, yet moments from the town, the slopes and the story.",
+    "map_image": "castelaria-aerial",
+    "proximity": [
+      {
+        "value": "12 min",
+        "text": "On foot to Bran Castle and the town centre"
+      },
+      {
+        "value": "6 min",
+        "text": "By car to a local ski resort"
+      },
+      {
+        "value": "20 min",
+        "text": "By car to Poiana Brașov, Romania's premier slopes"
+      },
+      {
+        "value": "360°",
+        "text": "Mountain and river views, wrapped in privacy"
+      }
+    ]
+  },
+  "addons": [
+    {
+      "icon": "✦",
+      "title": "Private Chef",
+      "text": "A tasting menu or a family dinner, cooked in your kitchen and served at your table.",
+      "value": "chef",
+      "price_eur": 350,
+      "unit": "night"
+    },
+    {
+      "icon": "❋",
+      "title": "In-Home Spa",
+      "text": "Massage, yoga and wellness sessions brought to the estate, on your schedule.",
+      "value": "spa",
+      "price_eur": 220,
+      "unit": "stay"
+    },
+    {
+      "icon": "▲",
+      "title": "Mountain Adventures",
+      "text": "ATV and Can-Am rides into the Carpathians, guided and ready at the gate.",
+      "value": "atv",
+      "price_eur": 280,
+      "unit": "day"
+    },
+    {
+      "icon": "❄",
+      "title": "Ski Days & Guides",
+      "text": "Slopes minutes away, with lessons, gear and a guide arranged for you.",
+      "value": "ski",
+      "price_eur": 320,
+      "unit": "day"
+    }
+  ],
+  "card": {
+    "image": "castelaria-aerial",
+    "desc": "A historic estate a short drive from Bran Castle, where an indoor marble pool, private saunas and a screening room sit beneath centuries of Transylvanian story.",
+    "tags": [
+      "Indoor Marble Pool",
+      "Sauna & Gym",
+      "Private Theatre",
+      "River Views"
+    ]
+  },
+  "cross_sell": "marque-de-lago",
+  "ical_urls": []
+}

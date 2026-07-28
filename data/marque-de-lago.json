@@ -1,0 +1,330 @@
+{
+  "slug": "marque-de-lago",
+  "name": "MarqueDeLago",
+  "status": "live",
+  "order": 2,
+  "location": "Bucharest",
+  "region": "Bucharest",
+  "img_key": "marque",
+  "seo": {
+    "title": "MarqueDeLago — A Lakeside Penthouse in Bucharest | Jet Crust",
+    "description": "MarqueDeLago is a 500 sqm duplex penthouse above a Bucharest lake. Pininfarina master suite, Miele kitchen, Bowers & Wilkins sound, two heated terraces with a lake-view jacuzzi. Sleeps 8."
+  },
+  "tagline": "A 500 square metre duplex penthouse above a Bucharest lake, wrapped in glass, finished by the names you would hope for, and just as considered as Castelaria.",
+  "hero_image": "marque-hero",
+  "pricing": {
+    "base_nightly_eur": 795,
+    "currency": "EUR",
+    "min_nights": 2,
+    "dynamic": {
+      "enabled": true,
+      "floor_eur": 650,
+      "ceiling_eur": 1500,
+      "occupancy": {
+        "enabled": true,
+        "window_days": 30,
+        "max_uplift_pct": 18
+      }
+    },
+    "seasonal": [],
+    "weekend_nightly_eur": 950
+  },
+  "capacity": {
+    "sleeps": 8,
+    "max_adults": 8,
+    "max_children": 4,
+    "bedrooms": 4,
+    "bathrooms": 4
+  },
+  "size": {
+    "interior_sqm": 500,
+    "grounds_sqm": null,
+    "floors": 2
+  },
+  "hours": {
+    "check_in": "15:00",
+    "check_out": "11:00"
+  },
+  "hero_stats": [
+    {
+      "n": "8",
+      "label": "Guests"
+    },
+    {
+      "n": "4",
+      "label": "Suites"
+    },
+    {
+      "n": "4",
+      "label": "Bathrooms"
+    },
+    {
+      "n": "500",
+      "label": "Sq Metres"
+    },
+    {
+      "n": "2",
+      "label": "Floors"
+    }
+  ],
+  "aside_facts": [
+    {
+      "label": "Guests",
+      "value": "Up to 8"
+    },
+    {
+      "label": "Bedrooms",
+      "value": "4 suites"
+    },
+    {
+      "label": "Bathrooms",
+      "value": "4"
+    },
+    {
+      "label": "Interior",
+      "value": "500 m²"
+    },
+    {
+      "label": "Layout",
+      "value": "Duplex, 2 floors"
+    },
+    {
+      "label": "Views",
+      "value": "Lake and city"
+    }
+  ],
+  "story_heading": "Mornings on the water, evenings over the city",
+  "story": [
+    "MarqueDeLago sits at the top of Emerald Residences, high above a Bucharest lake, arranged as a duplex across two floors and wrapped almost entirely in glass. Light arrives in the morning across the water and settles into the city by night.",
+    "The master suite was shaped by Pininfarina. The kitchen runs on Miele, the sound is Bowers and Wilkins, and the whole penthouse answers to a single smart home system. Two terraces with heated floors stay open through winter, one facing the lake with a jacuzzi beneath a retractable pergola, the other a summer kitchen made for long dinners in the open air.",
+    "It is the modern counterpoint to Castelaria, for a different kind of escape and the same standard of care."
+  ],
+  "features": [
+    {
+      "title": "The Lake Terrace",
+      "image": "marque-08",
+      "text": "A heated terrace over the water, with a jacuzzi under a retractable pergola and the whole lake for a view."
+    },
+    {
+      "title": "A Pininfarina Suite",
+      "image": "marque-03",
+      "text": "A master bedroom designed by Pininfarina, with sunrise over the lake and a walk-in closet the size of a room."
+    },
+    {
+      "title": "The Miele Kitchen",
+      "image": "marque-06",
+      "text": "A full Miele suite in black gloss and Italian marble, with a summer kitchen in stainless on the terrace."
+    },
+    {
+      "title": "Living Above the City",
+      "image": "marque-01",
+      "text": "Open-plan living behind floor-to-ceiling glass, Bowers and Wilkins throughout, the city laid out below."
+    }
+  ],
+  "gallery": {
+    "max": 18,
+    "images": [
+      {
+        "file": "marque-01",
+        "caption": "The living room, above the lake"
+      },
+      {
+        "file": "marque-02",
+        "caption": "Open-plan living in natural light"
+      },
+      {
+        "file": "marque-03",
+        "caption": "The master suite"
+      },
+      {
+        "file": "marque-04",
+        "caption": "A guest suite"
+      },
+      {
+        "file": "marque-05",
+        "caption": "A designer bathroom"
+      },
+      {
+        "file": "marque-06",
+        "caption": "The kitchen in black gloss and marble"
+      },
+      {
+        "file": "marque-07",
+        "caption": "Dining with the city beyond the glass"
+      },
+      {
+        "file": "marque-08",
+        "caption": "Sunset on the terrace"
+      },
+      {
+        "file": "marque-09",
+        "caption": "The summer kitchen and terrace"
+      },
+      {
+        "file": "marque-10",
+        "caption": "After the rain, over the lake"
+      },
+      {
+        "file": "marque-11",
+        "caption": "The residence gym"
+      },
+      {
+        "file": "marque-12",
+        "caption": "The squash court"
+      },
+      {
+        "file": "marque-13",
+        "caption": "For younger guests"
+      },
+      {
+        "file": "marque-14",
+        "caption": "Emerald Residences after dark"
+      },
+      {
+        "file": "marque-15",
+        "caption": "Rest and quiet"
+      },
+      {
+        "file": "marque-16",
+        "caption": "Al fresco, forty metres up"
+      }
+    ]
+  },
+  "videos": [],
+  "amenities": [
+    {
+      "category": "Living & Design",
+      "items": [
+        "Four en-suite bedrooms",
+        "500 m² over two floors",
+        "Italian marble floors",
+        "Barisol ceilings with chandeliers",
+        "Pininfarina master suite",
+        "Floor-to-ceiling Schüco glass",
+        "Somfy electric curtains"
+      ]
+    },
+    {
+      "category": "Kitchen",
+      "items": [
+        "Full Miele appliance suite",
+        "Espresso machine",
+        "Two refrigerators, two freezers",
+        "Wine refrigerator",
+        "Soft-close shelving",
+        "Stainless summer kitchen"
+      ]
+    },
+    {
+      "category": "Terraces & Wellness",
+      "items": [
+        "Two heated terraces",
+        "Lake-view Jacuzzi",
+        "Corradi retractable pergola",
+        "Sunbeds and lounge",
+        "Al fresco dining",
+        "Glass railings with lighting"
+      ]
+    },
+    {
+      "category": "Technology & Security",
+      "items": [
+        "Gira smart home system",
+        "Bowers & Wilkins sound",
+        "Two Schindler card-access lifts",
+        "Gasperotti bulletproof doors",
+        "24/7 security",
+        "Motion-sensor doors"
+      ]
+    },
+    {
+      "category": "Residence Amenities",
+      "items": [
+        "Private gym",
+        "Squash court",
+        "Children's playground",
+        "Climbing wall",
+        "Landscaped grounds"
+      ]
+    },
+    {
+      "category": "Comfort",
+      "items": [
+        "Sunrise lake views",
+        "City views at night",
+        "Walk-in closets",
+        "Designer Gessi bathrooms",
+        "Snow-melting terrace floors"
+      ]
+    }
+  ],
+  "setting": {
+    "heading": "Lakefront, minutes from the city",
+    "lead": "MarqueDeLago crowns Emerald Residences on the edge of a Bucharest lake, secure behind card-access lifts and round-the-clock security, yet a short drive from the centre and the airport.",
+    "map_image": "marque-14",
+    "proximity": [
+      {
+        "value": "Lakefront",
+        "text": "At the top of Emerald Residences, over the water"
+      },
+      {
+        "value": "City",
+        "text": "A short drive to central Bucharest"
+      },
+      {
+        "value": "Airport",
+        "text": "Around 30 minutes to Henri Coandă"
+      },
+      {
+        "value": "Secure",
+        "text": "Card-access lifts and 24/7 security"
+      }
+    ]
+  },
+  "addons": [
+    {
+      "icon": "✦",
+      "title": "Private Chef",
+      "text": "A tasting menu or a family dinner, cooked in the penthouse and served on the terrace.",
+      "value": "chef",
+      "price_eur": 300,
+      "unit": "night"
+    },
+    {
+      "icon": "❋",
+      "title": "In-Home Spa",
+      "text": "Massage, yoga and wellness sessions brought to the penthouse, on your schedule.",
+      "value": "spa",
+      "price_eur": 200,
+      "unit": "stay"
+    },
+    {
+      "icon": "◈",
+      "title": "City & Culture",
+      "text": "A private concierge for Bucharest, from tables to tickets to after hours.",
+      "value": "city",
+      "price_eur": 250,
+      "unit": "stay"
+    },
+    {
+      "icon": "➜",
+      "title": "Airport & Driver",
+      "text": "A car and driver on call, from the moment you land to the day you leave.",
+      "value": "driver",
+      "price_eur": 120,
+      "unit": "day"
+    }
+  ],
+  "card": {
+    "image": "marque-bedroom",
+    "desc": "A refined penthouse above the water, where floor to ceiling glass frames the lake and the city softens into evening. Modern calm, minutes from the heart of Bucharest.",
+    "tags": [
+      "Lake Views",
+      "Penthouse",
+      "Design-Led",
+      "City Access"
+    ]
+  },
+  "cross_sell": "castelaria",
+  "ical_urls": []
+}

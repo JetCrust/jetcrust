@@ -1,0 +1,160 @@
+// Jet Crust booking data model.
+// Property CONTENT lives in the data/*.json files (single source of truth).
+// This database holds only accounts, bookings, availability and consent records.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  GUEST
+  ADMIN
+}
+
+enum BookingStatus {
+  REQUESTED   // card authorized (held), awaiting host approval
+  APPROVED    // host approved, card captured, dates blocked
+  DECLINED    // host declined, hold released
+  CANCELLED
+  EXPIRED     // authorization lapsed before approval
+}
+
+enum BlockSource {
+  MANUAL
+  ICAL
+  BOOKING
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// Journal / blog. Fully managed from the admin dashboard.
+model Post {
+  id             String     @id @default(cuid())
+  slug           String     @unique
+  title          String
+  excerpt        String
+  body           String     // markdown
+  coverImage     String?    // URL or /assets path (use our own or free-to-use images)
+  tags           String     @default("[]") // JSON array
+  faq            String     @default("[]") // JSON array of { q, a }
+  seoTitle       String?
+  seoDescription String?
+  status         PostStatus @default(DRAFT)
+  source         String     @default("manual") // "manual" | "ai"
+  publishedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(GUEST)
+  createdAt    DateTime @default(now())
+
+  // Profile & preferences
+  phone           String?
+  marketingOptIn  Boolean @default(false)
+
+  // Saved billing address (prefills checkout)
+  billingName     String?
+  billingLine1    String?
+  billingLine2    String?
+  billingCity     String?
+  billingPostcode String?
+  billingCountry  String?
+
+  // Account-level Stripe customer, for saved cards
+  stripeCustomerId String?
+
+  bookings     Booking[]
+  acceptances  ContractAcceptance[]
+}
+
+// Properties live in the database so they can be added and managed from the admin.
+// `data` holds the full property object (same shape the app already uses); the
+// scalar columns are what we filter and sort on.
+model Property {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  status    String   @default("live") // live | draft
+  order     Int      @default(99)
+  name      String
+  location  String   @default("")
+  data      String   // full property JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, order])
+}
+
+model Booking {
+  id                    String        @id @default(cuid())
+  propertySlug          String
+  user                  User          @relation(fields: [userId], references: [id])
+  userId                String
+  checkIn               DateTime
+  checkOut              DateTime
+  guests                Int           @default(2)
+  addons                String        @default("[]") // JSON array of add-on keys
+  status                BookingStatus @default(REQUESTED)
+  amountCents           Int           // full stay total (stay + add-ons)
+  currency              String        @default("eur")
+  note                  String?       // guest's note at booking
+  adminNotes            String?       // internal host notes, guest never sees these
+  breakdown             String?       // JSON snapshot of the quote as priced at booking
+  createdAt             DateTime      @default(now())
+  approvedAt            DateTime?
+
+  // Payment: deposit now, balance later (split), via Stripe
+  depositCents          Int?          // amount held/charged first (= amountCents when no split)
+  balanceCents          Int           @default(0)
+  balanceDueAt          DateTime?
+  balancePaidAt         DateTime?
+  stripeCustomerId      String?
+  stripePaymentIntentId String?       // the deposit/hold intent
+  stripePaymentMethodId String?       // saved card, for the balance charge
+
+  acceptance            ContractAcceptance?
+
+  @@index([propertySlug, status])
+  @@index([userId])
+}
+
+model ContractAcceptance {
+  id              String   @id @default(cuid())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+  bookingId       String   @unique
+  contractVersion String
+  ipAddress       String
+  userAgent       String
+  acceptedAt      DateTime @default(now())
+}
+
+// External calendars (Airbnb, VRBO, concierge) import here via iCal; our
+// confirmed bookings also create a block. This is the availability source of truth.
+model AvailabilityBlock {
+  id           String      @id @default(cuid())
+  propertySlug String
+  start        DateTime
+  end          DateTime
+  source       BlockSource @default(MANUAL)
+  note         String?
+  createdAt    DateTime    @default(now())
+
+  @@index([propertySlug, start, end])
+}

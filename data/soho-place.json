@@ -1,0 +1,298 @@
+{
+  "slug": "soho-place",
+  "name": "Soho Place",
+  "status": "live",
+  "order": 3,
+  "location": "Bran · Transylvania",
+  "region": "Transylvania",
+  "img_key": "soho",
+  "seo": {
+    "title": "Soho Place — A Geodesic Dome Retreat in Bran | Jet Crust",
+    "description": "Soho Place is an adults-only cluster of premium geodesic domes below the Bucegi mountains in Bran. Fireplaces, soaking tubs and stargazing skylights. A romantic Transylvanian escape."
+  },
+  "tagline": "Premium geodesic domes at the foot of the Bucegi mountains, adults only, each open to the stars. The gentlest escape in the collection.",
+  "hero_image": "soho-hero",
+  "pricing": {
+    "base_nightly_eur": 120,
+    "currency": "EUR",
+    "min_nights": 2,
+    "dynamic": {
+      "enabled": true,
+      "floor_eur": 100,
+      "ceiling_eur": 260,
+      "occupancy": {
+        "enabled": true,
+        "window_days": 30,
+        "max_uplift_pct": 15
+      }
+    },
+    "seasonal": [],
+    "weekend_nightly_eur": 150
+  },
+  "capacity": {
+    "sleeps": 2,
+    "max_adults": 2,
+    "max_children": 0,
+    "bedrooms": 1,
+    "bathrooms": 1
+  },
+  "size": {
+    "interior_sqm": null,
+    "grounds_sqm": null,
+    "floors": 1
+  },
+  "hours": {
+    "check_in": "15:00",
+    "check_out": "11:00"
+  },
+  "hero_stats": [
+    {
+      "n": "2",
+      "label": "Guests"
+    },
+    {
+      "n": "4",
+      "label": "Domes"
+    },
+    {
+      "n": "18+",
+      "label": "Adults Only"
+    },
+    {
+      "n": "Bucegi",
+      "label": "Mountain Views"
+    }
+  ],
+  "aside_facts": [
+    {
+      "label": "Guests",
+      "value": "2 per dome"
+    },
+    {
+      "label": "Domes",
+      "value": "4 (Soho 1–4)"
+    },
+    {
+      "label": "Bathroom",
+      "value": "Private, each dome"
+    },
+    {
+      "label": "Setting",
+      "value": "Bran, Bucegi foothills"
+    },
+    {
+      "label": "Style",
+      "value": "Adults-only glamping"
+    },
+    {
+      "label": "Nearest",
+      "value": "Bran Castle and trails"
+    }
+  ],
+  "story_heading": "Where love stays, under a glass sky",
+  "story": [
+    "Soho Place is a small cluster of premium geodesic domes set in the meadows below the Bucegi mountains, a few minutes from Bran. Four domes, adults only, each its own private world of glass, timber and quiet.",
+    "Inside, a fireplace warms the wood, a freestanding tub waits beneath the trees, and a skylight hands the ceiling over to the stars. Outside, the forest, the lakes and the mountain air do the rest.",
+    "It is the gentlest room in the collection. Come for two, and let the valley keep the time."
+  ],
+  "features": [
+    {
+      "title": "Sleep Under the Stars",
+      "image": "soho-02",
+      "text": "A skylight above the bed turns the dome over to the night. Fall asleep to the Bucegi sky and wake to the mountains."
+    },
+    {
+      "title": "Fire and a Soaking Tub",
+      "image": "soho-06",
+      "text": "A wood-burning fireplace and a freestanding tub beneath the trees, for the slowest evenings you will spend all year."
+    },
+    {
+      "title": "At the Foot of the Bucegi",
+      "image": "soho-13",
+      "text": "Set in open meadow with direct mountain views, forest and lakes a short walk in every direction."
+    },
+    {
+      "title": "For Two, and No One Else",
+      "image": "soho-09",
+      "text": "Adults only, and made for it. Candlelit dinners, private patios, and a quiet the world rarely offers."
+    }
+  ],
+  "gallery": {
+    "max": 18,
+    "images": [
+      {
+        "file": "soho-01",
+        "caption": "A dome and the mountains beyond"
+      },
+      {
+        "file": "soho-02",
+        "caption": "Beneath the stargazing skylight"
+      },
+      {
+        "file": "soho-03",
+        "caption": "Timber, glass and warm light"
+      },
+      {
+        "file": "soho-04",
+        "caption": "A fireplace and a bed for two"
+      },
+      {
+        "file": "soho-05",
+        "caption": "Warmth by the wood stove"
+      },
+      {
+        "file": "soho-06",
+        "caption": "A soaking tub under the trees"
+      },
+      {
+        "file": "soho-07",
+        "caption": "The tub beneath the loft"
+      },
+      {
+        "file": "soho-08",
+        "caption": "A dome on the green hillside"
+      },
+      {
+        "file": "soho-09",
+        "caption": "A candlelit dinner for two"
+      },
+      {
+        "file": "soho-10",
+        "caption": "The domes from above"
+      },
+      {
+        "file": "soho-11",
+        "caption": "A hanging chair in the forest"
+      },
+      {
+        "file": "soho-12",
+        "caption": "The domes glowing after dark"
+      },
+      {
+        "file": "soho-13",
+        "caption": "Below the Bucegi mountains"
+      },
+      {
+        "file": "soho-14",
+        "caption": "The painted chapel"
+      },
+      {
+        "file": "soho-15",
+        "caption": "Sunset over the valley"
+      }
+    ]
+  },
+  "videos": [],
+  "amenities": [
+    {
+      "category": "Each Dome",
+      "items": [
+        "Stargazing skylight",
+        "Wood-burning fireplace",
+        "Freestanding soaking tub",
+        "Premium bed and linens",
+        "Heating and air conditioning",
+        "Minibar",
+        "Private bathroom"
+      ]
+    },
+    {
+      "category": "The Setting",
+      "items": [
+        "Bucegi mountain views",
+        "Meadows, forest and lakes",
+        "Private patio",
+        "Hanging chairs and nature nooks",
+        "Adults-only tranquility"
+      ]
+    },
+    {
+      "category": "The Retreat",
+      "items": [
+        "Four domes (Soho 1–4)",
+        "Candlelit event pavilion",
+        "On-site dining experiences",
+        "Landscaped grounds",
+        "Romantic celebrations"
+      ]
+    },
+    {
+      "category": "Nearby",
+      "items": [
+        "Bran Castle",
+        "Mountain trails",
+        "Poiana Brașov skiing",
+        "Transylvanian villages"
+      ]
+    }
+  ],
+  "setting": {
+    "heading": "In the meadows, below the mountains",
+    "lead": "Soho Place sits in open Transylvanian meadow at the foot of the Bucegi mountains, a few minutes from Bran. Forest, lakes and mountain air on every side, and the town and its castle within easy reach.",
+    "map_image": "soho-13",
+    "proximity": [
+      {
+        "value": "Bran",
+        "text": "A few minutes from Bran Castle and the town"
+      },
+      {
+        "value": "Bucegi",
+        "text": "Direct views of the Bucegi mountains"
+      },
+      {
+        "value": "Nature",
+        "text": "Meadows, forest and lakes at the door"
+      },
+      {
+        "value": "Adults only",
+        "text": "A quiet, romantic retreat for two"
+      }
+    ]
+  },
+  "addons": [
+    {
+      "icon": "✦",
+      "title": "Dinner in the Dome",
+      "text": "A private chef and a candlelit table, set inside your dome or under the stars.",
+      "value": "dinner",
+      "price_eur": 280,
+      "unit": "stay"
+    },
+    {
+      "icon": "❋",
+      "title": "Couples Spa",
+      "text": "Massage and wellness for two, brought to your dome on your schedule.",
+      "value": "spa",
+      "price_eur": 240,
+      "unit": "stay"
+    },
+    {
+      "icon": "♥",
+      "title": "A Celebration",
+      "text": "Proposals, anniversaries and honeymoons, arranged down to the last petal.",
+      "value": "celebration",
+      "price_eur": 350,
+      "unit": "stay"
+    },
+    {
+      "icon": "▲",
+      "title": "Mountain Adventures",
+      "text": "Guided trails, ATV rides and the Bucegi at your pace.",
+      "value": "atv",
+      "price_eur": 260,
+      "unit": "day"
+    }
+  ],
+  "card": {
+    "image": "soho-hero",
+    "desc": "Premium geodesic domes at the foot of the Bucegi, adults only, each with a fireplace, a soaking tub and a skylight open to the stars. The gentlest escape in the collection.",
+    "tags": [
+      "Geodesic Domes",
+      "Stargazing Skylight",
+      "Adults Only",
+      "Bucegi Views"
+    ]
+  },
+  "cross_sell": "castelaria",
+  "ical_urls": []
+}

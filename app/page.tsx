@@ -1,66 +1,208 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import MarketingHeader from "./components/MarketingHeader";
+import MarketingFooter from "./components/MarketingFooter";
+import WhatsAppButton from "./components/WhatsAppButton";
+import ClientInteractions from "./components/ClientInteractions";
+import { getProperties, imageUrl, priceLabel, type Property } from "@/lib/properties";
 
-export default function Home() {
+export default async function Home() {
+  const properties = await getProperties();
+  const heroImg = imageUrl("castelaria", "castelaria-pool", 2000);
+  const heroStyle = {
+    backgroundImage: `linear-gradient(180deg, rgba(14,17,14,0.34) 0%, rgba(14,17,14,0.12) 38%, rgba(14,17,14,0.78) 100%), url('${heroImg}')`,
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <MarketingHeader />
+
+      {/* HERO */}
+      <section className="hero">
+        <div className="hero__media slot has-photo" id="heroMedia" style={heroStyle} />
+        <div className="wrap hero__inner">
+          <p className="overline eyebrow-line">Transylvania · Bucharest · Beyond</p>
+          <h1 className="hero__title">Where legend meets <em>private sanctuary</em></h1>
+          <p className="hero__sub">
+            A hand-selected collection of historic estates and modern penthouses, hosted with quiet precision.
+            Extraordinary homes for travellers who expect more than a room.
           </p>
+          <div className="hero__actions">
+            <a className="btn btn--brass" href="#collection">Explore the Collection</a>
+            <Link className="btn btn--ghost-light" href="/account">Sign In to Book</Link>
+          </div>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="hero__scroll">Scroll to discover</div>
+      </section>
+
+      {/* TRUST BAR */}
+      <section className="trust" aria-label="Why Jet Crust">
+        <div className="trust__grid">
+          <div className="trust__item"><h4>Personally Selected</h4><p>Every home is visited, vetted and chosen by us</p></div>
+          <div className="trust__item"><h4>Hosted With Care</h4><p>Owner-managed stays with concierge on request</p></div>
+          <div className="trust__item"><h4>Direct &amp; Discreet</h4><p>Book with us, no platform layers or surprises</p></div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* COLLECTION */}
+      <section className="section section--cream" id="collection">
+        <div className="wrap">
+          <div className="sec-head reveal">
+            <p className="overline eyebrow-line">The Collection</p>
+            <h2>A small collection, chosen without compromise</h2>
+            <p className="lead">
+              We would rather offer a handful of remarkable homes than a catalogue of ordinary ones. Each stay below
+              is one we would happily book ourselves.
+            </p>
+          </div>
+          <div className="collection">
+            {properties.map((p: Property) => (
+              <article className="property reveal" key={p.slug}>
+                <div className="property__figure">
+                  <div
+                    className="property__media slot has-photo"
+                    style={{ backgroundImage: `url('${imageUrl(p.img_key, p.card.image, 1400)}')` }}
+                  />
+                </div>
+                <div className="property__meta">
+                  <span className="property__loc">{p.location}</span>
+                  <span className="property__price">{priceLabel(p)}</span>
+                </div>
+                <h3 className="property__name">{p.name}</h3>
+                <p className="property__desc">{p.card.desc}</p>
+                <div className="property__tags">
+                  {p.card.tags.map((t) => <span className="tag" key={t}>{t}</span>)}
+                </div>
+                <div className="property__foot">
+                  <Link className="textlink" href={`/${p.slug}`}>
+                    Explore {p.name} <span className="arw">&rarr;</span>
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* OUR STANDARD */}
+      <section className="section section--forest" id="edge">
+        <div className="wrap edge">
+          <div
+            className="edge__media slot has-photo reveal"
+            style={{ backgroundImage: `url('${imageUrl("castelaria", "castelaria-06", 1400)}')` }}
+          />
+          <div className="reveal">
+            <p className="overline eyebrow-line">Our Standard</p>
+            <h2>The Jet Crust difference</h2>
+            <p className="lead">
+              Romania is one of Europe&apos;s most quietly extraordinary destinations, and it is barely represented on
+              the platforms most travellers know. That gap is our advantage, and yours.
+            </p>
+            <ul className="edge__list">
+              <li><span className="edge__num">01</span><div><h4>Selected in person</h4><p>We only list homes we have stood inside. If it would not impress us, it does not join the collection.</p></div></li>
+              <li><span className="edge__num">02</span><div><h4>Historic meets modern</h4><p>Centuries-old character paired with the amenities you actually want. Legend on the outside, sanctuary within.</p></div></li>
+              <li><span className="edge__num">03</span><div><h4>Looked after, personally</h4><p>Direct hosts, local knowledge and concierge on request. A real person answers, every time.</p></div></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* EXPERIENCES */}
+      <section className="section section--cream" id="experiences">
+        <div className="wrap">
+          <div className="sec-head center reveal">
+            <p className="overline eyebrow-line" style={{ justifyContent: "center" }}>Ways to Stay</p>
+            <h2>Find your kind of escape</h2>
+            <p className="lead" style={{ marginInline: "auto" }}>Discover our homes by the feeling you are looking for, not just the map.</p>
+          </div>
+          <div className="exp-grid">
+            <a className="exp reveal" href="#collection">
+              <div className="exp__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("castelaria", "castelaria-08", 800)}')` }} />
+              <div className="exp__body"><h3>Historic Luxury</h3><p>Estates with a story, restored for the way we live now.</p></div>
+            </a>
+            <a className="exp reveal" href="#collection">
+              <div className="exp__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("marque", "marque-08", 800)}')` }} />
+              <div className="exp__body"><h3>Views &amp; Privacy</h3><p>Homes that keep the world at a distance and the horizon close.</p></div>
+            </a>
+            <a className="exp reveal" href="#collection">
+              <div className="exp__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("soho", "soho-02", 800)}')` }} />
+              <div className="exp__body"><h3>Cultural Immersion</h3><p>Dracula lore, mountain villages and quiet Romanian ritual.</p></div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="section section--ink" id="testimonials">
+        <div className="wrap">
+          <div className="quote-wrap">
+            <p className="overline eyebrow-line" style={{ justifyContent: "center" }}>In Their Words</p>
+            <blockquote className="quote active">
+              Castelaria is a luxurious gem in Bran. The indoor marble pool, the saunas, the private theatre. Every
+              detail felt considered. Perfect for a memorable and exclusive getaway.
+              <span className="quote__author">Olivia S. · Castelaria</span>
+            </blockquote>
+            <blockquote className="quote">
+              We booked directly and were looked after from the first message to the last morning. This is how travel
+              to Romania should feel.
+              <span className="quote__author">Marcus &amp; Lena · MarqueDeLago</span>
+            </blockquote>
+            <blockquote className="quote">
+              The blend of history and comfort is unlike anywhere we have stayed in Europe. We are already planning the
+              next visit.
+              <span className="quote__author">The Ardelean Family · Castelaria</span>
+            </blockquote>
+            <div className="quote-dots" id="quoteDots" aria-label="Choose testimonial">
+              <button className="active" aria-label="Testimonial 1"></button>
+              <button aria-label="Testimonial 2"></button>
+              <button aria-label="Testimonial 3"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DESTINATIONS */}
+      <section className="section section--stone" id="destinations">
+        <div className="wrap">
+          <div className="sec-head reveal">
+            <p className="overline eyebrow-line">Destinations</p>
+            <h2>Where we are, and where we are going</h2>
+            <p className="lead">A collection that grows with intention. New homes and new destinations join only when they meet the standard.</p>
+          </div>
+          <div className="dest-grid">
+            <a className="dest reveal" href="#collection">
+              <div className="dest__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("castelaria", "castelaria-01", 800)}')` }} />
+              <div className="dest__body"><h3>Bran</h3><p>Transylvania</p></div>
+            </a>
+            <a className="dest reveal" href="#collection">
+              <div className="dest__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("marque", "marque-14", 800)}')` }} />
+              <div className="dest__body"><h3>Bucharest</h3><p>Capital</p></div>
+            </a>
+            <a className="dest dest--soon reveal" href="#collection">
+              <span className="dest__badge">Coming Soon</span>
+              <div className="dest__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("soho", "soho-15", 800)}')` }} />
+              <div className="dest__body"><h3>Los Angeles</h3><p>Register interest</p></div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="section cta-band" id="enquire">
+        <div className="cta-band__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("castelaria", "castelaria-hero", 2000)}')` }} />
+        <div className="wrap">
+          <p className="overline eyebrow-line" style={{ justifyContent: "center" }}>Ready When You Are</p>
+          <h2>Begin your escape</h2>
+          <p className="lead">Tell us the dates, the party and the feeling you are after. We will shape the rest, personally.</p>
+          <div className="cta-band__actions">
+            <a className="btn btn--brass" href="#collection">Book a Stay</a>
+            <a className="btn btn--ghost-light" href="tel:+40770111555">Call Us</a>
+          </div>
+        </div>
+      </section>
+
+      <MarketingFooter />
+      <WhatsAppButton />
+      <ClientInteractions />
+    </>
   );
 }

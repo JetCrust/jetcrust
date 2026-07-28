@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/admin/sync-ical", "schedule": "0 */3 * * *" },
+    { "path": "/api/admin/charge-balances", "schedule": "0 9 * * *" },
+    { "path": "/api/admin/posts/generate", "schedule": "0 8 * * 1,3,5" }
+  ]
+}

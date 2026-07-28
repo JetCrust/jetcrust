@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
+
+# local dev email outbox
+.dev-emails/
+
+# prisma local dev database (never commit — has test data)
+/prisma/*.db
+/prisma/*.db-journal
