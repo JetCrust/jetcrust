@@ -878,3 +878,8 @@ p { margin: 0 0 1em; }
   .mc-cell { min-height: 76px; }
   .mc-price { font-size: 0.72rem; }
 }
+
+/* Check-in acknowledgement checkboxes */
+.co-check { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 0.92rem; cursor: pointer; margin-bottom: 0.6rem; line-height: 1.4; }
+.co-check.is-on { border-color: var(--forest); background: rgba(37,48,38,0.05); }
+.co-check input { margin-top: 3px; flex-shrink: 0; width: 18px; height: 18px; }

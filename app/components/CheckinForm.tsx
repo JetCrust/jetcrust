@@ -5,23 +5,24 @@ import { compress, SignaturePad } from "./StayFormBits";
 
 type Photo = { url: string; at: string };
 type Item = { desc: string; amountCents: number };
-type Initial = { photos: Photo[]; items: Item[]; depositStatus: string; depositNote: string; notes: string; staffName: string; signature: string; completedAt: string | null } | null;
+type Initial = { photos: Photo[]; items: Item[]; notes: string; staffName: string; signature: string; acknowledged: boolean; completedAt: string | null } | null;
 
 const money = (c: number) => `€${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const QUICK = [["Wine", 5000], ["Minibar", 3000], ["Late checkout", 8000], ["Extra cleaning", 6000], ["Damage", 0]] as const;
+const QUICK = [["Grocery pre-stock", 8000], ["Airport transfer", 15000], ["Private chef", 30000], ["Champagne on arrival", 12000]] as const;
 
-export default function CheckoutForm({ bookingId, propertyName, guestName, security, initial }: {
+export default function CheckinForm({ bookingId, propertyName, guestName, stay, initial }: {
   bookingId: string; propertyName: string; guestName: string;
-  security: { cents: number; status: string; capturedCents: number };
+  stay: { checkIn: string; checkOut: string; guests: number; checkInTime?: string };
   initial: Initial;
 }) {
   const router = useRouter();
   const done = !!initial?.completedAt;
   const [photos, setPhotos] = useState<Photo[]>(initial?.photos || []);
   const [items, setItems] = useState<Item[]>(initial?.items || []);
-  const [depositStatus, setDepositStatus] = useState(initial?.depositStatus || (security.status === "captured" ? "partial" : "refund"));
   const [notes, setNotes] = useState(initial?.notes || "");
   const [staffName, setStaffName] = useState(initial?.staffName || "");
+  const [ackRules, setAckRules] = useState(initial?.acknowledged || false);
+  const [ackDeposit, setAckDeposit] = useState(initial?.acknowledged || false);
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export default function CheckoutForm({ bookingId, propertyName, guestName, secur
         const blob = await compress(file);
         const fd = new FormData();
         fd.append("file", blob, "photo.jpg");
-        const res = await fetch(`/api/admin/checkout/${bookingId}/photo`, { method: "POST", body: fd });
+        const res = await fetch(`/api/admin/checkin/${bookingId}/photo`, { method: "POST", body: fd });
         const d = await res.json().catch(() => ({}));
         if (!res.ok) { setError(d.error || "Upload failed."); break; }
         setPhotos((p) => [...p, { url: d.url, at: new Date().toISOString() }]);
@@ -54,15 +55,15 @@ export default function CheckoutForm({ bookingId, propertyName, guestName, secur
 
   async function submit(complete: boolean) {
     setError(null);
-    const sig = complete ? sigRef.current?.export() : sigRef.current?.export() || initial?.signature;
+    const sig = sigRef.current?.export() || initial?.signature;
     if (complete) {
-      if (photos.length === 0) { setError("Take at least one condition photo."); return; }
+      if (!ackRules || !ackDeposit) { setError("Please confirm the house rules and deposit acknowledgements."); return; }
       if (!sig) { setError("Please capture the guest signature."); return; }
     }
     setBusy(true);
-    const res = await fetch(`/api/admin/checkout/${bookingId}`, {
+    const res = await fetch(`/api/admin/checkin/${bookingId}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ photos, items: items.filter((it) => it.desc.trim()), depositStatus, notes, staffName, signature: sig || undefined, complete }),
+      body: JSON.stringify({ photos, items: items.filter((it) => it.desc.trim()), notes, staffName, signature: sig || undefined, acknowledged: ackRules && ackDeposit, complete }),
     });
     setBusy(false);
     const d = await res.json().catch(() => ({}));
@@ -75,17 +76,25 @@ export default function CheckoutForm({ bookingId, propertyName, guestName, secur
     <div className="co-card">
       <div className="co-head">
         <button className="co-back" onClick={() => router.push(`/admin/bookings/${bookingId}`)}>‹ Booking</button>
-        <h1 className="co-title">Check-out: {propertyName}</h1>
+        <h1 className="co-title">Check-in: {propertyName}</h1>
         <p className="co-sub">{guestName}{done ? " · completed" : ""}</p>
       </div>
 
-      {done && (
-        <div className="co-doneflag">This check-out is complete. The guest has been emailed a signed summary. Changes below will not re-charge or re-send.</div>
-      )}
+      {done && <div className="co-doneflag">This check-in is complete and signed. Changes below will not re-notify.</div>}
 
-      {/* Photos */}
+      {/* Stay confirmation */}
       <section className="co-sec">
-        <h2 className="co-h">Condition photos <span className="co-req">required</span></h2>
+        <h2 className="co-h">Stay</h2>
+        <ul className="kv">
+          <li><span>Arrival</span><span>{stay.checkIn}{stay.checkInTime ? ` · from ${stay.checkInTime}` : ""}</span></li>
+          <li><span>Departure</span><span>{stay.checkOut}</span></li>
+          <li><span>Guests</span><span>{stay.guests}</span></li>
+        </ul>
+      </section>
+
+      {/* ID / arrival photos */}
+      <section className="co-sec">
+        <h2 className="co-h">ID &amp; arrival photos</h2>
         <div className="co-photos">
           {photos.map((p, i) => (
             <div key={i} className="co-thumb" style={{ backgroundImage: `url(${p.url})` }}>
@@ -94,17 +103,23 @@ export default function CheckoutForm({ bookingId, propertyName, guestName, secur
           ))}
           {!done && (
             <button className="co-takephoto" onClick={() => fileRef.current?.click()} disabled={uploading}>
-              {uploading ? "Uploading…" : "＋ Take photos"}
+              {uploading ? "Uploading…" : "＋ Capture"}
             </button>
           )}
         </div>
         <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple hidden onChange={(e) => onFiles(e.target.files)} />
-        <p className="co-note">Photos shrink on the device before saving, so they stay small and load fast.</p>
+        <p className="co-note">Stored privately and compressed on the device. Capture ID only where your market requires it.</p>
       </section>
 
-      {/* Extras / charges */}
+      {/* Preferences & notes */}
       <section className="co-sec">
-        <h2 className="co-h">Extras &amp; additional charges</h2>
+        <h2 className="co-h">Preferences &amp; notes</h2>
+        <textarea className="co-textarea" rows={3} value={notes} disabled={done} onChange={(e) => setNotes(e.target.value)} placeholder="Arrival time, pillow / temperature preferences, occasion, dietary notes, anything to make the stay theirs." />
+      </section>
+
+      {/* Early extras */}
+      <section className="co-sec">
+        <h2 className="co-h">Add-ons on arrival</h2>
         {!done && (
           <div className="co-quick">
             {QUICK.map(([label, amt]) => (
@@ -113,7 +128,7 @@ export default function CheckoutForm({ bookingId, propertyName, guestName, secur
           </div>
         )}
         {items.length === 0 ? (
-          <p className="co-note">No extras. Add bar, minibar, services or a breakage above.</p>
+          <p className="co-note">None. Add any early services above.</p>
         ) : (
           <div className="co-items">
             {items.map((it, i) => (
@@ -128,23 +143,20 @@ export default function CheckoutForm({ bookingId, propertyName, guestName, secur
             ))}
           </div>
         )}
-        <div className="co-total"><span>Total additional charges</span><strong>{money(total)}</strong></div>
+        {total > 0 && <div className="co-total"><span>Add-ons total</span><strong>{money(total)}</strong></div>}
       </section>
 
-      {/* Security deposit */}
+      {/* Acknowledgements */}
       <section className="co-sec">
-        <h2 className="co-h">Security deposit</h2>
-        <p className="co-note" style={{ marginTop: 0 }}>
-          {security.cents > 0 ? `${money(security.cents)} on file · currently ${security.status}.` : "No security deposit set for this home."}
-          {" "}Money is moved on the booking's deposit panel; here you record the outcome for the guest.
-        </p>
-        <div className="co-radios">
-          {[["refund", "Refund in full"], ["partial", "Partial claim"], ["claim", "Charge for items"], ["pending", "Review later"]].map(([v, l]) => (
-            <label key={v} className={`co-radio${depositStatus === v ? " is-on" : ""}`}>
-              <input type="radio" name="dep" value={v} checked={depositStatus === v} disabled={done} onChange={() => setDepositStatus(v)} /> {l}
-            </label>
-          ))}
-        </div>
+        <h2 className="co-h">Agreement <span className="co-req">required</span></h2>
+        <label className={`co-check${ackRules ? " is-on" : ""}`}>
+          <input type="checkbox" checked={ackRules} disabled={done} onChange={(e) => setAckRules(e.target.checked)} />
+          <span>Guest has read and agrees to the house rules and rental agreement.</span>
+        </label>
+        <label className={`co-check${ackDeposit ? " is-on" : ""}`}>
+          <input type="checkbox" checked={ackDeposit} disabled={done} onChange={(e) => setAckDeposit(e.target.checked)} />
+          <span>Guest acknowledges the security-deposit terms for this stay.</span>
+        </label>
       </section>
 
       {/* Signature */}
@@ -158,11 +170,9 @@ export default function CheckoutForm({ bookingId, propertyName, guestName, secur
         )}
       </section>
 
-      {/* Notes + staff */}
+      {/* Staff */}
       <section className="co-sec">
-        <h2 className="co-h">Notes</h2>
-        <textarea className="co-textarea" rows={3} value={notes} disabled={done} onChange={(e) => setNotes(e.target.value)} placeholder="Anything worth recording about the walkthrough." />
-        <input className="co-staff" value={staffName} disabled={done} onChange={(e) => setStaffName(e.target.value)} placeholder="Completed by (staff name)" />
+        <input className="co-staff" value={staffName} disabled={done} onChange={(e) => setStaffName(e.target.value)} placeholder="Checked in by (staff name)" />
       </section>
 
       {error && <p className="co-error">{error}</p>}
