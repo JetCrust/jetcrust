@@ -42,8 +42,9 @@ export default async function AdminCalendar() {
                 <p className="overline eyebrow-line">Admin</p>
                 <h2>Calendar &amp; sync</h2>
                 <p className="lead" style={{ marginBottom: 0 }}>
-                  Share these feeds with Airbnb, Booking.com, VRBO or a concierge so they see our booked dates. To pull
-                  their calendars in, add their iCal links to each property&apos;s <code>ical_urls</code>, then sync.
+                  Share the feeds below with Airbnb, Booking.com, VRBO or a concierge so they see our booked dates
+                  (outgoing). To pull their calendars in (incoming), add their iCal links under each home in{" "}
+                  <a className="textlink" href="/admin/properties">Properties &amp; pricing</a>, then press Sync.
                 </p>
               </div>
 

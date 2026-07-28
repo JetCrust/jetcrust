@@ -32,6 +32,7 @@ type PropObj = {
   story?: string[];
   gallery?: { max: number; images: { file: string; caption: string }[] };
   card?: { image: string; desc: string; tags: string[] };
+  ical_urls?: string[];
   [key: string]: unknown;
 };
 
@@ -243,6 +244,27 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div className="full"><label>Story (one paragraph per line)</label><textarea value={(o.story || []).join("\n")} onChange={(e) => set({ story: e.target.value.split("\n").filter((l) => l.trim()) })} style={{ minHeight: 120 }} /></div>
         </div>
         <p className="panel__hint" style={{ marginBottom: 0 }}>Photos are referenced by file name for now. Once you are live on hosting, you will upload them here directly.</p>
+      </div>
+
+      {/* Calendar import */}
+      <div className="panel">
+        <div className="panel__head"><h3>Calendar import</h3></div>
+        <p className="panel__hint">Paste the iCal (.ics) links from Airbnb, Booking.com, VRBO or a concierge, one per line. We pull these in every few hours (and on demand) to block those dates here.</p>
+        <div className="ef">
+          <div className="full">
+            <textarea
+              value={(o.ical_urls || []).join("\n")}
+              onChange={(e) => setO((s) => ({ ...s, ical_urls: e.target.value.split("\n").map((l) => l.trim()).filter(Boolean) }))}
+              placeholder="https://www.airbnb.com/calendar/ical/....ics&#10;https://ical.booking.com/v1/export?...&#10;"
+              style={{ minHeight: 100 }}
+            />
+          </div>
+        </div>
+        {!isNew && (
+          <p className="panel__hint" style={{ marginBottom: 0 }}>
+            Your outgoing feed (give this to the channels so they see your booked dates): <code>/api/ical/{o.slug}</code>
+          </p>
+        )}
       </div>
 
       {/* Advanced */}
