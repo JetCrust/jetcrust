@@ -4,6 +4,7 @@ import AppHeader from "../../../components/AppHeader";
 import BookingManage from "../../../components/BookingManage";
 import CancelBookingButton from "../../../components/CancelBookingButton";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
+import GuestStayForms from "../../../components/GuestStayForms";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
@@ -115,6 +116,14 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             )}
             <p className="note" style={{ margin: "0.6rem 0 0", color: "var(--stone)", fontSize: "0.8rem" }}>Arrival directions and access details are sent by our team before your stay.</p>
           </div>
+
+          <GuestStayForms
+            bookingId={b.id}
+            preferences={b.stayPreferences || ""}
+            showPreferences={!["CANCELLED", "DECLINED", "EXPIRED"].includes(b.status) && b.checkOut > new Date()}
+            canReview={b.status === "APPROVED" && b.checkOut <= new Date()}
+            review={b.reviewRating ? { rating: b.reviewRating, text: b.reviewText || "" } : null}
+          />
 
           {(b.note || messages.length > 0) && (
             <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>

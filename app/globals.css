@@ -901,3 +901,11 @@ p { margin: 0 0 1em; }
 .ov-row__name { display: block; font-weight: 600; font-size: 0.95rem; }
 .ov-row__meta { display: block; font-size: 0.8rem; color: var(--stone); margin-top: 0.15rem; }
 .ov-today { display: inline-block; margin-left: 0.5rem; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(163,65,46,0.12); color: #a3412e; padding: 0.12rem 0.4rem; border-radius: 999px; vertical-align: middle; }
+
+/* Guest review stars */
+.stars { font-size: 1.1rem; letter-spacing: 0.1em; color: var(--brass); }
+.stars__empty { color: var(--line); }
+.star-pick { display: flex; gap: 0.3rem; }
+.star-pick__btn { font-size: 1.9rem; line-height: 1; background: none; border: none; cursor: pointer; color: var(--line); padding: 0; transition: color 0.12s ease; }
+.star-pick__btn.is-on { color: var(--brass); }
+.star-pick__btn:hover { color: var(--brass-2); }

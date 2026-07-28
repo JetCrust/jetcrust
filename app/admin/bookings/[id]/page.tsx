@@ -93,8 +93,20 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   </ul>
                   {b.user.preferences && (
                     <>
-                      <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest preferences</p>
+                      <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest preferences (account)</p>
                       <p style={{ margin: 0, color: "var(--ink-soft)" }}>{b.user.preferences}</p>
+                    </>
+                  )}
+                  {b.stayPreferences && (
+                    <>
+                      <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>This stay's preferences</p>
+                      <p style={{ margin: 0, color: "var(--ink-soft)" }}>{b.stayPreferences}</p>
+                    </>
+                  )}
+                  {b.reviewRating && (
+                    <>
+                      <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest review</p>
+                      <p style={{ margin: 0, color: "var(--ink-soft)" }}><span style={{ color: "var(--brass)", letterSpacing: "0.1em" }}>{"★".repeat(b.reviewRating)}</span>{b.reviewText ? ` — "${b.reviewText}"` : ""}</p>
                     </>
                   )}
                   {b.note && (

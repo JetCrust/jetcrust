@@ -144,6 +144,12 @@ model Booking {
   extras                String    @default("[]")
   refundedCents         Int       @default(0)   // total refunded on the stay payment
 
+  // Guest depth: pre-arrival preferences for this stay + post-stay review
+  stayPreferences       String?                 // arrival time, occasion, requests for this stay
+  reviewRating          Int?                     // 1..5, set after checkout
+  reviewText            String?
+  reviewedAt            DateTime?
+
   acceptance            ContractAcceptance?
 
   @@index([propertySlug, status])
