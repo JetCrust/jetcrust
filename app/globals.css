@@ -909,3 +909,19 @@ p { margin: 0 0 1em; }
 .star-pick__btn { font-size: 1.9rem; line-height: 1; background: none; border: none; cursor: pointer; color: var(--line); padding: 0; transition: color 0.12s ease; }
 .star-pick__btn.is-on { color: var(--brass); }
 .star-pick__btn:hover { color: var(--brass-2); }
+
+/* ===== Messaging thread ===== */
+.msg-thread { display: flex; flex-direction: column; gap: 0.7rem; max-height: 380px; overflow-y: auto; padding: 0.2rem; margin-bottom: 1rem; }
+.msg { display: flex; flex-direction: column; max-width: 82%; }
+.msg--me { align-self: flex-end; align-items: flex-end; }
+.msg--them { align-self: flex-start; align-items: flex-start; }
+.msg__bubble { padding: 0.6rem 0.9rem; border-radius: 14px; font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.msg--me .msg__bubble { background: var(--forest); color: var(--cream); border-bottom-right-radius: 4px; }
+.msg--them .msg__bubble { background: #fff; border: 1px solid var(--line); color: var(--ink); border-bottom-left-radius: 4px; }
+.msg__meta { font-size: 0.68rem; color: var(--stone); margin-top: 0.25rem; padding: 0 0.3rem; }
+.msg-compose { display: flex; gap: 0.6rem; align-items: flex-end; }
+.msg-compose textarea { flex: 1; padding: 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.95rem; background: #fff; resize: vertical; }
+.msg-compose .btn { flex-shrink: 0; }
+
+/* Inbox unread badge */
+.msg-badge { display: inline-block; margin-left: 0.5rem; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #a3412e; color: #fff; font-size: 0.68rem; line-height: 18px; text-align: center; vertical-align: middle; }

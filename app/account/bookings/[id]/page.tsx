@@ -6,6 +6,7 @@ import CancelBookingButton from "../../../components/CancelBookingButton";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
 import GuestStayForms from "../../../components/GuestStayForms";
 import CancelStay from "../../../components/CancelStay";
+import MessageThread from "../../../components/MessageThread";
 import { cancellationRefund } from "@/lib/policy";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -35,6 +36,7 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
     ? await prisma.stayReport.findFirst({ where: { bookingId: b.id, kind: "CHECKOUT", completedAt: { not: null } }, orderBy: { createdAt: "desc" } })
     : null;
   const checkoutItems: { desc: string; amountCents: number }[] = checkoutReport ? JSON.parse(checkoutReport.items || "[]") : [];
+  const chatMessages = await prisma.message.findMany({ where: { bookingId: b.id }, orderBy: { createdAt: "asc" } });
   const current: string[] = JSON.parse(b.addons || "[]");
   let messages: { text: string; at: string }[] = [];
   try { messages = JSON.parse(b.guestMessages || "[]"); } catch { messages = []; }
@@ -89,6 +91,12 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             {b.status === "REQUESTED" && (
               <div style={{ marginTop: "0.4rem" }}><CancelBookingButton bookingId={b.id} /></div>
             )}
+          </div>
+
+          <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+            <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Messages &amp; concierge</h3>
+            <p className="panel__hint" style={{ marginTop: 0 }}>Message us directly about your stay. We reply here and by email.</p>
+            <MessageThread bookingId={b.id} me="GUEST" messages={chatMessages.map((m) => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.createdAt.toISOString() }))} />
           </div>
 
           <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>

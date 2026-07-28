@@ -5,6 +5,7 @@ import ConsoleNav from "../../../components/ConsoleNav";
 import AdminActions from "../../../components/AdminActions";
 import BalanceButton from "../../../components/BalanceButton";
 import AdminNotes from "../../../components/AdminNotes";
+import MessageThread from "../../../components/MessageThread";
 import SecurityDeposit from "../../../components/SecurityDeposit";
 import ExtrasLedger from "../../../components/ExtrasLedger";
 import RefundControl from "../../../components/RefundControl";
@@ -53,6 +54,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
     prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKOUT" }, orderBy: { createdAt: "desc" } }),
   ]);
   const reportStatus = (r: { completedAt: Date | null } | null) => (!r ? "Not started" : r.completedAt ? `Completed ${fmtDT(r.completedAt)}` : "Draft saved");
+  const chatMessages = await prisma.message.findMany({ where: { bookingId: id }, orderBy: { createdAt: "asc" } });
   const addonKeys: string[] = JSON.parse(b.addons || "[]");
   const addonTitles = (p?.addons || []).filter((a) => addonKeys.includes(a.value));
   const breakdown = parseBreakdown(b.breakdown);
@@ -129,6 +131,12 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                       </>
                     ) : null;
                   })()}
+                </div>
+
+                {/* Messages */}
+                <div className="panel">
+                  <div className="panel__head"><h3>Messages</h3></div>
+                  <MessageThread bookingId={b.id} me="ADMIN" messages={chatMessages.map((m) => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.createdAt.toISOString() }))} />
                 </div>
 
                 {/* Stay + add-ons */}

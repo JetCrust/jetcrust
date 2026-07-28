@@ -235,4 +235,22 @@ export function checkoutReportEmail(d: {
   };
 }
 
+export function newMessageEmail(d: { toGuest: boolean; guestName: string; propertyName: string; preview: string; bookingId: string }) {
+  const first = d.guestName.split(" ")[0] || "there";
+  const link = d.toGuest ? `${SITE}/account/bookings/${d.bookingId}` : `${SITE}/admin/bookings/${d.bookingId}`;
+  return {
+    subject: d.toGuest ? `A message about your stay at ${d.propertyName}` : `New guest message: ${d.propertyName}`,
+    html: layout({
+      preheader: d.preview,
+      heading: "New message",
+      accent: "#B08D57",
+      bodyHtml:
+        h2(d.toGuest ? `Hello ${esc(first)}` : "New guest message") +
+        p(d.toGuest ? `You have a new message from your host about ${esc(d.propertyName)}:` : `<strong>${esc(d.guestName)}</strong> sent a message about ${esc(d.propertyName)}:`) +
+        `<p style="font-size:15px;line-height:1.65;color:#3B392E;margin:0 0 16px;padding:12px 16px;background:#EFE8D9;border-radius:8px;">&ldquo;${esc(d.preview)}&rdquo;</p>` +
+        button(link, d.toGuest ? "Read & reply" : "Open in Admin"),
+    }),
+  };
+}
+
 export type { BookingData };

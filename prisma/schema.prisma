@@ -187,6 +187,19 @@ enum StayFormKind {
   CHECKOUT
 }
 
+// Two-way message thread between a guest and the host, per booking.
+model Message {
+  id          String   @id @default(cuid())
+  bookingId   String
+  sender      String   // "GUEST" | "ADMIN"
+  body        String
+  createdAt   DateTime @default(now())
+  readByAdmin Boolean  @default(false)
+  readByGuest Boolean  @default(false)
+
+  @@index([bookingId, createdAt])
+}
+
 // Digital check-in / check-out report (tablet-first). Condition photos, extras
 // consumed, additional charges, deposit outcome and the guest's finger signature,
 // all saved against the booking. Photos live in Vercel Blob (compressed on device).
