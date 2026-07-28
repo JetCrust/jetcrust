@@ -53,6 +53,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             depositCents: collected,
             balanceCents,
             balanceDueAt,
+            // Record the security deposit for this stay; it's held automatically near check-in.
+            securityCents: Math.round((Number(property?.pricing?.deposit_eur) || 0) * 100),
           },
         }),
         prisma.availabilityBlock.create({

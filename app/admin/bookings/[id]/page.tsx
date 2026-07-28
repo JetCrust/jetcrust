@@ -5,6 +5,7 @@ import ConsoleNav from "../../../components/ConsoleNav";
 import AdminActions from "../../../components/AdminActions";
 import BalanceButton from "../../../components/BalanceButton";
 import AdminNotes from "../../../components/AdminNotes";
+import SecurityDeposit from "../../../components/SecurityDeposit";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -145,6 +146,14 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                     <div style={{ marginTop: "1rem" }}><BalanceButton bookingId={b.id} /></div>
                   )}
                 </div>
+
+                {/* Security deposit */}
+                {b.status === "APPROVED" && (
+                  <div className="panel">
+                    <div className="panel__head"><h3>Security deposit</h3></div>
+                    <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} />
+                  </div>
+                )}
 
                 {/* Agreement / compliance */}
                 <div className="panel">

@@ -67,6 +67,14 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
                 <li>Payment <span>{paymentLabel}</span></li>
               )}
               {current.length > 0 && <li>Add-ons <span>{addonTitles}</span></li>}
+              {b.securityCents > 0 && (
+                <li>Security deposit <span>{money(b.securityCents)}{
+                  b.securityStatus === "held" ? " · held" :
+                  b.securityStatus === "released" ? " · released" :
+                  b.securityStatus === "captured" ? ` · ${money(b.securityCapturedCents)} charged` :
+                  " · refundable, held near arrival"
+                }</span></li>
+              )}
             </ul>
 
             <p className="panel__hint" style={{ marginBottom: "0.5rem" }}>What you are paying for</p>

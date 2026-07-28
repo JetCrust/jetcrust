@@ -131,6 +131,18 @@ model Booking {
   stripePaymentIntentId String?       // the deposit/hold intent
   stripePaymentMethodId String?       // saved card, for the balance charge
 
+  // Security / damage deposit (separate from the stay payment). Held near check-in,
+  // released on a clean checkout, or captured (part/all) for damage or extras.
+  securityCents         Int       @default(0)      // the deposit amount for this stay
+  securityHoldId        String?                     // Stripe PaymentIntent for the hold
+  securityStatus        String    @default("none")  // none | held | released | captured | expired
+  securityCapturedCents Int       @default(0)
+  securityHeldAt        DateTime?
+  securityResolvedAt    DateTime?
+
+  // Extras ledger (Stage 3): [{ desc, amountCents, at, settled }]
+  extras                String    @default("[]")
+
   acceptance            ContractAcceptance?
 
   @@index([propertySlug, status])
