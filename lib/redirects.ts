@@ -12,7 +12,7 @@ export const REDIRECTS: Record<string, string> = {
   "/contact-us": "/",
   "/quote": "/castelaria",
   "/proposal": "/",
-  "/blog": "/",
+  "/blog": "/journal",
   "/full-width": "/",
   "/left-sidebar": "/",
   "/right-sidebar": "/",
