@@ -165,7 +165,11 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                 <div className="panel">
                   <div className="panel__head"><h3>Internal notes</h3></div>
                   <p className="panel__hint">Only your team sees these. The guest never does.</p>
-                  <AdminNotes bookingId={b.id} initial={b.adminNotes || ""} />
+                  <AdminNotes bookingId={b.id} log={(() => {
+                    if (!b.adminNotes) return [];
+                    try { const v = JSON.parse(b.adminNotes); return Array.isArray(v) ? v : [{ text: b.adminNotes, at: "" }]; }
+                    catch { return [{ text: b.adminNotes, at: "" }]; }
+                  })()} />
                 </div>
 
                 {/* Actions */}

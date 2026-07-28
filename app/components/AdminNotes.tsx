@@ -2,23 +2,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// Internal host notes on a booking. Saved separately from the guest's own note.
-export default function AdminNotes({ bookingId, initial }: { bookingId: string; initial: string }) {
-  const router = useRouter();
-  const [value, setValue] = useState(initial);
-  const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const dirty = value !== initial;
+type NoteEntry = { text: string; at: string };
 
-  async function save() {
+// Internal host notes as a running, dated log. Each note is added, never overwritten.
+export default function AdminNotes({ bookingId, log }: { bookingId: string; log: NoteEntry[] }) {
+  const router = useRouter();
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function add() {
+    if (!value.trim()) return;
     setBusy(true);
     setError(null);
-    setSaved(false);
     const res = await fetch(`/api/admin/bookings/${bookingId}/notes`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminNotes: value }),
+      body: JSON.stringify({ note: value.trim() }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -26,25 +26,34 @@ export default function AdminNotes({ bookingId, initial }: { bookingId: string; 
       setError(d.error || "Could not save the note.");
       return;
     }
-    setSaved(true);
+    setValue("");
     router.refresh();
   }
 
   return (
-    <div className="ef" style={{ gridTemplateColumns: "1fr" }}>
-      <div className="full">
-        <textarea
-          value={value}
-          onChange={(e) => { setValue(e.target.value); setSaved(false); }}
-          placeholder="Arrival time, gate code, special requests, follow-ups…"
-        />
-      </div>
-      <div className="full" style={{ display: "flex", gap: "0.8rem", alignItems: "center", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn--brass" disabled={busy || !dirty} onClick={save}>
-          {busy ? "Saving…" : "Save note"}
-        </button>
-        {saved && <span style={{ fontSize: "0.85rem", color: "var(--forest)" }}>Saved.</span>}
-        {error && <span style={{ fontSize: "0.85rem", color: "#a3412e" }}>{error}</span>}
+    <div>
+      {log.length > 0 && (
+        <ul className="stack" style={{ listStyle: "none", padding: 0, margin: "0 0 1rem" }}>
+          {log.map((n, i) => (
+            <li key={i} style={{ padding: "0.7rem 0.9rem", background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-sm)" }}>
+              <span className="panel__hint" style={{ display: "block", marginBottom: "0.25rem" }}>
+                {n.at ? new Date(n.at).toLocaleString("en-GB") : "Earlier"}
+              </span>
+              <span style={{ color: "var(--ink-soft)", whiteSpace: "pre-wrap" }}>{n.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="ef" style={{ gridTemplateColumns: "1fr" }}>
+        <div className="full">
+          <textarea value={value} onChange={(e) => setValue(e.target.value)} placeholder="Add a note (arrival time, gate code, a call you had, a follow-up…)" />
+        </div>
+        <div className="full" style={{ display: "flex", gap: "0.8rem", alignItems: "center", flexWrap: "wrap" }}>
+          <button type="button" className="btn btn--brass" disabled={busy || !value.trim()} onClick={add}>
+            {busy ? "Adding…" : "Add note"}
+          </button>
+          {error && <span style={{ fontSize: "0.85rem", color: "#a3412e" }}>{error}</span>}
+        </div>
       </div>
     </div>
   );
