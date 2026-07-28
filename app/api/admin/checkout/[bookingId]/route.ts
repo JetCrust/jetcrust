@@ -8,7 +8,7 @@ import { sendEmail } from "@/lib/email";
 import { checkoutReportEmail } from "@/lib/emails";
 
 const schema = z.object({
-  photos: z.array(z.object({ url: z.string().url(), at: z.string() })).default([]),
+  photos: z.array(z.object({ url: z.string().min(1), at: z.string() })).default([]),
   items: z.array(z.object({ desc: z.string().min(1).max(120), amountCents: z.number().int().nonnegative() })).default([]),
   depositStatus: z.enum(["pending", "refund", "partial", "claim"]).default("pending"),
   depositNote: z.string().max(300).optional(),
