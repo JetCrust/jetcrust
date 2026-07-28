@@ -14,7 +14,8 @@ datasource db {
 
 enum Role {
   GUEST
-  ADMIN
+  ADMIN     // Super Admin — full access
+  MANAGER   // Property / Location Manager — scoped to assigned properties
 }
 
 enum BookingStatus {
@@ -63,6 +64,7 @@ model User {
   name         String?
   passwordHash String
   role         Role     @default(GUEST)
+  managedSlugs String[] @default([]) // property slugs a MANAGER is assigned to
   createdAt    DateTime @default(now())
 
   // Profile & preferences

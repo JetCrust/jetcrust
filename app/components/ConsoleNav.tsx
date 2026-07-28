@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/admin/finance", label: "Finance & P&L" },
   { href: "/admin/journal", label: "Journal" },
   { href: "/admin/properties", label: "Properties & pricing" },
+  { href: "/admin/users", label: "Users & access" },
 ];
 
 export default function ConsoleNav({ pendingCount = 0 }: { pendingCount?: number }) {
