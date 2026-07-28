@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import AppHeader from "../../../components/AppHeader";
 import ConsoleNav from "../../../components/ConsoleNav";
+import LocalTime from "../../../components/LocalTime";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { bookingIncome } from "@/lib/accounting";
@@ -9,7 +10,6 @@ import { staffScope, slugFilter } from "@/lib/access";
 
 const money = (c: number) => `€${Math.round(c / 100).toLocaleString("en-US")}`;
 const fmt = (d: Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-const fmtDT = (d: Date) => new Date(d).toLocaleString("en-GB");
 const STATUS: Record<string, string> = { REQUESTED: "Awaiting", APPROVED: "Confirmed", DECLINED: "Declined", CANCELLED: "Cancelled", EXPIRED: "Expired" };
 
 export default async function GuestProfile({ params }: { params: Promise<{ userId: string }> }) {
@@ -89,7 +89,7 @@ export default async function GuestProfile({ params }: { params: Promise<{ userI
                 )}
               </div>
 
-              <p style={{ fontSize: "0.78rem", color: "var(--stone)" }}>Account created {fmtDT(user.createdAt)}.</p>
+              <p style={{ fontSize: "0.78rem", color: "var(--stone)" }}>Account created <LocalTime iso={user.createdAt.toISOString()} />.</p>
             </div>
           </div>
         </div>

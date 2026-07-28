@@ -27,7 +27,6 @@ const STATUS_LABEL: Record<string, string> = {
 const money = (c: number) => `€${(c / 100).toLocaleString("en-US")}`;
 const fmt = (d: Date | null) =>
   d ? new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long", year: "numeric" }) : "—";
-const fmtDT = (d: Date | null) => (d ? new Date(d).toLocaleString("en-GB") : "—");
 
 export default async function AdminBookingDetail({ params }: { params: Promise<{ id: string }> }) {
   const scope = await staffScope();
@@ -116,7 +115,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                         <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest requests</p>
                         {gm.map((m, i) => (
                           <p key={i} style={{ margin: "0 0 0.5rem", fontStyle: "italic", color: "var(--ink-soft)" }}>
-                            &ldquo;{m.text}&rdquo; <span style={{ fontStyle: "normal", color: "var(--stone)", fontSize: "0.78rem" }}>· {fmtDT(new Date(m.at))}</span>
+                            &ldquo;{m.text}&rdquo; <span style={{ fontStyle: "normal", color: "var(--stone)", fontSize: "0.78rem" }}>· {m.at ? <LocalTime iso={m.at} /> : ""}</span>
                           </p>
                         ))}
                       </>
@@ -155,7 +154,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                         <span>Balance</span>
                         <span>
                           {money(b.balanceCents)}
-                          {b.balancePaidAt ? ` · paid ${fmtDT(b.balancePaidAt)}` : b.balanceDueAt ? ` · due ${fmt(b.balanceDueAt)}` : ""}
+                          {b.balancePaidAt ? <> · paid <LocalTime iso={b.balancePaidAt.toISOString()} /></> : b.balanceDueAt ? ` · due ${fmt(b.balanceDueAt)}` : ""}
                         </span>
                       </li>
                     )}
@@ -214,7 +213,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   {b.acceptance ? (
                     <ul className="kv">
                       <li><span>Version</span><span>{b.acceptance.contractVersion}</span></li>
-                      <li><span>Accepted</span><span>{fmtDT(b.acceptance.acceptedAt)}</span></li>
+                      <li><span>Accepted</span><span><LocalTime iso={b.acceptance.acceptedAt.toISOString()} /></span></li>
                       <li><span>IP address</span><span>{b.acceptance.ipAddress}</span></li>
                       <li><span>Device</span><span style={{ maxWidth: 320, fontSize: "0.78rem" }}>{b.acceptance.userAgent}</span></li>
                     </ul>

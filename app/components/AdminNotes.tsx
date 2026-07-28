@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LocalTime from "./LocalTime";
 
 type NoteEntry = { text: string; at: string };
 
@@ -37,7 +38,7 @@ export default function AdminNotes({ bookingId, log }: { bookingId: string; log:
           {log.map((n, i) => (
             <li key={i} style={{ padding: "0.7rem 0.9rem", background: "var(--white)", border: "1px solid var(--line)", borderRadius: "var(--radius-sm)" }}>
               <span className="panel__hint" style={{ display: "block", marginBottom: "0.25rem" }}>
-                {n.at ? new Date(n.at).toLocaleString("en-GB") : "Earlier"}
+                {n.at ? <LocalTime iso={n.at} /> : "Earlier"}
               </span>
               <span style={{ color: "var(--ink-soft)", whiteSpace: "pre-wrap" }}>{n.text}</span>
             </li>

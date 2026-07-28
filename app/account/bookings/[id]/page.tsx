@@ -7,6 +7,7 @@ import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBre
 import GuestStayForms from "../../../components/GuestStayForms";
 import CancelStay from "../../../components/CancelStay";
 import MessageThread from "../../../components/MessageThread";
+import LocalTime from "../../../components/LocalTime";
 import { cancellationRefund } from "@/lib/policy";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -169,7 +170,7 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
               )}
               {messages.map((m, i) => (
                 <p key={i} style={{ margin: "0 0 0.7rem", color: "var(--ink-soft)" }}>
-                  <span className="panel__hint" style={{ display: "block", marginBottom: "0.2rem" }}>{new Date(m.at).toLocaleString("en-GB")}</span>
+                  <span className="panel__hint" style={{ display: "block", marginBottom: "0.2rem" }}><LocalTime iso={m.at} /></span>
                   &ldquo;{m.text}&rdquo;
                 </p>
               ))}
