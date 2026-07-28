@@ -173,9 +173,14 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   <div className="panel">
                     <div className="panel__head"><h3>Decision</h3></div>
                     <p className="panel__hint">
-                      Approving captures the held card and blocks these dates. Declining releases the hold.
+                      Choose how much to charge now, then approve (this charges the card and blocks these dates) or decline (releases the hold).
                     </p>
-                    <AdminActions bookingId={b.id} />
+                    <AdminActions
+                      bookingId={b.id}
+                      totalCents={b.amountCents}
+                      defaultPct={Number(p?.pricing?.charge_now_pct) || 100}
+                      balanceDays={Number(p?.pricing?.balance_days_before) || 30}
+                    />
                   </div>
                 )}
               </div>

@@ -1,10 +1,11 @@
-// Deposit / split-payment policy. Configurable via env; sensible defaults.
-// If a stay is far enough out, take a deposit now and the balance closer to arrival.
-export const DEPOSIT_PERCENT = clampNum(process.env.DEPOSIT_PERCENT, 50, 1, 100);
-export const BALANCE_DUE_DAYS = clampNum(process.env.BALANCE_DUE_DAYS, 30, 0, 365); // balance due this many days before check-in
-export const SPLIT_MIN_LEAD_DAYS = clampNum(process.env.SPLIT_MIN_LEAD_DAYS, 45, 0, 3650); // only split if check-in is at least this far out
+// Deposit / split-payment policy. Each property sets how much to charge at
+// approval (charge_now_pct) and how many days before arrival the remainder is
+// auto-charged (balance_days_before). The admin can override the percentage at
+// approval time. Env values are fallbacks when a property doesn't set its own.
+export const DEFAULT_CHARGE_NOW_PCT = clampNum(process.env.DEPOSIT_PERCENT, 100, 1, 100);
+export const DEFAULT_BALANCE_DAYS = clampNum(process.env.BALANCE_DUE_DAYS, 30, 0, 365);
 
-function clampNum(v: string | undefined, def: number, min: number, max: number): number {
+function clampNum(v: string | number | undefined, def: number, min: number, max: number): number {
   const n = Number(v);
   if (!Number.isFinite(n)) return def;
   return Math.min(max, Math.max(min, n));
@@ -14,19 +15,46 @@ const DAY = 86400000;
 
 export type DepositPlan = {
   split: boolean;
-  depositCents: number;
-  balanceCents: number;
+  depositCents: number; // charged/held now
+  balanceCents: number; // charged later
   balanceDueAt: Date | null;
 };
 
-// now is passed in (never call Date.now indirectly in a way that breaks tests).
-export function depositPlan(totalCents: number, checkIn: Date, now: Date): DepositPlan {
+// Work out the split for a total, given the property's charge-now percentage and
+// how many days before arrival the balance is due. If the stay is already within
+// that window (or the percentage is 100), everything is taken now.
+export function depositPlan(
+  totalCents: number,
+  checkIn: Date,
+  now: Date,
+  chargeNowPct = DEFAULT_CHARGE_NOW_PCT,
+  balanceDaysBefore = DEFAULT_BALANCE_DAYS,
+): DepositPlan {
+  const pct = clampNum(chargeNowPct, DEFAULT_CHARGE_NOW_PCT, 1, 100);
   const leadDays = Math.floor((checkIn.getTime() - now.getTime()) / DAY);
-  if (DEPOSIT_PERCENT >= 100 || leadDays < SPLIT_MIN_LEAD_DAYS) {
+  if (pct >= 100 || leadDays <= balanceDaysBefore) {
     return { split: false, depositCents: totalCents, balanceCents: 0, balanceDueAt: null };
   }
-  const depositCents = Math.round((totalCents * DEPOSIT_PERCENT) / 100);
+  const depositCents = Math.round((totalCents * pct) / 100);
   const balanceCents = totalCents - depositCents;
-  const balanceDueAt = new Date(checkIn.getTime() - BALANCE_DUE_DAYS * DAY);
+  const balanceDueAt = new Date(checkIn.getTime() - balanceDaysBefore * DAY);
   return { split: true, depositCents, balanceCents, balanceDueAt };
+}
+
+// Same split maths, but for an explicit "charge now" percentage chosen by the
+// admin at approval (always splits the remainder to the balance, due before arrival).
+export function splitForApproval(
+  totalCents: number,
+  checkIn: Date,
+  now: Date,
+  chargeNowPct: number,
+  balanceDaysBefore = DEFAULT_BALANCE_DAYS,
+): DepositPlan {
+  const pct = clampNum(chargeNowPct, 100, 1, 100);
+  const depositCents = Math.round((totalCents * pct) / 100);
+  const balanceCents = totalCents - depositCents;
+  if (balanceCents <= 0) return { split: false, depositCents: totalCents, balanceCents: 0, balanceDueAt: null };
+  // Never in the past: if the stay is within the window, charge the balance at the next run.
+  const due = new Date(checkIn.getTime() - balanceDaysBefore * DAY);
+  return { split: true, depositCents, balanceCents, balanceDueAt: due < now ? now : due };
 }

@@ -23,6 +23,8 @@ type PropObj = {
     currency: string;
     min_nights: number;
     deposit_eur?: number;
+    charge_now_pct?: number;
+    balance_days_before?: number;
     dynamic?: { enabled: boolean; floor_eur: number; ceiling_eur: number; occupancy?: { enabled: boolean; window_days: number; max_uplift_pct: number } };
     seasonal?: Seasonal[];
   };
@@ -163,7 +165,10 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div><label>Weekend nightly (€)</label><input type="number" value={o.pricing.weekend_nightly_eur || 0} onChange={(e) => setPricing({ weekend_nightly_eur: num(e.target.value) })} /></div>
           <div><label>Minimum nights</label><input type="number" value={o.pricing.min_nights} onChange={(e) => setPricing({ min_nights: num(e.target.value) })} /></div>
           <div><label>Security deposit (€)</label><input type="number" value={o.pricing.deposit_eur || 0} onChange={(e) => setPricing({ deposit_eur: num(e.target.value) })} /></div>
+          <div><label>Charge at approval (%)</label><input type="number" min={1} max={100} value={o.pricing.charge_now_pct || 100} onChange={(e) => setPricing({ charge_now_pct: num(e.target.value) })} /></div>
+          <div><label>Balance due (days before arrival)</label><input type="number" value={o.pricing.balance_days_before ?? 30} onChange={(e) => setPricing({ balance_days_before: num(e.target.value) })} /></div>
         </div>
+        <p className="panel__hint" style={{ marginBottom: 0 }}>Charge at approval: 100% takes the full stay when you approve. A lower figure (e.g. 50%) charges that share now and auto-charges the rest the set number of days before arrival. You can still change the amount on each booking when you approve it.</p>
 
         <p className="panel__hint" style={{ marginTop: "1.2rem", marginBottom: "0.4rem" }}>Seasonal / holiday rates</p>
         {seasonal.map((sn, i) => (

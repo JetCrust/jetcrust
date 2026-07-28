@@ -4,6 +4,73 @@ import { sendEmail } from "./email";
 import { toBookingData } from "./booking-data";
 import { balanceChargedEmail } from "./emails";
 
+type BookingLike = {
+  id: string;
+  currency: string;
+  propertySlug: string;
+  stripeCustomerId: string | null;
+  stripePaymentIntentId: string | null;
+  stripePaymentMethodId: string | null;
+};
+
+// Charge exactly `chargeNowCents` at approval. The card hold may be smaller or
+// larger than that: capture what we can from the hold, and charge any shortfall
+// off-session using the saved card. Returns the saved payment method + what was
+// actually collected.
+export async function collectAtApproval(booking: BookingLike, chargeNowCents: number) {
+  let paymentMethodId = booking.stripePaymentMethodId;
+  let collected = 0;
+
+  // No hold on file: charge the whole amount off-session (needs a saved card).
+  if (!booking.stripePaymentIntentId) {
+    if (chargeNowCents > 0 && booking.stripeCustomerId && paymentMethodId) {
+      const pi = await stripe.paymentIntents.create({
+        amount: chargeNowCents, currency: booking.currency, customer: booking.stripeCustomerId,
+        payment_method: paymentMethodId, off_session: true, confirm: true,
+        metadata: { bookingId: booking.id, kind: "approval" },
+      });
+      if (pi.status === "succeeded") collected = chargeNowCents;
+    }
+    return { paymentMethodId, collected };
+  }
+
+  const intent = await stripe.paymentIntents.retrieve(booking.stripePaymentIntentId);
+  const authorized = intent.amount;
+  paymentMethodId =
+    (typeof intent.payment_method === "string" ? intent.payment_method : intent.payment_method?.id) ?? paymentMethodId;
+
+  if (chargeNowCents <= 0) {
+    // Nothing to charge now: release the hold.
+    await stripe.paymentIntents.cancel(booking.stripePaymentIntentId).catch(() => {});
+    return { paymentMethodId, collected: 0 };
+  }
+
+  if (chargeNowCents <= authorized) {
+    // Capture just what we need; the rest of the hold is released automatically.
+    await stripe.paymentIntents.capture(booking.stripePaymentIntentId, { amount_to_capture: chargeNowCents });
+    collected = chargeNowCents;
+  } else {
+    // Capture the whole hold, then charge the shortfall off-session.
+    await stripe.paymentIntents.capture(booking.stripePaymentIntentId);
+    collected = authorized;
+    const shortfall = chargeNowCents - authorized;
+    if (shortfall > 0 && booking.stripeCustomerId && paymentMethodId) {
+      try {
+        const pi = await stripe.paymentIntents.create({
+          amount: shortfall, currency: booking.currency, customer: booking.stripeCustomerId,
+          payment_method: paymentMethodId, off_session: true, confirm: true,
+          metadata: { bookingId: booking.id, kind: "approval-topup" },
+        });
+        if (pi.status === "succeeded") collected += shortfall;
+      } catch {
+        // Top-up failed (declined / needs auth). We still captured the hold; the
+        // rest can be taken as a balance later.
+      }
+    }
+  }
+  return { paymentMethodId, collected };
+}
+
 // Charge the remaining balance for an approved booking, off-session, using the saved card.
 export async function chargeBookingBalance(bookingId: string) {
   const b = await prisma.booking.findUnique({ where: { id: bookingId }, include: { user: true } });

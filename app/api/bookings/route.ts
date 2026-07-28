@@ -68,8 +68,15 @@ export async function POST(req: Request) {
     "unknown";
   const userAgent = hdrs.get("user-agent") || "unknown";
 
-  // Deposit now / balance later, based on how far out the stay is.
-  const plan = depositPlan(q.amountCents, new Date(checkIn), new Date());
+  // Hold reflects the property's default charge-now percentage; the host can
+  // still adjust the amount when approving.
+  const plan = depositPlan(
+    q.amountCents,
+    new Date(checkIn),
+    new Date(),
+    Number(property.pricing.charge_now_pct) || undefined,
+    Number(property.pricing.balance_days_before) || undefined,
+  );
 
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Payments are not configured yet. Please contact us to complete your booking." }, { status: 500 });

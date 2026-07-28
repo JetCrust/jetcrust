@@ -5,15 +5,19 @@ import { stripe } from "@/lib/stripe";
 import { sendEmail } from "@/lib/email";
 import { toBookingData } from "@/lib/booking-data";
 import { bookingApprovedEmail, bookingDeclinedEmail } from "@/lib/emails";
+import { getProperty } from "@/lib/properties";
+import { splitForApproval, DEFAULT_BALANCE_DAYS } from "@/lib/policy";
+import { collectAtApproval } from "@/lib/charge";
 
-// Host approves (captures the held card + blocks the calendar) or declines (releases the hold).
+// Host approves (charges the chosen amount + blocks the calendar) or declines (releases the hold).
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const { id } = await params;
-  const { action } = (await req.json().catch(() => ({}))) as { action?: string };
+  const body = (await req.json().catch(() => ({}))) as { action?: string; chargeNowPct?: number };
+  const { action } = body;
 
   const booking = await prisma.booking.findUnique({ where: { id }, include: { user: true } });
   if (!booking) return NextResponse.json({ error: "Booking not found." }, { status: 404 });
@@ -22,27 +26,47 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   if (action === "approve") {
-    let paymentMethodId: string | null = booking.stripePaymentMethodId;
-    if (booking.stripePaymentIntentId) {
-      const captured = await stripe.paymentIntents.capture(booking.stripePaymentIntentId);
-      paymentMethodId =
-        typeof captured.payment_method === "string"
-          ? captured.payment_method
-          : captured.payment_method?.id ?? paymentMethodId;
+    const property = await getProperty(booking.propertySlug);
+    const balanceDays = Number(property?.pricing?.balance_days_before) || DEFAULT_BALANCE_DAYS;
+    // How much to charge now: the admin's choice, else the property default, else 100%.
+    const pct = Number.isFinite(body.chargeNowPct)
+      ? Math.min(100, Math.max(1, Number(body.chargeNowPct)))
+      : Number(property?.pricing?.charge_now_pct) || 100;
+
+    const plan = splitForApproval(booking.amountCents, booking.checkIn, new Date(), pct, balanceDays);
+
+    try {
+      const { paymentMethodId, collected } = await collectAtApproval(booking, plan.depositCents);
+      const balanceCents = Math.max(0, booking.amountCents - collected);
+      const DAY = 86400000;
+      const now = new Date();
+      const due = new Date(booking.checkIn.getTime() - balanceDays * DAY);
+      const balanceDueAt = balanceCents > 0 ? (due < now ? now : due) : null;
+
+      await prisma.$transaction([
+        prisma.booking.update({
+          where: { id },
+          data: {
+            status: "APPROVED",
+            approvedAt: new Date(),
+            stripePaymentMethodId: paymentMethodId,
+            depositCents: collected,
+            balanceCents,
+            balanceDueAt,
+          },
+        }),
+        prisma.availabilityBlock.create({
+          data: { propertySlug: booking.propertySlug, start: booking.checkIn, end: booking.checkOut, source: "BOOKING", note: `Booking ${id}` },
+        }),
+      ]);
+      const data = await toBookingData({ ...booking, depositCents: collected, balanceCents, balanceDueAt }, booking.user);
+      const mail = bookingApprovedEmail(data);
+      await sendEmail({ to: booking.user.email, subject: mail.subject, html: mail.html });
+      return NextResponse.json({ ok: true, status: "APPROVED", collectedCents: collected, balanceCents });
+    } catch (e) {
+      console.error("Approval charge failed:", e);
+      return NextResponse.json({ error: `Could not charge the card. (${e instanceof Error ? e.message : "Unknown error"})` }, { status: 500 });
     }
-    await prisma.$transaction([
-      prisma.booking.update({
-        where: { id },
-        data: { status: "APPROVED", approvedAt: new Date(), stripePaymentMethodId: paymentMethodId },
-      }),
-      prisma.availabilityBlock.create({
-        data: { propertySlug: booking.propertySlug, start: booking.checkIn, end: booking.checkOut, source: "BOOKING", note: `Booking ${id}` },
-      }),
-    ]);
-    const data = await toBookingData(booking, booking.user);
-    const mail = bookingApprovedEmail(data);
-    await sendEmail({ to: booking.user.email, subject: mail.subject, html: mail.html });
-    return NextResponse.json({ ok: true, status: "APPROVED" });
   }
 
   if (action === "decline") {

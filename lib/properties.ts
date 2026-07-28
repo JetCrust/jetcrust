@@ -7,6 +7,9 @@ export type Pricing = {
   weekend_nightly_eur?: number;
   currency: string;
   min_nights: number;
+  deposit_eur?: number;         // refundable security/damage deposit (Stage 2)
+  charge_now_pct?: number;      // % of the stay charged at approval (default)
+  balance_days_before?: number; // days before arrival the remainder auto-charges
   dynamic?: {
     enabled: boolean;
     floor_eur: number;
