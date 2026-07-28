@@ -195,4 +195,44 @@ export function adminNewRequestEmail(d: BookingData) {
   };
 }
 
+const DEPOSIT_LINE: Record<string, string> = {
+  refund: "Your security deposit will be refunded in full. Please allow 7 to 10 days for it to clear.",
+  partial: "A partial charge will be applied to your security deposit for the items noted below. The remainder is released.",
+  claim: "A charge will be applied for the items noted below.",
+  pending: "Your security deposit is being reviewed and we will be in touch shortly.",
+};
+
+export function checkoutReportEmail(d: {
+  guestName: string;
+  propertyName: string;
+  checkOut: Date;
+  items: { desc: string; amountCents: number }[];
+  additionalCents: number;
+  depositStatus: string;
+  photos: number;
+}) {
+  const first = d.guestName.split(" ")[0] || "there";
+  const itemsRows = d.items.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;border-top:1px solid rgba(23,22,15,0.10);border-bottom:1px solid rgba(23,22,15,0.10);">
+        ${d.items.map((it) => `<tr><td style="padding:8px 0;font-size:14px;color:#17160F;">${esc(it.desc)}</td><td style="padding:8px 0;font-size:14px;color:#17160F;text-align:right;">${money(it.amountCents, "eur")}</td></tr>`).join("")}
+        <tr><td style="padding:10px 0;font-size:14px;color:#17160F;font-weight:bold;border-top:1px solid rgba(23,22,15,0.10);">Additional charges</td><td style="padding:10px 0;font-size:14px;color:#17160F;text-align:right;font-weight:bold;border-top:1px solid rgba(23,22,15,0.10);">${money(d.additionalCents, "eur")}</td></tr>
+      </table>`
+    : p("No additional charges. Thank you for leaving the home in wonderful condition.");
+  return {
+    subject: `Your check-out summary, ${d.propertyName}`,
+    html: layout({
+      preheader: `Thank you for staying at ${d.propertyName}. Your signed check-out summary is enclosed.`,
+      heading: "Check-out complete",
+      accent: "#253026",
+      bodyHtml:
+        h2(`Thank you, ${esc(first)}`) +
+        p(`We have completed the check-out for your stay at <strong>${esc(d.propertyName)}</strong> on ${fmt(d.checkOut)}. A condition report with ${d.photos} photo${d.photos === 1 ? "" : "s"} has been recorded and signed.`) +
+        itemsRows +
+        p(DEPOSIT_LINE[d.depositStatus] || DEPOSIT_LINE.pending) +
+        p("It was a pleasure to host you. We would love to welcome you back.") +
+        button(`${SITE}/account`, "View My Bookings"),
+    }),
+  };
+}
+
 export type { BookingData };

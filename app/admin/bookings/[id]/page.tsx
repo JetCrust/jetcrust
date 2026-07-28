@@ -158,6 +158,15 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   </div>
                 )}
 
+                {/* Check-out form */}
+                {b.status === "APPROVED" && (
+                  <div className="panel">
+                    <div className="panel__head"><h3>Check-out</h3></div>
+                    <p className="panel__hint">Open the tablet-first check-out: condition photos, extras, deposit outcome and the guest's signature.</p>
+                    <Link href={`/admin/checkout/${b.id}`} className="btn btn--dark" style={{ justifyContent: "center" }}>Start check-out</Link>
+                  </div>
+                )}
+
                 {/* Extras ledger */}
                 {b.status === "APPROVED" && (
                   <div className="panel">

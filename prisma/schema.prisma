@@ -176,6 +176,34 @@ model AvailabilityBlock {
   @@index([propertySlug, start, end])
 }
 
+enum StayFormKind {
+  CHECKIN
+  CHECKOUT
+}
+
+// Digital check-in / check-out report (tablet-first). Condition photos, extras
+// consumed, additional charges, deposit outcome and the guest's finger signature,
+// all saved against the booking. Photos live in Vercel Blob (compressed on device).
+model StayReport {
+  id              String       @id @default(cuid())
+  bookingId       String
+  kind            StayFormKind @default(CHECKOUT)
+  photos          String       @default("[]") // [{ url, at }]
+  items           String       @default("[]") // extras consumed: [{ desc, amountCents }]
+  additionalCents Int          @default(0)
+  depositStatus   String       @default("pending") // pending | refund | partial | claim
+  depositNote     String?
+  guestName       String?
+  staffName       String?
+  notes           String?
+  signature       String?      // finger-drawn signature, PNG data URL
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([bookingId, kind])
+}
+
 enum ExpenseCategory {
   CLEANING
   MAINTENANCE
