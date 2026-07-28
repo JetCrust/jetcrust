@@ -44,6 +44,7 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const rows = propFilter === "all" ? properties : properties.filter((p) => p.slug === propFilter);
+  const singleProp = propFilter !== "all" ? properties.find((p) => p.slug === propFilter) || null : null;
 
   const visible = useMemo(
     () => items.filter((it) => show[it.status] && (propFilter === "all" || it.propertySlug === propFilter)),
@@ -153,9 +154,20 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
         </div>
       </div>
 
-      {/* Calendar */}
+      {/* Calendar: per-property month grid when one property is picked, else the all-properties timeline */}
+      {singleProp ? (
+        <MonthCalendar
+          yr={y} mon={mo} N={N} firstWeekday={firstWeekday}
+          item={singleProp}
+          items={visible.filter((it) => it.propertySlug === singleProp.slug)}
+          prices={prices?.[singleProp.slug]}
+          currencySymbol={currencySymbol}
+          todayIso={todayIso}
+          onSelect={setSelected}
+        />
+      ) : (
       <div className="cal-wrap">
-        <div className="cal-grid" style={{ gridTemplateColumns: "170px 1fr" }}>
+        <div className="cal-grid" style={{ gridTemplateColumns: "170px 1fr", minWidth: 170 + N * 72 }}>
           {/* header */}
           <div className="cal-corner" />
           <div className="cal-head" style={{ height: headH }}>
@@ -228,12 +240,73 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
         </div>
         {rows.length === 0 && <p style={{ color: "var(--stone)", padding: "1rem" }}>No properties to show.</p>}
       </div>
+      )}
 
-      <p className="cal-hint">Nightly rack rates shown per day (seasonal / weekend / base) — quote straight off the calendar. Demand pricing may adjust the final quote. Click a card for details; drag a booking to move it, or its right edge to extend.</p>
+      <p className="cal-hint">{singleProp
+        ? "Per-property month view — the nightly rate shows in each open night; bookings appear as coloured pills you can click. Choose “All properties” above for the side-by-side timeline."
+        : "All-properties timeline — nightly rates per day; scroll sideways for the full month. Pick one property above for its month grid. Drag a booking to move it, or its right edge to extend."}</p>
 
       {selected && <DetailPopover item={selected} properties={properties} onClose={() => setSelected(null)} onMove={patchDates} onRemoveBlock={removeBlock} />}
       {modal === "block" && <BlockModal properties={properties} defaultSlug={propFilter !== "all" ? propFilter : properties[0]?.slug} monthKey={monthKey} onClose={() => setModal(null)} onDone={() => { setModal(null); router.refresh(); }} />}
       {modal === "manual" && <ManualModal properties={properties} defaultSlug={propFilter !== "all" ? propFilter : properties[0]?.slug} monthKey={monthKey} onClose={() => setModal(null)} onDone={() => { setModal(null); router.refresh(); }} />}
+    </div>
+  );
+}
+
+/* ---- Per-property month grid (Airbnb-style: day number + nightly rate, bookings as pills) ---- */
+const WD_FULL = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+function MonthCalendar({ yr, mon, N, firstWeekday, items, prices, currencySymbol, todayIso, onSelect }: {
+  yr: number; mon: number; N: number; firstWeekday: number;
+  item: Prop; items: CalItem[]; prices?: number[]; currencySymbol: string;
+  todayIso: string; onSelect: (it: CalItem) => void;
+}) {
+  const monthStartMs = Date.UTC(yr, mon - 1, 1);
+  const p2 = (n: number) => String(n).padStart(2, "0");
+
+  // Which item (if any) covers each day of the month.
+  const cover: (CalItem | null)[] = Array.from({ length: N }, () => null);
+  for (const it of items) {
+    const s = diffDays(it.start, monthStartMs);
+    const e = diffDays(it.end, monthStartMs);
+    for (let i = Math.max(0, s); i < Math.min(N, e); i++) if (!cover[i]) cover[i] = it;
+  }
+
+  const trailing = (7 - ((firstWeekday + N) % 7)) % 7;
+
+  return (
+    <div className="mc">
+      <div className="mc-wd">{WD_FULL.map((d) => <span key={d}>{d}</span>)}</div>
+      <div className="mc-grid">
+        {Array.from({ length: firstWeekday }, (_, i) => <div key={`b${i}`} className="mc-cell mc-cell--blank" />)}
+        {Array.from({ length: N }, (_, i) => {
+          const dayNum = i + 1;
+          const col = (firstWeekday + i) % 7;
+          const weekend = col === 0 || col === 6;
+          const isToday = `${yr}-${p2(mon)}-${p2(dayNum)}` === todayIso;
+          const c = cover[i];
+          const isStart = !!c && (i === 0 || cover[i - 1] !== c);
+          const isEnd = !!c && (i === N - 1 || cover[i + 1] !== c);
+          const showLabel = !!c && (isStart || col === 0);
+          const rate = prices?.[i];
+          return (
+            <div key={dayNum} className={`mc-cell${weekend ? " is-weekend" : ""}`}>
+              <span className={`mc-dn${isToday ? " is-today" : ""}`}>{dayNum}</span>
+              {c ? (
+                <div
+                  className={`mc-pill mc-pill--${c.status}${isStart ? " is-start" : ""}${isEnd ? " is-end" : ""}`}
+                  onClick={() => onSelect(c)}
+                  title={`${c.label} · ${c.start} → ${c.end}`}
+                >
+                  {showLabel && <span className="mc-pill__label">{c.label}</span>}
+                </div>
+              ) : (
+                rate ? <span className="mc-price">{currencySymbol}{rate.toLocaleString("en-US")}</span> : null
+              )}
+            </div>
+          );
+        })}
+        {Array.from({ length: trailing }, (_, i) => <div key={`t${i}`} className="mc-cell mc-cell--blank" />)}
+      </div>
     </div>
   );
 }
