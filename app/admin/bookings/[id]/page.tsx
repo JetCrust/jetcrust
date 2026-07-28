@@ -6,10 +6,13 @@ import AdminActions from "../../../components/AdminActions";
 import BalanceButton from "../../../components/BalanceButton";
 import AdminNotes from "../../../components/AdminNotes";
 import SecurityDeposit from "../../../components/SecurityDeposit";
+import ExtrasLedger from "../../../components/ExtrasLedger";
+import RefundControl from "../../../components/RefundControl";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
+import { parseExtras } from "@/lib/accounting";
 
 const STATUS_LABEL: Record<string, string> = {
   REQUESTED: "Awaiting approval",
@@ -152,6 +155,24 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   <div className="panel">
                     <div className="panel__head"><h3>Security deposit</h3></div>
                     <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} />
+                  </div>
+                )}
+
+                {/* Extras ledger */}
+                {b.status === "APPROVED" && (
+                  <div className="panel">
+                    <div className="panel__head"><h3>Extras &amp; charges</h3></div>
+                    <p className="panel__hint">Bar, services, late checkout or agreed breakages. Charge the saved card, take cash, or settle from the security deposit.</p>
+                    <ExtrasLedger bookingId={b.id} extras={parseExtras(b.extras)} hasCard={!!(b.stripeCustomerId && b.stripePaymentMethodId)} />
+                  </div>
+                )}
+
+                {/* Refund */}
+                {b.status === "APPROVED" && (
+                  <div className="panel">
+                    <div className="panel__head"><h3>Refund</h3></div>
+                    <p className="panel__hint">Refund part or all of the stay payment to the guest. The security deposit is handled above, on its own hold.</p>
+                    <RefundControl bookingId={b.id} totalCents={b.amountCents} refundedCents={b.refundedCents} />
                   </div>
                 )}
 

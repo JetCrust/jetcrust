@@ -140,8 +140,9 @@ model Booking {
   securityHeldAt        DateTime?
   securityResolvedAt    DateTime?
 
-  // Extras ledger (Stage 3): [{ desc, amountCents, at, settled }]
+  // Extras ledger (Stage 3): [{ id, desc, amountCents, at, settled, settledVia }]
   extras                String    @default("[]")
+  refundedCents         Int       @default(0)   // total refunded on the stay payment
 
   acceptance            ContractAcceptance?
 
@@ -173,4 +174,29 @@ model AvailabilityBlock {
   createdAt    DateTime    @default(now())
 
   @@index([propertySlug, start, end])
+}
+
+enum ExpenseCategory {
+  CLEANING
+  MAINTENANCE
+  SUPPLIES
+  COMMISSION   // OTA / partner commission — shown as its own P&L line
+  UTILITIES
+  OTHER
+}
+
+// Costs for the P&L (Stage 3). Entered by admin. `commission` is a category so
+// OTA/partner fees appear on their own line. Optionally tied to a property and/or booking.
+model Expense {
+  id           String          @id @default(cuid())
+  propertySlug String?         // null = portfolio-wide / unattributed
+  bookingId    String?         // optional link to the booking that incurred it
+  category     ExpenseCategory @default(OTHER)
+  description  String
+  amountCents  Int
+  date         DateTime        // when the cost was incurred (drives date-range filtering)
+  createdAt    DateTime        @default(now())
+
+  @@index([propertySlug, date])
+  @@index([date])
 }
