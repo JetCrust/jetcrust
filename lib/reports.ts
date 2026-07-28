@@ -47,17 +47,19 @@ function proratedRoom(amountCents: number, aStart: Date, aEnd: Date, wStart: Dat
   return Math.round((amountCents / totalNights) * inRange);
 }
 
-export async function buildPerformance(start: Date, end: Date): Promise<Performance> {
+export async function buildPerformance(start: Date, end: Date, slugs?: string[] | null): Promise<Performance> {
   const nights = Math.max(1, Math.round((end.getTime() - start.getTime()) / DAY));
-  const props = await prisma.property.findMany({ select: { slug: true, name: true }, orderBy: { order: "asc" } });
+  const propWhere = slugs ? { slug: { in: slugs } } : {};
+  const slugFilter = slugs ? { propertySlug: { in: slugs } } : {};
+  const props = await prisma.property.findMany({ where: propWhere, select: { slug: true, name: true }, orderBy: { order: "asc" } });
 
   // Approved bookings overlapping the range (for occupancy/revenue) and all
   // decided bookings starting in range (for cancellation rate + counts).
   const overlapping = await prisma.booking.findMany({
-    where: { status: "APPROVED", checkIn: { lt: end }, checkOut: { gt: start } },
+    where: { status: "APPROVED", checkIn: { lt: end }, checkOut: { gt: start }, ...slugFilter },
   });
   const startingInRange = await prisma.booking.findMany({
-    where: { checkIn: { gte: start, lte: end } },
+    where: { checkIn: { gte: start, lte: end }, ...slugFilter },
   });
 
   const perf = new Map<string, PropPerf>();

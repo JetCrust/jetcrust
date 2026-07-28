@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 import AppHeader from "../../components/AppHeader";
 import ConsoleNav from "../../components/ConsoleNav";
 import CalendarGrid, { type CalItem } from "../../components/CalendarGrid";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { nightlyBase } from "@/lib/pricing";
+import { staffScope, slugFilter } from "@/lib/access";
 
 const day = (d: Date) => new Date(d).toISOString().slice(0, 10);
 
@@ -21,24 +21,17 @@ function monthWindow(m?: string) {
 }
 
 export default async function AdminCalendar({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect("/account?next=/admin/calendar");
-  if (role !== "ADMIN") {
-    return (
-      <>
-        <AppHeader />
-        <main className="section section--cream" style={{ minHeight: "60vh" }}><div className="wrap"><h2>Not authorized</h2></div></main>
-      </>
-    );
-  }
+  const scope = await staffScope();
+  if (!scope) redirect("/account?next=/admin/calendar");
+  const sf = slugFilter(scope);
 
   const sp = await searchParams;
   const { start, end, key, y, mo } = monthWindow(sp.m);
   const N = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
 
-  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
-  const properties = await getProperties(true);
+  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED", ...sf } });
+  const allProperties = await getProperties(true);
+  const properties = scope.slugs ? allProperties.filter((p) => scope.slugs!.includes(p.slug)) : allProperties;
 
   // Per-night rack rate for every day of the month (seasonal / weekend / base).
   // Lets the team quote straight off the calendar; this is the rate that will
@@ -51,12 +44,12 @@ export default async function AdminCalendar({ searchParams }: { searchParams: Pr
 
   // Bookings overlapping the month (confirmed + pending).
   const bookings = await prisma.booking.findMany({
-    where: { status: { in: ["APPROVED", "REQUESTED"] }, checkIn: { lt: end }, checkOut: { gt: start } },
+    where: { status: { in: ["APPROVED", "REQUESTED"] }, checkIn: { lt: end }, checkOut: { gt: start }, ...sf },
     include: { user: true },
   });
   // Non-booking blocks (manual holds + imported OTA stays).
   const blocks = await prisma.availabilityBlock.findMany({
-    where: { source: { in: ["MANUAL", "ICAL"] }, start: { lt: end }, end: { gt: start } },
+    where: { source: { in: ["MANUAL", "ICAL"] }, start: { lt: end }, end: { gt: start }, ...sf },
   });
 
   const items: CalItem[] = [
@@ -89,7 +82,7 @@ export default async function AdminCalendar({ searchParams }: { searchParams: Pr
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap wrap--wide">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
             <div>
               <CalendarGrid
                 monthKey={key}

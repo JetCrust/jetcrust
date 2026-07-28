@@ -2,24 +2,26 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AppHeader from "../../components/AppHeader";
 import ConsoleNav from "../../components/ConsoleNav";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { staffScope, slugFilter } from "@/lib/access";
 
 const money = (c: number) => `€${Math.round(c / 100).toLocaleString("en-US")}`;
 const fmt = (d: Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 export default async function GuestsList() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect("/account?next=/admin");
-  if (role !== "ADMIN") {
-    return (<><AppHeader /><main className="section section--cream" style={{ minHeight: "60vh" }}><div className="wrap"><h2>Not authorized</h2></div></main></>);
-  }
+  const scope = await staffScope();
+  if (!scope) redirect("/account?next=/admin");
+  const sf = slugFilter(scope);
 
-  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
+  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED", ...sf } });
+  let userIds: string[] | null = null;
+  if (scope.slugs) {
+    const bs = await prisma.booking.findMany({ where: sf, select: { userId: true } });
+    userIds = [...new Set(bs.map((b) => b.userId))];
+  }
   const users = await prisma.user.findMany({
-    where: { role: "GUEST" },
-    include: { bookings: { select: { status: true, amountCents: true, checkIn: true } } },
+    where: { role: "GUEST", ...(userIds ? { id: { in: userIds } } : {}) },
+    include: { bookings: { where: sf, select: { status: true, amountCents: true, checkIn: true } } },
     orderBy: { createdAt: "desc" },
   });
   const rows = users.map((u) => {
@@ -35,7 +37,7 @@ export default async function GuestsList() {
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap wrap--wide">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
             <div>
               <div className="sec-head" style={{ marginBottom: "1.2rem" }}>
                 <p className="overline eyebrow-line">Admin</p>

@@ -10,10 +10,10 @@ import SecurityDeposit from "../../../components/SecurityDeposit";
 import ExtrasLedger from "../../../components/ExtrasLedger";
 import RefundControl from "../../../components/RefundControl";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
 import { parseExtras } from "@/lib/accounting";
+import { staffScope, slugFilter, canAccessProperty } from "@/lib/access";
 
 const STATUS_LABEL: Record<string, string> = {
   REQUESTED: "Awaiting approval",
@@ -29,25 +29,15 @@ const fmt = (d: Date | null) =>
 const fmtDT = (d: Date | null) => (d ? new Date(d).toLocaleString("en-GB") : "—");
 
 export default async function AdminBookingDetail({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect("/account?next=/admin");
-  if (role !== "ADMIN") {
-    return (
-      <>
-        <AppHeader />
-        <main className="section section--cream" style={{ minHeight: "60vh" }}>
-          <div className="wrap"><h2>Not authorized</h2></div>
-        </main>
-      </>
-    );
-  }
+  const scope = await staffScope();
+  if (!scope) redirect("/account?next=/admin");
 
   const { id } = await params;
   const b = await prisma.booking.findUnique({ where: { id }, include: { user: true, acceptance: true } });
   if (!b) notFound();
+  if (!canAccessProperty(scope, b.propertySlug)) notFound();
 
-  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
+  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED", ...slugFilter(scope) } });
   const p = await getProperty(b.propertySlug);
   const [checkinReport, checkoutReport] = await Promise.all([
     prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKIN" }, orderBy: { createdAt: "desc" } }),
@@ -66,7 +56,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
 
             <div>
               <p style={{ margin: "0 0 1rem" }}>

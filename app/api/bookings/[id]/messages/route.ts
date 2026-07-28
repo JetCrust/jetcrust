@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
 import { sendEmail } from "@/lib/email";
 import { newMessageEmail } from "@/lib/emails";
+import { staffScope, canAccessProperty } from "@/lib/access";
 
 const sendSchema = z.object({ body: z.string().min(1).max(4000) });
 
@@ -14,9 +15,11 @@ async function context(id: string) {
   if (!u?.id) return { error: "Please sign in.", status: 401 as const };
   const booking = await prisma.booking.findUnique({ where: { id }, include: { user: true } });
   if (!booking) return { error: "Not found.", status: 404 as const };
-  const isAdmin = u.role === "ADMIN";
-  if (!isAdmin && booking.userId !== u.id) return { error: "Not authorized.", status: 403 as const };
-  return { booking, isAdmin };
+  // Host side = Super Admin, or a Property Manager assigned to this booking's home.
+  const scope = await staffScope();
+  const isStaff = !!scope && canAccessProperty(scope, booking.propertySlug);
+  if (!isStaff && booking.userId !== u.id) return { error: "Not authorized.", status: 403 as const };
+  return { booking, isAdmin: isStaff };
 }
 
 // Send a message on a booking (guest or host).

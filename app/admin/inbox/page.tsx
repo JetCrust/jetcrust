@@ -2,22 +2,25 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AppHeader from "../../components/AppHeader";
 import ConsoleNav from "../../components/ConsoleNav";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
+import { staffScope, slugFilter } from "@/lib/access";
 
 const fmt = (d: Date) => new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export default async function AdminInbox() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect("/account?next=/admin/inbox");
-  if (role !== "ADMIN") {
-    return (<><AppHeader /><main className="section section--cream" style={{ minHeight: "60vh" }}><div className="wrap"><h2>Not authorized</h2></div></main></>);
-  }
+  const scope = await staffScope();
+  if (!scope) redirect("/account?next=/admin/inbox");
+  const sf = slugFilter(scope);
 
-  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
-  const messages = await prisma.message.findMany({ orderBy: { createdAt: "desc" } });
+  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED", ...sf } });
+  // Managers only see threads for their properties.
+  let bookingIds: string[] | null = null;
+  if (scope.slugs) {
+    const bs = await prisma.booking.findMany({ where: sf, select: { id: true } });
+    bookingIds = bs.map((b) => b.id);
+  }
+  const messages = await prisma.message.findMany({ where: bookingIds ? { bookingId: { in: bookingIds } } : {}, orderBy: { createdAt: "desc" } });
   const props = await getProperties(true);
   const nameOf = (s: string) => props.find((p) => p.slug === s)?.name || s;
 
@@ -45,7 +48,7 @@ export default async function AdminInbox() {
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap wrap--wide">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
             <div>
               <div className="sec-head" style={{ marginBottom: "1.2rem" }}>
                 <p className="overline eyebrow-line">Admin</p>

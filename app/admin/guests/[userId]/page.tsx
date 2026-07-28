@@ -2,10 +2,10 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import AppHeader from "../../../components/AppHeader";
 import ConsoleNav from "../../../components/ConsoleNav";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { bookingIncome } from "@/lib/accounting";
+import { staffScope, slugFilter } from "@/lib/access";
 
 const money = (c: number) => `€${Math.round(c / 100).toLocaleString("en-US")}`;
 const fmt = (d: Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -13,17 +13,15 @@ const fmtDT = (d: Date) => new Date(d).toLocaleString("en-GB");
 const STATUS: Record<string, string> = { REQUESTED: "Awaiting", APPROVED: "Confirmed", DECLINED: "Declined", CANCELLED: "Cancelled", EXPIRED: "Expired" };
 
 export default async function GuestProfile({ params }: { params: Promise<{ userId: string }> }) {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect("/account?next=/admin");
-  if (role !== "ADMIN") {
-    return (<><AppHeader /><main className="section section--cream" style={{ minHeight: "60vh" }}><div className="wrap"><h2>Not authorized</h2></div></main></>);
-  }
+  const scope = await staffScope();
+  if (!scope) redirect("/account?next=/admin");
+  const sf = slugFilter(scope);
 
   const { userId } = await params;
-  const user = await prisma.user.findUnique({ where: { id: userId }, include: { bookings: { orderBy: { checkIn: "desc" } } } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, include: { bookings: { where: sf, orderBy: { checkIn: "desc" } } } });
   if (!user) notFound();
-  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
+  if (!scope.isSuper && user.bookings.length === 0) notFound();
+  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED", ...sf } });
   const props = await getProperties(true);
   const nameOf = (s: string) => props.find((p) => p.slug === s)?.name || s;
 
@@ -38,7 +36,7 @@ export default async function GuestProfile({ params }: { params: Promise<{ userI
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap wrap--wide">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
             <div>
               <p style={{ margin: "0 0 1rem" }}><Link className="textlink" href="/admin/guests">&larr; All guests</Link></p>
               <div className="sec-head" style={{ marginBottom: "1.2rem" }}>

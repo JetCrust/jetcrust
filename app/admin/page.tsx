@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AppHeader from "../components/AppHeader";
 import ConsoleNav from "../components/ConsoleNav";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
+import { staffScope, slugFilter } from "@/lib/access";
 
 const STATUS_LABEL: Record<string, string> = {
   REQUESTED: "Awaiting approval",
@@ -43,21 +43,11 @@ async function Row({
 }
 
 export default async function AdminPage() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect("/account?next=/admin");
-  if (role !== "ADMIN") {
-    return (
-      <>
-        <AppHeader />
-        <main className="section section--cream" style={{ minHeight: "60vh" }}>
-          <div className="wrap"><h2>Not authorized</h2><p className="lead">This area is for Jet Crust administrators.</p></div>
-        </main>
-      </>
-    );
-  }
+  const scope = await staffScope();
+  if (!scope) redirect("/account?next=/admin");
 
   const bookings = await prisma.booking.findMany({
+    where: { ...slugFilter(scope) },
     orderBy: [{ createdAt: "desc" }],
     include: { user: true },
   });
@@ -71,7 +61,7 @@ export default async function AdminPage() {
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap">
           <div className="console">
-            <ConsoleNav pendingCount={pending.length} />
+            <ConsoleNav pendingCount={pending.length} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
 
             <div>
               <div className="sec-head" style={{ marginBottom: "1.6rem" }}>

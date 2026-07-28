@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AppHeader from "../../components/AppHeader";
 import ConsoleNav from "../../components/ConsoleNav";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { buildPerformance } from "@/lib/reports";
+import { staffScope, slugFilter } from "@/lib/access";
 
 const money = (c: number) => `€${Math.round(c / 100).toLocaleString("en-US")}`;
 const pct = (n: number) => `${Math.round(n * 100)}%`;
@@ -12,12 +12,9 @@ const fmt = (d: Date) => new Date(d).toLocaleDateString("en-GB", { weekday: "sho
 const DAY = 86400000;
 
 export default async function AdminOverview() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect("/account?next=/admin/overview");
-  if (role !== "ADMIN") {
-    return (<><AppHeader /><main className="section section--cream" style={{ minHeight: "60vh" }}><div className="wrap"><h2>Not authorized</h2></div></main></>);
-  }
+  const scope = await staffScope();
+  if (!scope) redirect("/account?next=/admin/overview");
+  const sf = slugFilter(scope);
 
   const now = new Date();
   const today0 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -28,15 +25,15 @@ export default async function AdminOverview() {
   const props = await prisma.property.findMany({ select: { slug: true, name: true } });
   const nameOf = (s: string) => props.find((p) => p.slug === s)?.name || s;
 
-  const perf = await buildPerformance(monthStart, monthEnd);
+  const perf = await buildPerformance(monthStart, monthEnd, scope.slugs);
   const t = perf.totals;
 
   const [arrivals, departures, pendingCount, balancesDue, depositsToPlace] = await Promise.all([
-    prisma.booking.findMany({ where: { status: "APPROVED", checkIn: { gte: today0, lte: horizon } }, include: { user: true }, orderBy: { checkIn: "asc" } }),
-    prisma.booking.findMany({ where: { status: "APPROVED", checkOut: { gte: today0, lte: horizon } }, include: { user: true }, orderBy: { checkOut: "asc" } }),
-    prisma.booking.count({ where: { status: "REQUESTED" } }),
-    prisma.booking.findMany({ where: { status: "APPROVED", balanceCents: { gt: 0 }, balancePaidAt: null } }),
-    prisma.booking.count({ where: { status: "APPROVED", securityCents: { gt: 0 }, securityStatus: "none", checkIn: { gte: today0, lte: new Date(today0.getTime() + 3 * DAY) } } }),
+    prisma.booking.findMany({ where: { status: "APPROVED", checkIn: { gte: today0, lte: horizon }, ...sf }, include: { user: true }, orderBy: { checkIn: "asc" } }),
+    prisma.booking.findMany({ where: { status: "APPROVED", checkOut: { gte: today0, lte: horizon }, ...sf }, include: { user: true }, orderBy: { checkOut: "asc" } }),
+    prisma.booking.count({ where: { status: "REQUESTED", ...sf } }),
+    prisma.booking.findMany({ where: { status: "APPROVED", balanceCents: { gt: 0 }, balancePaidAt: null, ...sf } }),
+    prisma.booking.count({ where: { status: "APPROVED", securityCents: { gt: 0 }, securityStatus: "none", checkIn: { gte: today0, lte: new Date(today0.getTime() + 3 * DAY) }, ...sf } }),
   ]);
   const balanceTotal = balancesDue.reduce((s, b) => s + b.balanceCents, 0);
   const isToday = (d: Date) => new Date(d).toISOString().slice(0, 10) === today0.toISOString().slice(0, 10);
@@ -60,7 +57,7 @@ export default async function AdminOverview() {
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap wrap--wide">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
             <div>
               <div className="sec-head" style={{ marginBottom: "1.2rem" }}>
                 <p className="overline eyebrow-line">Admin</p>
