@@ -167,7 +167,7 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
         />
       ) : (
       <div className="cal-wrap">
-        <div className="cal-grid" style={{ gridTemplateColumns: "170px 1fr", minWidth: 170 + N * 72 }}>
+        <div className="cal-grid" style={{ gridTemplateColumns: "150px 1fr", minWidth: 760 }}>
           {/* header */}
           <div className="cal-corner" />
           <div className="cal-head" style={{ height: headH }}>
@@ -244,7 +244,7 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
 
       <p className="cal-hint">{singleProp
         ? "Per-property month view — the nightly rate shows in each open night; bookings appear as coloured pills you can click. Choose “All properties” above for the side-by-side timeline."
-        : "All-properties timeline — nightly rates per day; scroll sideways for the full month. Pick one property above for its month grid. Drag a booking to move it, or its right edge to extend."}</p>
+        : "All-properties timeline — the whole month at a glance with nightly rates. Pick one property above for the larger month grid. Drag a booking to move it, or its right edge to extend."}</p>
 
       {selected && <DetailPopover item={selected} properties={properties} onClose={() => setSelected(null)} onMove={patchDates} onRemoveBlock={removeBlock} />}
       {modal === "block" && <BlockModal properties={properties} defaultSlug={propFilter !== "all" ? propFilter : properties[0]?.slug} monthKey={monthKey} onClose={() => setModal(null)} onDone={() => { setModal(null); router.refresh(); }} />}
