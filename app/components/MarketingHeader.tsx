@@ -20,7 +20,6 @@ export default async function MarketingHeader() {
             <li><Link className="nav__link" href="/#experiences">Experiences</Link></li>
             <li><Link className="nav__link" href="/#destinations">Destinations</Link></li>
             <li><Link className="nav__link" href="/journal">Journal</Link></li>
-            <li><Link className="nav__link" href="/account">My Account</Link></li>
           </ul>
         </nav>
         <div className="nav__right">
