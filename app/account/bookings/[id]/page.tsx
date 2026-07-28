@@ -5,6 +5,8 @@ import BookingManage from "../../../components/BookingManage";
 import CancelBookingButton from "../../../components/CancelBookingButton";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
 import GuestStayForms from "../../../components/GuestStayForms";
+import CancelStay from "../../../components/CancelStay";
+import { cancellationRefund } from "@/lib/policy";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
@@ -124,6 +126,11 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             canReview={b.status === "APPROVED" && b.checkOut <= new Date()}
             review={b.reviewRating ? { rating: b.reviewRating, text: b.reviewText || "" } : null}
           />
+
+          {b.status === "APPROVED" && b.checkIn > new Date() && (() => {
+            const c = cancellationRefund(b, new Date());
+            return <CancelStay bookingId={b.id} refundableCents={c.refundableCents} label={c.label} />;
+          })()}
 
           {(b.note || messages.length > 0) && (
             <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>

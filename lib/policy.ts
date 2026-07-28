@@ -58,3 +58,28 @@ export function splitForApproval(
   const due = new Date(checkIn.getTime() - balanceDaysBefore * DAY);
   return { split: true, depositCents, balanceCents, balanceDueAt: due < now ? now : due };
 }
+
+// ---- Cancellation policy ----
+// Refund tiers by days before check-in. Luxury-appropriate defaults; can be made
+// per-property later. Percentage applies to what the guest has actually paid.
+export const CANCELLATION_TIERS = [
+  { minDaysBefore: 30, pct: 100, label: "Free cancellation (30+ days before arrival)" },
+  { minDaysBefore: 14, pct: 50, label: "50% refund (14 to 29 days before arrival)" },
+  { minDaysBefore: 0, pct: 0, label: "Non-refundable (within 14 days of arrival)" },
+];
+
+type CancelBooking = {
+  status: string; checkIn: Date; amountCents: number;
+  depositCents: number | null; balanceCents: number; balancePaidAt: Date | null; refundedCents: number;
+};
+
+// What a guest would get back if they cancel now.
+export function cancellationRefund(b: CancelBooking, now: Date) {
+  const DAY = 86400000;
+  const daysBefore = Math.floor((b.checkIn.getTime() - now.getTime()) / DAY);
+  const tier = CANCELLATION_TIERS.find((t) => daysBefore >= t.minDaysBefore) || CANCELLATION_TIERS[CANCELLATION_TIERS.length - 1];
+  const collected = (b.depositCents ?? b.amountCents) + (b.balancePaidAt ? b.balanceCents : 0);
+  const collectedNet = Math.max(0, collected - b.refundedCents);
+  const refundableCents = Math.min(collectedNet, Math.round(collectedNet * tier.pct / 100));
+  return { daysBefore, pct: tier.pct, label: tier.label, collectedNet, refundableCents };
+}
