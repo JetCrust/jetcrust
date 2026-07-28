@@ -2,11 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AppHeader from "../../components/AppHeader";
 import ConsoleNav from "../../components/ConsoleNav";
+import LocalTime from "../../components/LocalTime";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { staffScope, slugFilter } from "@/lib/access";
-
-const fmt = (d: Date) => new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export default async function AdminInbox() {
   const scope = await staffScope();
@@ -70,7 +69,7 @@ export default async function AdminInbox() {
                           </span>
                         </div>
                         <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <span className="ov-row__meta" style={{ display: "block" }}>{fmt(t.latest.createdAt)}</span>
+                          <span className="ov-row__meta" style={{ display: "block" }}><LocalTime iso={t.latest.createdAt.toISOString()} /></span>
                           <Link className="chip" href={`/admin/bookings/${t.id}`}>Open</Link>
                         </div>
                       </li>

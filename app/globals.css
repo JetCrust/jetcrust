@@ -920,8 +920,13 @@ p { margin: 0 0 1em; }
 .msg--them .msg__bubble { background: #fff; border: 1px solid var(--line); color: var(--ink); border-bottom-left-radius: 4px; }
 .msg__meta { font-size: 0.68rem; color: var(--stone); margin-top: 0.25rem; padding: 0 0.3rem; }
 .msg-compose { display: flex; gap: 0.6rem; align-items: flex-end; }
-.msg-compose textarea { flex: 1; padding: 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.95rem; background: #fff; resize: vertical; }
-.msg-compose .btn { flex-shrink: 0; }
+.msg-compose textarea { flex: 1 1 auto; min-width: 0; padding: 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.95rem; background: #fff; resize: vertical; }
+/* Override .pdp-aside .btn { width:100% } so Send doesn't swallow the compose row */
+.msg-compose .btn { flex: 0 0 auto; width: auto; align-self: stretch; }
+@media (max-width: 480px) {
+  .msg-compose { flex-direction: column; align-items: stretch; }
+  .msg-compose .btn { width: 100%; }
+}
 
 /* Inbox unread badge */
 .msg-badge { display: inline-block; margin-left: 0.5rem; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #a3412e; color: #fff; font-size: 0.68rem; line-height: 18px; text-align: center; vertical-align: middle; }

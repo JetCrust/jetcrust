@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import LocalTime from "./LocalTime";
 
 type Msg = { id: string; sender: string; body: string; createdAt: string };
 
@@ -43,7 +44,7 @@ export default function MessageThread({ bookingId, messages, me }: {
             return (
               <div key={m.id} className={`msg ${mine ? "msg--me" : "msg--them"}`}>
                 <div className="msg__bubble">{m.body}</div>
-                <div className="msg__meta">{mine ? "You" : m.sender === "ADMIN" ? "Jet Crust" : "Guest"} · {new Date(m.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
+                <div className="msg__meta">{mine ? "You" : m.sender === "ADMIN" ? "Jet Crust" : "Guest"} · <LocalTime iso={m.createdAt} /></div>
               </div>
             );
           })
