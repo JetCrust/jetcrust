@@ -124,8 +124,26 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
                 </ul>
               </>
             )}
-            <p className="note" style={{ margin: "0.6rem 0 0", color: "var(--stone)", fontSize: "0.8rem" }}>Arrival directions and access details are sent by our team before your stay.</p>
+            {b.status === "APPROVED" && p?.guest_info?.checkin_instructions && (
+              <><div className="rule"></div><p className="panel__hint" style={{ marginBottom: "0.3rem" }}>Check-in instructions</p><p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: 0 }}>{p.guest_info.checkin_instructions}</p></>
+            )}
+            {b.status === "APPROVED" && p?.guest_info?.wifi && (
+              <><p className="panel__hint" style={{ marginTop: "0.8rem", marginBottom: "0.3rem" }}>WiFi &amp; access</p><p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: 0 }}>{p.guest_info.wifi}</p></>
+            )}
+            {p?.guest_info?.house_rules && (
+              <><p className="panel__hint" style={{ marginTop: "0.8rem", marginBottom: "0.3rem" }}>House rules</p><p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: 0 }}>{p.guest_info.house_rules}</p></>
+            )}
+            {!(b.status === "APPROVED" && p?.guest_info?.checkin_instructions) && (
+              <p className="note" style={{ margin: "0.6rem 0 0", color: "var(--stone)", fontSize: "0.8rem" }}>Arrival directions and access details are sent by our team before your stay.</p>
+            )}
           </div>
+
+          {p?.guest_info?.guidebook && (
+            <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Local guidebook</h3>
+              <p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: 0 }}>{p.guest_info.guidebook}</p>
+            </div>
+          )}
 
           <GuestStayForms
             bookingId={b.id}

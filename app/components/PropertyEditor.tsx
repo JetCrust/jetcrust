@@ -30,6 +30,7 @@ type PropObj = {
   };
   capacity: { sleeps: number; max_adults: number; max_children: number; bedrooms: number; bathrooms: number };
   hours: { check_in: string; check_out: string };
+  guest_info?: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
   story_heading?: string;
   story?: string[];
   gallery?: { max: number; images: { file: string; caption: string }[] };
@@ -57,6 +58,8 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
     setDynamic({ occupancy: { enabled: false, window_days: 30, max_uplift_pct: 0, ...o.pricing.dynamic?.occupancy, ...patch } });
   const setCapacity = (patch: Partial<PropObj["capacity"]>) => setO((s) => ({ ...s, capacity: { ...s.capacity, ...patch } }));
   const setHours = (patch: Partial<PropObj["hours"]>) => setO((s) => ({ ...s, hours: { ...s.hours, ...patch } }));
+  const setGuestInfo = (patch: Partial<NonNullable<PropObj["guest_info"]>>) =>
+    setO((s) => ({ ...s, guest_info: { house_rules: "", checkin_instructions: "", wifi: "", guidebook: "", ...s.guest_info, ...patch } }));
   const setSeo = (patch: Partial<PropObj["seo"]>) => setO((s) => ({ ...s, seo: { ...s.seo, ...patch } }));
   const setCard = (patch: Partial<NonNullable<PropObj["card"]>>) => setO((s) => ({ ...s, card: { image: "", desc: "", tags: [], ...s.card, ...patch } }));
 
@@ -212,6 +215,18 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div><label>Bathrooms</label><input type="number" value={o.capacity.bathrooms} onChange={(e) => setCapacity({ bathrooms: num(e.target.value) })} /></div>
           <div><label>Check-in</label><input value={o.hours.check_in} onChange={(e) => setHours({ check_in: e.target.value })} /></div>
           <div><label>Check-out</label><input value={o.hours.check_out} onChange={(e) => setHours({ check_out: e.target.value })} /></div>
+        </div>
+      </div>
+
+      {/* Guest info & guidebook */}
+      <div className="panel">
+        <div className="panel__head"><h3>Guest info & guidebook</h3></div>
+        <p className="panel__hint">Shown to confirmed guests in their booking (document vault + guidebook). Leave blank to hide a section.</p>
+        <div className="ef">
+          <div className="full"><label>House rules</label><textarea value={o.guest_info?.house_rules || ""} onChange={(e) => setGuestInfo({ house_rules: e.target.value })} placeholder="Quiet hours, no smoking indoors, pets, events…" style={{ minHeight: 90 }} /></div>
+          <div className="full"><label>Check-in instructions</label><textarea value={o.guest_info?.checkin_instructions || ""} onChange={(e) => setGuestInfo({ checkin_instructions: e.target.value })} placeholder="Directions, gate/lockbox code guidance, parking, who to call on arrival…" style={{ minHeight: 90 }} /></div>
+          <div className="full"><label>WiFi & access</label><textarea value={o.guest_info?.wifi || ""} onChange={(e) => setGuestInfo({ wifi: e.target.value })} placeholder="Network name + password, smart-home notes…" style={{ minHeight: 60 }} /></div>
+          <div className="full"><label>Digital guidebook (recommendations)</label><textarea value={o.guest_info?.guidebook || ""} onChange={(e) => setGuestInfo({ guidebook: e.target.value })} placeholder="Restaurants, sights, transport, appliance tips, emergency contacts…" style={{ minHeight: 120 }} /></div>
         </div>
       </div>
 

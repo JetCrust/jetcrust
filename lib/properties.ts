@@ -32,6 +32,7 @@ export type Property = {
   pricing: Pricing;
   capacity: { sleeps: number; max_adults: number; max_children: number; bedrooms: number; bathrooms: number };
   hours: { check_in: string; check_out: string };
+  guest_info: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
   hero_stats: { n: string; label: string }[];
   aside_facts: { label: string; value: string }[];
   story_heading: string;
@@ -95,6 +96,12 @@ function normalize(p: Partial<Property>): Property {
       bathrooms: p.capacity?.bathrooms || 1,
     },
     hours: { check_in: p.hours?.check_in || "16:00", check_out: p.hours?.check_out || "11:00" },
+    guest_info: {
+      house_rules: p.guest_info?.house_rules || "",
+      checkin_instructions: p.guest_info?.checkin_instructions || "",
+      wifi: p.guest_info?.wifi || "",
+      guidebook: p.guest_info?.guidebook || "",
+    },
     hero_stats: p.hero_stats || [],
     aside_facts: p.aside_facts || [],
     story_heading: p.story_heading || "",
