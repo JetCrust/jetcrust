@@ -200,7 +200,7 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
                     const rate = prices?.[p.slug]?.[i];
                     return (
                       <div key={i} className={`cal-cell${wd === 0 || wd === 6 ? " is-weekend" : ""}${dateIso === todayIso ? " is-today" : ""}`} style={{ left: `${(i / N) * 100}%`, width: `${(1 / N) * 100}%` }}>
-                        {rate ? <span className="cal-price">{currencySymbol}{rate}</span> : null}
+                        {rate ? <span className="cal-price">{rate}</span> : null}
                       </div>
                     );
                   })}

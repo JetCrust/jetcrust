@@ -851,7 +851,7 @@ p { margin: 0 0 1em; }
 
 /* Nightly rate shown in each empty calendar cell — bounded to the cell so it
    never spills into the next day (centered, clipped if the column is narrow). */
-.cal-price { position: absolute; top: 4px; left: 1px; right: 1px; text-align: center; font-size: 0.56rem; line-height: 1; color: var(--stone); pointer-events: none; white-space: nowrap; overflow: hidden; }
+.cal-price { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font-size: 0.52rem; letter-spacing: -0.02em; line-height: 1; color: var(--stone); pointer-events: none; white-space: nowrap; overflow: hidden; }
 .cal-cell.is-weekend .cal-price { color: #7d6132; }
 
 /* Per-property month grid (Airbnb-style) */
