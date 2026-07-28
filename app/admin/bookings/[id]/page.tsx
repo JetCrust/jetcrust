@@ -83,7 +83,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
               <div className="stack">
                 {/* Who is booking */}
                 <div className="panel">
-                  <div className="panel__head"><h3>Guest</h3></div>
+                  <div className="panel__head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}><h3>Guest</h3><Link className="textlink" href={`/admin/guests/${b.userId}`}>Full profile &rarr;</Link></div>
                   <ul className="kv">
                     <li><span>Name</span><span>{[b.user.title, b.user.name].filter(Boolean).join(" ") || "—"}</span></li>
                     <li><span>Email</span><span><a className="textlink" href={`mailto:${b.user.email}`}>{b.user.email}</a></span></li>

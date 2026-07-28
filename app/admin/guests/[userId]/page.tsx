@@ -1,0 +1,101 @@
+import Link from "next/link";
+import { redirect, notFound } from "next/navigation";
+import AppHeader from "../../../components/AppHeader";
+import ConsoleNav from "../../../components/ConsoleNav";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { getProperties } from "@/lib/properties";
+import { bookingIncome } from "@/lib/accounting";
+
+const money = (c: number) => `€${Math.round(c / 100).toLocaleString("en-US")}`;
+const fmt = (d: Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const fmtDT = (d: Date) => new Date(d).toLocaleString("en-GB");
+const STATUS: Record<string, string> = { REQUESTED: "Awaiting", APPROVED: "Confirmed", DECLINED: "Declined", CANCELLED: "Cancelled", EXPIRED: "Expired" };
+
+export default async function GuestProfile({ params }: { params: Promise<{ userId: string }> }) {
+  const session = await auth();
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  if (!session) redirect("/account?next=/admin");
+  if (role !== "ADMIN") {
+    return (<><AppHeader /><main className="section section--cream" style={{ minHeight: "60vh" }}><div className="wrap"><h2>Not authorized</h2></div></main></>);
+  }
+
+  const { userId } = await params;
+  const user = await prisma.user.findUnique({ where: { id: userId }, include: { bookings: { orderBy: { checkIn: "desc" } } } });
+  if (!user) notFound();
+  const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
+  const props = await getProperties(true);
+  const nameOf = (s: string) => props.find((p) => p.slug === s)?.name || s;
+
+  const approved = user.bookings.filter((b) => b.status === "APPROVED");
+  const lifetime = approved.reduce((s, b) => s + bookingIncome(b).netCents, 0);
+  const nights = approved.reduce((s, b) => s + Math.max(0, Math.round((b.checkOut.getTime() - b.checkIn.getTime()) / 86400000)), 0);
+  const now = new Date();
+
+  return (
+    <>
+      <AppHeader />
+      <main className="section section--cream" style={{ minHeight: "70vh" }}>
+        <div className="wrap wrap--wide">
+          <div className="console">
+            <ConsoleNav pendingCount={pendingCount} />
+            <div>
+              <p style={{ margin: "0 0 1rem" }}><Link className="textlink" href="/admin/guests">&larr; All guests</Link></p>
+              <div className="sec-head" style={{ marginBottom: "1.2rem" }}>
+                <p className="overline eyebrow-line">Guest</p>
+                <h2 style={{ fontSize: "clamp(1.8rem,3.4vw,2.4rem)" }}>{[user.title, user.name].filter(Boolean).join(" ") || user.email}</h2>
+              </div>
+
+              <div className="rep-kpis" style={{ marginBottom: "1.4rem" }}>
+                <div className="rep-kpi"><p className="rep-kpi__label">Confirmed stays</p><p className="rep-kpi__value">{approved.length}</p></div>
+                <div className="rep-kpi"><p className="rep-kpi__label">Nights hosted</p><p className="rep-kpi__value">{nights}</p></div>
+                <div className="rep-kpi"><p className="rep-kpi__label">Lifetime value</p><p className="rep-kpi__value">{money(lifetime)}</p></div>
+                <div className="rep-kpi"><p className="rep-kpi__label">Guest since</p><p className="rep-kpi__value" style={{ fontSize: "1.3rem" }}>{fmt(user.createdAt)}</p></div>
+              </div>
+
+              <div className="panel">
+                <div className="panel__head"><h3>Contact &amp; preferences</h3></div>
+                <ul className="kv">
+                  <li><span>Email</span><span><a className="textlink" href={`mailto:${user.email}`}>{user.email}</a></span></li>
+                  {user.phone && <li><span>Phone</span><span>{user.phone}</span></li>}
+                  <li><span>Marketing</span><span>{user.marketingOptIn ? "Subscribed" : "Not subscribed"}</span></li>
+                  {(user.billingCity || user.billingCountry) && <li><span>Billing</span><span>{[user.billingLine1, user.billingCity, user.billingCountry].filter(Boolean).join(", ")}</span></li>}
+                </ul>
+                {user.preferences && (
+                  <>
+                    <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Preferences</p>
+                    <p style={{ margin: 0, color: "var(--ink-soft)" }}>{user.preferences}</p>
+                  </>
+                )}
+              </div>
+
+              <div className="panel">
+                <div className="panel__head"><h3>Booking history</h3><span className="console__count">{user.bookings.length}</span></div>
+                {user.bookings.length === 0 ? <p style={{ color: "var(--stone)", margin: 0 }}>No bookings yet.</p> : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="ledger">
+                      <thead><tr><th>Property</th><th>Dates</th><th>Status</th><th>Value</th><th></th></tr></thead>
+                      <tbody>
+                        {user.bookings.map((b) => (
+                          <tr key={b.id}>
+                            <td>{nameOf(b.propertySlug)}{b.status === "APPROVED" && b.checkOut > now ? " · upcoming" : ""}</td>
+                            <td>{fmt(b.checkIn)} → {fmt(b.checkOut)}</td>
+                            <td><span className={`pill pill--${(STATUS[b.status] || b.status).toLowerCase()}`}>{STATUS[b.status] || b.status}</span></td>
+                            <td>{money(b.amountCents)}</td>
+                            <td><Link className="textlink" href={`/admin/bookings/${b.id}`}>Open</Link></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <p style={{ fontSize: "0.78rem", color: "var(--stone)" }}>Account created {fmtDT(user.createdAt)}.</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}
