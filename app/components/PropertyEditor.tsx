@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { compress } from "./StayFormBits";
 
 /* Minimal shapes for the fields the editor touches. The full object is passed
    through untouched, so advanced fields (features, amenities, etc.) are preserved. */
@@ -60,6 +61,29 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
   const setHours = (patch: Partial<PropObj["hours"]>) => setO((s) => ({ ...s, hours: { ...s.hours, ...patch } }));
   const setGuestInfo = (patch: Partial<NonNullable<PropObj["guest_info"]>>) =>
     setO((s) => ({ ...s, guest_info: { house_rules: "", checkin_instructions: "", wifi: "", guidebook: "", ...s.guest_info, ...patch } }));
+
+  const galFileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  async function uploadGallery(list: FileList | null) {
+    if (!list?.length) return;
+    setUploading(true);
+    const added: string[] = [];
+    for (const f of Array.from(list)) {
+      try {
+        const blob = await compress(f, 2000, 0.82);
+        const fd = new FormData(); fd.append("file", blob, "photo.jpg");
+        const res = await fetch("/api/admin/properties/photo", { method: "POST", body: fd });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok && d.url) added.push(`${d.url} | `);
+      } catch { /* skip */ }
+    }
+    setUploading(false);
+    if (added.length) {
+      const cur = (o.gallery?.images || []).map((g) => `${g.file} | ${g.caption}`).join("\n");
+      setGalleryText((cur ? cur + "\n" : "") + added.join("\n"));
+    }
+    if (galFileRef.current) galFileRef.current.value = "";
+  }
   const setSeo = (patch: Partial<PropObj["seo"]>) => setO((s) => ({ ...s, seo: { ...s.seo, ...patch } }));
   const setCard = (patch: Partial<NonNullable<PropObj["card"]>>) => setO((s) => ({ ...s, card: { image: "", desc: "", tags: [], ...s.card, ...patch } }));
 
@@ -259,11 +283,16 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div><label>Hero image (file name)</label><input value={o.hero_image} onChange={(e) => set({ hero_image: e.target.value })} /></div>
           <div className="full"><label>Card description</label><textarea value={o.card?.desc || ""} onChange={(e) => setCard({ desc: e.target.value })} /></div>
           <div className="full"><label>Card tags (comma separated)</label><input value={(o.card?.tags || []).join(", ")} onChange={(e) => setCard({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} /></div>
-          <div className="full"><label>Gallery images (one per line: file | caption)</label><textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} placeholder="castelaria-01 | The great hall" style={{ minHeight: 120 }} /></div>
+          <div className="full">
+            <label>Gallery images (one per line: file | caption)</label>
+            <textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} placeholder="castelaria-01 | The great hall" style={{ minHeight: 120 }} />
+            <input ref={galFileRef} type="file" accept="image/*" multiple hidden onChange={(e) => uploadGallery(e.target.files)} />
+            <button type="button" className="btn btn--ghost" style={{ marginTop: "0.5rem" }} disabled={uploading} onClick={() => galFileRef.current?.click()}>{uploading ? "Uploading…" : "＋ Upload photos"}</button>
+          </div>
           <div className="full"><label>Story heading</label><input value={o.story_heading || ""} onChange={(e) => set({ story_heading: e.target.value })} /></div>
           <div className="full"><label>Story (one paragraph per line)</label><textarea value={(o.story || []).join("\n")} onChange={(e) => set({ story: e.target.value.split("\n").filter((l) => l.trim()) })} style={{ minHeight: 120 }} /></div>
         </div>
-        <p className="panel__hint" style={{ marginBottom: 0 }}>Photos are referenced by file name for now. Once you are live on hosting, you will upload them here directly.</p>
+        <p className="panel__hint" style={{ marginBottom: 0 }}>Upload photos above (compressed on the device, stored on your hosting) or reference existing file names. Uploaded photos appear as full links in the list; add a caption after the “|”.</p>
       </div>
 
       {/* Calendar import */}
