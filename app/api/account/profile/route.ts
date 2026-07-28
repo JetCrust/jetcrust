@@ -4,8 +4,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
+  title: z.string().max(10).optional(),
   name: z.string().max(120).optional(),
   phone: z.string().max(40).optional(),
+  preferences: z.string().max(2000).optional(),
   marketingOptIn: z.boolean().optional(),
 });
 
@@ -22,8 +24,10 @@ export async function PATCH(req: Request) {
   await prisma.user.update({
     where: { id: userId },
     data: {
+      ...(d.title !== undefined ? { title: d.title || null } : {}),
       ...(d.name !== undefined ? { name: d.name || null } : {}),
       ...(d.phone !== undefined ? { phone: d.phone || null } : {}),
+      ...(d.preferences !== undefined ? { preferences: d.preferences || null } : {}),
       ...(d.marketingOptIn !== undefined ? { marketingOptIn: d.marketingOptIn } : {}),
     },
   });

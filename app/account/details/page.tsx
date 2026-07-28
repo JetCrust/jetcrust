@@ -28,7 +28,7 @@ export default async function AccountDetails() {
 
               <div className="panel" style={{ marginBottom: "1.6rem" }}>
                 <div className="panel__head"><h3>Contact & preferences</h3></div>
-                <ProfileForm initial={{ name: user.name || "", phone: user.phone || "", marketingOptIn: user.marketingOptIn }} />
+                <ProfileForm initial={{ title: user.title || "", name: user.name || "", phone: user.phone || "", preferences: user.preferences || "", marketingOptIn: user.marketingOptIn }} />
               </div>
 
               <div className="panel">

@@ -29,6 +29,8 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
   if (b.userId !== userId) notFound();
   const p = await getProperty(b.propertySlug);
   const current: string[] = JSON.parse(b.addons || "[]");
+  let messages: { text: string; at: string }[] = [];
+  try { messages = JSON.parse(b.guestMessages || "[]"); } catch { messages = []; }
   const canEdit = !["DECLINED", "CANCELLED", "EXPIRED"].includes(b.status);
   const hasBalance = b.balanceCents > 0;
   const addonTitles = current.map((v) => p?.addons.find((a) => a.value === v)?.title || v).join(", ");
@@ -73,6 +75,25 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
               <div style={{ marginTop: "0.4rem" }}><CancelBookingButton bookingId={b.id} /></div>
             )}
           </div>
+
+          {(b.note || messages.length > 0) && (
+            <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Your notes & requests</h3>
+              {b.note && (
+                <p style={{ margin: "0 0 0.8rem", color: "var(--ink-soft)" }}>
+                  <span className="panel__hint" style={{ display: "block", marginBottom: "0.2rem" }}>At booking</span>
+                  &ldquo;{b.note}&rdquo;
+                </p>
+              )}
+              {messages.map((m, i) => (
+                <p key={i} style={{ margin: "0 0 0.7rem", color: "var(--ink-soft)" }}>
+                  <span className="panel__hint" style={{ display: "block", marginBottom: "0.2rem" }}>{new Date(m.at).toLocaleString("en-GB")}</span>
+                  &ldquo;{m.text}&rdquo;
+                </p>
+              ))}
+              <p className="note" style={{ margin: 0, color: "var(--stone)", fontSize: "0.8rem" }}>Our team replies personally, by email.</p>
+            </div>
+          )}
 
           {canEdit ? (
             <>

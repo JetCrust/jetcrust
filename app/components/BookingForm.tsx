@@ -99,6 +99,7 @@ export default function BookingForm(props: Props) {
   const [addons, setAddons] = useState<string[]>(props.initial?.addons || []);
   const [note, setNote] = useState(props.initial?.note || "");
   const [accepted, setAccepted] = useState(false);
+  const [over18, setOver18] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -245,10 +246,14 @@ export default function BookingForm(props: Props) {
               <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
               <span>I have read and accept the rental agreement, terms and privacy policy.</span>
             </label>
+            <label className="addon-check" style={{ marginTop: "0.5rem" }}>
+              <input type="checkbox" checked={over18} onChange={(e) => setOver18(e.target.checked)} />
+              <span>I confirm the lead guest is 18 or over.</span>
+            </label>
           </div>
           {error && <p className="full" style={{ color: "#a3412e", margin: 0, fontSize: "0.9rem" }}>{error}</p>}
           <div className="full">
-            <button className="btn btn--brass" type="submit" disabled={!priceValid || !accepted || busy}>
+            <button className="btn btn--brass" type="submit" disabled={!priceValid || !accepted || !over18 || busy}>
               {busy ? "Please wait…" : "Continue to secure hold"}
             </button>
             <p className="note" style={{ marginTop: "0.8rem", color: "var(--stone)", fontSize: "0.8rem" }}>

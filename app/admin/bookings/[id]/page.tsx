@@ -76,17 +76,38 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                 <div className="panel">
                   <div className="panel__head"><h3>Guest</h3></div>
                   <ul className="kv">
-                    <li><span>Name</span><span>{b.user.name || "—"}</span></li>
+                    <li><span>Name</span><span>{[b.user.title, b.user.name].filter(Boolean).join(" ") || "—"}</span></li>
                     <li><span>Email</span><span><a className="textlink" href={`mailto:${b.user.email}`}>{b.user.email}</a></span></li>
+                    {b.user.phone && <li><span>Phone</span><span>{b.user.phone}</span></li>}
                     <li><span>Account created</span><span>{fmtDT(b.user.createdAt)}</span></li>
                     <li><span>Requested</span><span>{fmtDT(b.createdAt)}</span></li>
                   </ul>
+                  {b.user.preferences && (
+                    <>
+                      <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest preferences</p>
+                      <p style={{ margin: 0, color: "var(--ink-soft)" }}>{b.user.preferences}</p>
+                    </>
+                  )}
                   {b.note && (
                     <>
-                      <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest note</p>
+                      <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest note (at booking)</p>
                       <p style={{ margin: 0, fontStyle: "italic", color: "var(--ink-soft)" }}>&ldquo;{b.note}&rdquo;</p>
                     </>
                   )}
+                  {(() => {
+                    let gm: { text: string; at: string }[] = [];
+                    try { gm = JSON.parse(b.guestMessages || "[]"); } catch { gm = []; }
+                    return gm.length > 0 ? (
+                      <>
+                        <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest requests</p>
+                        {gm.map((m, i) => (
+                          <p key={i} style={{ margin: "0 0 0.5rem", fontStyle: "italic", color: "var(--ink-soft)" }}>
+                            &ldquo;{m.text}&rdquo; <span style={{ fontStyle: "normal", color: "var(--stone)", fontSize: "0.78rem" }}>· {fmtDT(new Date(m.at))}</span>
+                          </p>
+                        ))}
+                      </>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Stay + add-ons */}

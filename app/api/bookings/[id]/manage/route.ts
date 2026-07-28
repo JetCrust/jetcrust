@@ -32,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const property = await getProperty(booking.propertySlug);
   const changes: string[] = [];
-  const data: { addons?: string; guests?: number } = {};
+  const data: { addons?: string; guests?: number; guestMessages?: string } = {};
 
   if (parsed.data.addons) {
     const valid = new Set((property?.addons || []).map((a) => a.value));
@@ -50,10 +50,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     changes.push(`Guests: ${parsed.data.guests}`);
   }
 
+  // Keep a record of the guest's message so they can see it too (not just the host).
+  if (parsed.data.message) {
+    changes.push(`Message: ${parsed.data.message}`);
+    let log: { text: string; at: string }[] = [];
+    try { log = JSON.parse(booking.guestMessages || "[]"); } catch { log = []; }
+    log.push({ text: parsed.data.message, at: new Date().toISOString() });
+    data.guestMessages = JSON.stringify(log);
+  }
+
   if (Object.keys(data).length) {
     await prisma.booking.update({ where: { id }, data });
   }
-  if (parsed.data.message) changes.push(`Message: ${parsed.data.message}`);
 
   // Notify the host of the change (best effort).
   if (changes.length) {
