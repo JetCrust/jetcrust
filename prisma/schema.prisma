@@ -189,6 +189,38 @@ enum StayFormKind {
   CHECKOUT
 }
 
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskCategory {
+  CLEANING
+  MAINTENANCE
+  INSPECTION
+  RESTOCK
+  OTHER
+}
+
+// Operations task tied to a property (and optionally a booking), assignable to
+// a team member. Turnovers, maintenance, inspections, restocking.
+model Task {
+  id           String       @id @default(cuid())
+  propertySlug String
+  bookingId    String?
+  title        String
+  category     TaskCategory @default(CLEANING)
+  status       TaskStatus   @default(OPEN)
+  dueAt        DateTime?
+  assignedToId String?      // a staff (ADMIN/MANAGER) user id
+  notes        String?
+  createdAt    DateTime     @default(now())
+  completedAt  DateTime?
+
+  @@index([propertySlug, status])
+}
+
 // Two-way message thread between a guest and the host, per booking.
 model Message {
   id          String   @id @default(cuid())

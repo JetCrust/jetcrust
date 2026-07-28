@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/inbox", label: "Inbox", manager: true },
   { href: "/admin/guests", label: "Guests", manager: true },
   { href: "/admin/calendar", label: "Calendar & sync", manager: true },
+  { href: "/admin/tasks", label: "Operations", manager: true },
   { href: "/admin/reports", label: "Reports & performance" },
   { href: "/admin/finance", label: "Finance & P&L" },
   { href: "/admin/journal", label: "Journal" },
