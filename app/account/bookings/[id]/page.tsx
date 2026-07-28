@@ -24,10 +24,14 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
   const userId = (session.user as { id: string }).id;
   const { id } = await params;
 
-  const b = await prisma.booking.findUnique({ where: { id } });
+  const b = await prisma.booking.findUnique({ where: { id }, include: { acceptance: true } });
   if (!b) notFound();
   if (b.userId !== userId) notFound();
   const p = await getProperty(b.propertySlug);
+  const checkoutReport = b.status === "APPROVED"
+    ? await prisma.stayReport.findFirst({ where: { bookingId: b.id, kind: "CHECKOUT", completedAt: { not: null } }, orderBy: { createdAt: "desc" } })
+    : null;
+  const checkoutItems: { desc: string; amountCents: number }[] = checkoutReport ? JSON.parse(checkoutReport.items || "[]") : [];
   const current: string[] = JSON.parse(b.addons || "[]");
   let messages: { text: string; at: string }[] = [];
   try { messages = JSON.parse(b.guestMessages || "[]"); } catch { messages = []; }
@@ -82,6 +86,34 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             {b.status === "REQUESTED" && (
               <div style={{ marginTop: "0.4rem" }}><CancelBookingButton bookingId={b.id} /></div>
             )}
+          </div>
+
+          <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+            <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Your documents</h3>
+            <ul className="kv">
+              <li><span>Rental agreement</span><span>{b.acceptance ? `Signed ${fmt(b.acceptance.acceptedAt)}` : "On file"}</span></li>
+              <li><span>House rules &amp; terms</span><span><Link className="textlink" href="/terms">View</Link></span></li>
+              {p?.hours && <li><span>Arrival &amp; departure</span><span>In from {p.hours.check_in} · out by {p.hours.check_out}</span></li>}
+              {b.securityCents > 0 && (
+                <li><span>Security deposit</span><span>{money(b.securityCents)}{
+                  b.securityStatus === "held" ? " · held" :
+                  b.securityStatus === "released" ? " · released" :
+                  b.securityStatus === "captured" ? ` · ${money(b.securityCapturedCents)} charged` :
+                  " · refundable, held near arrival"
+                }</span></li>
+              )}
+            </ul>
+            {checkoutReport && (
+              <>
+                <div className="rule"></div>
+                <p className="panel__hint" style={{ marginBottom: "0.4rem" }}>Check-out summary</p>
+                <ul className="kv">
+                  {checkoutItems.map((it, i) => (<li key={i}><span>{it.desc}</span><span>{money(it.amountCents)}</span></li>))}
+                  <li style={{ fontWeight: 600 }}><span>Additional charges</span><span>{money(checkoutReport.additionalCents)}</span></li>
+                </ul>
+              </>
+            )}
+            <p className="note" style={{ margin: "0.6rem 0 0", color: "var(--stone)", fontSize: "0.8rem" }}>Arrival directions and access details are sent by our team before your stay.</p>
           </div>
 
           {(b.note || messages.length > 0) && (

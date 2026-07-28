@@ -48,6 +48,11 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
 
   const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED" } });
   const p = await getProperty(b.propertySlug);
+  const [checkinReport, checkoutReport] = await Promise.all([
+    prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKIN" }, orderBy: { createdAt: "desc" } }),
+    prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKOUT" }, orderBy: { createdAt: "desc" } }),
+  ]);
+  const reportStatus = (r: { completedAt: Date | null } | null) => (!r ? "Not started" : r.completedAt ? `Completed ${fmtDT(r.completedAt)}` : "Draft saved");
   const addonKeys: string[] = JSON.parse(b.addons || "[]");
   const addonTitles = (p?.addons || []).filter((a) => addonKeys.includes(a.value));
   const breakdown = parseBreakdown(b.breakdown);
@@ -163,9 +168,13 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   <div className="panel">
                     <div className="panel__head"><h3>Check-in &amp; check-out</h3></div>
                     <p className="panel__hint">Tablet-first forms: check-in captures ID, preferences, agreement signature and arrival add-ons; check-out captures condition photos, extras, deposit outcome and the guest's signature.</p>
+                    <ul className="kv" style={{ marginBottom: "1rem" }}>
+                      <li><span>Check-in</span><span>{reportStatus(checkinReport)}</span></li>
+                      <li><span>Check-out</span><span>{reportStatus(checkoutReport)}</span></li>
+                    </ul>
                     <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-                      <Link href={`/admin/checkin/${b.id}`} className="btn btn--ghost" style={{ justifyContent: "center" }}>Start check-in</Link>
-                      <Link href={`/admin/checkout/${b.id}`} className="btn btn--dark" style={{ justifyContent: "center" }}>Start check-out</Link>
+                      <Link href={`/admin/checkin/${b.id}`} className="btn btn--ghost" style={{ justifyContent: "center" }}>{checkinReport?.completedAt ? "View check-in" : "Start check-in"}</Link>
+                      <Link href={`/admin/checkout/${b.id}`} className="btn btn--dark" style={{ justifyContent: "center" }}>{checkoutReport?.completedAt ? "View check-out" : "Start check-out"}</Link>
                     </div>
                   </div>
                 )}
