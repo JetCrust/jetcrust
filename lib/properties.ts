@@ -32,6 +32,7 @@ export type Property = {
   pricing: Pricing;
   capacity: { sleeps: number; max_adults: number; max_children: number; bedrooms: number; bathrooms: number };
   hours: { check_in: string; check_out: string };
+  timezone: string; // IANA tz of the property (e.g. Europe/Bucharest), for on-site events
   guest_info: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
   hero_stats: { n: string; label: string }[];
   aside_facts: { label: string; value: string }[];
@@ -96,6 +97,7 @@ function normalize(p: Partial<Property>): Property {
       bathrooms: p.capacity?.bathrooms || 1,
     },
     hours: { check_in: p.hours?.check_in || "16:00", check_out: p.hours?.check_out || "11:00" },
+    timezone: p.timezone || "Europe/Bucharest",
     guest_info: {
       house_rules: p.guest_info?.house_rules || "",
       checkin_instructions: p.guest_info?.checkin_instructions || "",
@@ -158,6 +160,16 @@ export function imageUrl(imgKey: string, base: string, width = 1400): string {
     if (fs.existsSync(path.join(fsdir, `${base}.jpg`))) return `/${dir}/${base}.jpg`;
   }
   return `/assets/img/${imgKey}/${base}.jpg`;
+}
+
+// Format a timestamp in a specific timezone (for on-site property events).
+// Deterministic (fixed tz) so it is safe to render on the server.
+export function fmtInTz(d: Date, tz: string, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }): string {
+  try {
+    return new Date(d).toLocaleString("en-GB", { ...opts, timeZone: tz });
+  } catch {
+    return new Date(d).toLocaleString("en-GB", opts);
+  }
 }
 
 export function priceLabel(p: Property): string {

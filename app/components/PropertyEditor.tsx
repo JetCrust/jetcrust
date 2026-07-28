@@ -31,6 +31,7 @@ type PropObj = {
   };
   capacity: { sleeps: number; max_adults: number; max_children: number; bedrooms: number; bathrooms: number };
   hours: { check_in: string; check_out: string };
+  timezone?: string;
   guest_info?: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
   story_heading?: string;
   story?: string[];
@@ -239,7 +240,14 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div><label>Bathrooms</label><input type="number" value={o.capacity.bathrooms} onChange={(e) => setCapacity({ bathrooms: num(e.target.value) })} /></div>
           <div><label>Check-in</label><input value={o.hours.check_in} onChange={(e) => setHours({ check_in: e.target.value })} /></div>
           <div><label>Check-out</label><input value={o.hours.check_out} onChange={(e) => setHours({ check_out: e.target.value })} /></div>
+          <div>
+            <label>Timezone</label>
+            <select value={o.timezone || "Europe/Bucharest"} onChange={(e) => set({ timezone: e.target.value })}>
+              {["Europe/Bucharest", "Europe/London", "Europe/Paris", "America/New_York", "America/Los_Angeles", "America/Chicago", "Asia/Dubai", "Asia/Singapore"].map((tz) => <option key={tz} value={tz}>{tz.replace("_", " ")}</option>)}
+            </select>
+          </div>
         </div>
+        <p className="panel__hint" style={{ marginBottom: 0 }}>Check-in/out and arrival times show in this timezone (the property’s local time), wherever you are viewing from.</p>
       </div>
 
       {/* Guest info & guidebook */}

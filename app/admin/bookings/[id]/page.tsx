@@ -10,8 +10,9 @@ import SecurityDeposit from "../../../components/SecurityDeposit";
 import ExtrasLedger from "../../../components/ExtrasLedger";
 import RefundControl from "../../../components/RefundControl";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
+import LocalTime from "../../../components/LocalTime";
 import { prisma } from "@/lib/prisma";
-import { getProperty } from "@/lib/properties";
+import { getProperty, fmtInTz } from "@/lib/properties";
 import { parseExtras } from "@/lib/accounting";
 import { staffScope, slugFilter, canAccessProperty } from "@/lib/access";
 
@@ -43,7 +44,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
     prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKIN" }, orderBy: { createdAt: "desc" } }),
     prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKOUT" }, orderBy: { createdAt: "desc" } }),
   ]);
-  const reportStatus = (r: { completedAt: Date | null } | null) => (!r ? "Not started" : r.completedAt ? `Completed ${fmtDT(r.completedAt)}` : "Draft saved");
+  const reportStatus = (r: { completedAt: Date | null } | null) => (!r ? "Not started" : r.completedAt ? `Completed ${fmtInTz(r.completedAt, p?.timezone || "Europe/Bucharest")} (property time)` : "Draft saved");
   const chatMessages = await prisma.message.findMany({ where: { bookingId: id }, orderBy: { createdAt: "asc" } });
   const addonKeys: string[] = JSON.parse(b.addons || "[]");
   const addonTitles = (p?.addons || []).filter((a) => addonKeys.includes(a.value));
@@ -80,8 +81,8 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                     <li><span>Name</span><span>{[b.user.title, b.user.name].filter(Boolean).join(" ") || "—"}</span></li>
                     <li><span>Email</span><span><a className="textlink" href={`mailto:${b.user.email}`}>{b.user.email}</a></span></li>
                     {b.user.phone && <li><span>Phone</span><span>{b.user.phone}</span></li>}
-                    <li><span>Account created</span><span>{fmtDT(b.user.createdAt)}</span></li>
-                    <li><span>Requested</span><span>{fmtDT(b.createdAt)}</span></li>
+                    <li><span>Account created</span><span><LocalTime iso={b.user.createdAt.toISOString()} /></span></li>
+                    <li><span>Requested</span><span><LocalTime iso={b.createdAt.toISOString()} /></span></li>
                   </ul>
                   {b.user.preferences && (
                     <>
