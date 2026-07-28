@@ -36,7 +36,7 @@ type Props = {
   addons: Addon[];
   contract: string;
   signedIn: boolean;
-  initial?: { checkIn?: string; checkOut?: string; guests?: number };
+  initial?: { checkIn?: string; checkOut?: string; guests?: number; addons?: string[]; note?: string };
 };
 
 const money = (n: number) => `€${Math.round(n).toLocaleString("en-US")}`;
@@ -96,8 +96,8 @@ export default function BookingForm(props: Props) {
   const [checkIn, setCheckIn] = useState(props.initial?.checkIn || "");
   const [checkOut, setCheckOut] = useState(props.initial?.checkOut || "");
   const [guests, setGuests] = useState(props.initial?.guests || 2);
-  const [addons, setAddons] = useState<string[]>([]);
-  const [note, setNote] = useState("");
+  const [addons, setAddons] = useState<string[]>(props.initial?.addons || []);
+  const [note, setNote] = useState(props.initial?.note || "");
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,7 +146,11 @@ export default function BookingForm(props: Props) {
   }
 
   function toSignIn() {
-    const next = `/book/${props.slug}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
+    // Carry the whole selection (dates, guests, add-ons, note) through sign-in.
+    const p = new URLSearchParams({ checkIn, checkOut, guests: String(guests) });
+    if (addons.length) p.set("addons", addons.join(","));
+    if (note.trim()) p.set("note", note.trim());
+    const next = `/book/${props.slug}?${p.toString()}`;
     window.location.href = `/account?next=${encodeURIComponent(next)}`;
   }
 
@@ -178,6 +182,12 @@ export default function BookingForm(props: Props) {
       <div><label>Check out</label><input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} required /></div>
       <div><label>Guests</label><input type="number" min={1} max={props.maxGuests} value={guests} onChange={(e) => setGuests(Number(e.target.value))} /></div>
       <div><label>Minimum stay</label><input type="text" readOnly value={`${props.minNights} night${props.minNights === 1 ? "" : "s"}`} /></div>
+
+      {guests > props.maxGuests && (
+        <div className="full" style={{ marginTop: "-0.3rem", color: "#a3412e", fontSize: "0.9rem" }}>
+          {props.propertyName} sleeps up to <strong>{props.maxGuests}</strong> {props.maxGuests === 1 ? "guest" : "guests"}. Please reduce the number of guests, or <a className="textlink" href="/#collection">choose a home with more space</a>.
+        </div>
+      )}
 
       <div className="full"><label>Add to your stay</label>
         <div className="addon-checks">

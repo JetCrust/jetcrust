@@ -71,71 +71,82 @@ export async function POST(req: Request) {
   // Deposit now / balance later, based on how far out the stay is.
   const plan = depositPlan(q.amountCents, new Date(checkIn), new Date());
 
-  // A Stripe customer so we can charge the balance later, off-session.
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  const customer = await stripe.customers.create({
-    email: user?.email,
-    name: user?.name ?? undefined,
-    metadata: { userId },
-  });
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "Payments are not configured yet. Please contact us to complete your booking." }, { status: 500 });
+  }
 
-  // Authorize (hold) the deposit now; capture happens on host approval. Card saved for the balance.
-  // Card-only: no Satispay / ACH / wire, and no Stripe Link "create an account" prompt.
-  const intent = await stripe.paymentIntents.create({
-    amount: plan.depositCents,
-    currency: q.currency,
-    capture_method: "manual",
-    customer: customer.id,
-    setup_future_usage: "off_session",
-    payment_method_types: ["card"],
-    metadata: { propertySlug: slug, userId, kind: "deposit" },
-    description: `Jet Crust booking: ${property.name} ${checkIn} to ${checkOut}`,
-  });
+  try {
+    // A Stripe customer so we can charge the balance later, off-session.
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const customer = await stripe.customers.create({
+      email: user?.email,
+      name: user?.name ?? undefined,
+      metadata: { userId },
+    });
 
-  const booking = await prisma.booking.create({
-    data: {
-      propertySlug: slug,
-      userId,
-      checkIn: new Date(checkIn),
-      checkOut: new Date(checkOut),
-      guests,
-      addons: JSON.stringify(addons),
-      // Snapshot of exactly how the price was built, so the guest and the host
-      // always see what was quoted, even if rates change later.
-      breakdown: JSON.stringify({
-        nights: q.nights,
-        rateLines: q.rateLines,
-        stayTotal: q.stayTotal,
-        addonLines: q.addonLines,
-        addonsTotal: q.addonsTotal,
-        total: q.total,
-        avgNightly: q.avgNightly,
-      }),
-      amountCents: q.amountCents,
+    // Authorize (hold) the deposit now; capture happens on host approval. Card saved for the balance.
+    // Card-only: no Satispay / ACH / wire, and no Stripe Link "create an account" prompt.
+    const intent = await stripe.paymentIntents.create({
+      amount: plan.depositCents,
       currency: q.currency,
+      capture_method: "manual",
+      customer: customer.id,
+      setup_future_usage: "off_session",
+      payment_method_types: ["card"],
+      metadata: { propertySlug: slug, userId, kind: "deposit" },
+      description: `Jet Crust booking: ${property.name} ${checkIn} to ${checkOut}`,
+    });
+
+    const booking = await prisma.booking.create({
+      data: {
+        propertySlug: slug,
+        userId,
+        checkIn: new Date(checkIn),
+        checkOut: new Date(checkOut),
+        guests,
+        addons: JSON.stringify(addons),
+        // Snapshot of exactly how the price was built, so the guest and the host
+        // always see what was quoted, even if rates change later.
+        breakdown: JSON.stringify({
+          nights: q.nights,
+          rateLines: q.rateLines,
+          stayTotal: q.stayTotal,
+          addonLines: q.addonLines,
+          addonsTotal: q.addonsTotal,
+          total: q.total,
+          avgNightly: q.avgNightly,
+        }),
+        amountCents: q.amountCents,
+        currency: q.currency,
+        depositCents: plan.depositCents,
+        balanceCents: plan.balanceCents,
+        balanceDueAt: plan.balanceDueAt,
+        stripeCustomerId: customer.id,
+        stripePaymentIntentId: intent.id,
+        note: note ?? null,
+        acceptance: {
+          create: {
+            userId,
+            contractVersion: process.env.CONTRACT_VERSION || "v1",
+            ipAddress: ip,
+            userAgent,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      bookingId: booking.id,
+      clientSecret: intent.client_secret,
       depositCents: plan.depositCents,
       balanceCents: plan.balanceCents,
       balanceDueAt: plan.balanceDueAt,
-      stripeCustomerId: customer.id,
-      stripePaymentIntentId: intent.id,
-      note: note ?? null,
-      acceptance: {
-        create: {
-          userId,
-          contractVersion: process.env.CONTRACT_VERSION || "v1",
-          ipAddress: ip,
-          userAgent,
-        },
-      },
-    },
-  });
-
-  return NextResponse.json({
-    bookingId: booking.id,
-    clientSecret: intent.client_secret,
-    depositCents: plan.depositCents,
-    balanceCents: plan.balanceCents,
-    balanceDueAt: plan.balanceDueAt,
-    split: plan.split,
-  });
+      split: plan.split,
+    });
+  } catch (e) {
+    // Surface a real reason instead of a blank 500, and log the detail server-side.
+    console.error("Booking creation failed:", e);
+    const detail = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ error: `Could not create the booking request. (${detail})` }, { status: 500 });
+  }
 }

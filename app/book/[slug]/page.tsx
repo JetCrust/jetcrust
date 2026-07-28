@@ -11,7 +11,7 @@ export default async function BookPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ checkIn?: string; checkOut?: string; guests?: string }>;
+  searchParams: Promise<{ checkIn?: string; checkOut?: string; guests?: string; addons?: string; note?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -19,7 +19,13 @@ export default async function BookPage({
   if (!property || property.status !== "live") notFound();
 
   const session = await auth();
-  const initial = { checkIn: sp.checkIn, checkOut: sp.checkOut, guests: sp.guests ? Number(sp.guests) : undefined };
+  const initial = {
+    checkIn: sp.checkIn,
+    checkOut: sp.checkOut,
+    guests: sp.guests ? Number(sp.guests) : undefined,
+    addons: sp.addons ? sp.addons.split(",").map((a) => a.trim()).filter(Boolean) : undefined,
+    note: sp.note,
+  };
   const hero = imageUrl(property.img_key, property.hero_image, 2000);
 
   return (
