@@ -3,7 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = process.env.EMAIL_FROM || "Jet Crust <onboarding@resend.dev>";
+// Sent from stay@jetcrust.com (Resend); replies go to the real Zoho inbox.
+const FROM = process.env.EMAIL_FROM || "Jet Crust <stay@jetcrust.com>";
+const REPLY_TO = process.env.EMAIL_REPLY_TO || "contact@jetcrust.com";
 
 /**
  * Send an email. In production (RESEND_API_KEY set) it sends via Resend.
@@ -24,5 +26,5 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
     }
     return { dev: true };
   }
-  return resend.emails.send({ from: FROM, to: opts.to, subject: opts.subject, html: opts.html });
+  return resend.emails.send({ from: FROM, to: opts.to, subject: opts.subject, html: opts.html, replyTo: REPLY_TO });
 }
