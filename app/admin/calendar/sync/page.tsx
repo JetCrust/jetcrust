@@ -41,14 +41,15 @@ export default async function CalendarSync() {
                 <p className="overline eyebrow-line">Admin</p>
                 <h2>Channel feeds &amp; sync</h2>
                 <p className="lead" style={{ marginBottom: 0 }}>
-                  Share the feeds below with Airbnb, Booking.com, VRBO or a concierge so they see our booked dates
-                  (outgoing). To pull their calendars in (incoming), add their iCal links under each home in{" "}
-                  <a className="textlink" href="/admin/properties">Properties &amp; pricing</a>, then press Sync.
+                  This syncs both ways over iCal. <strong>Outgoing</strong>: give the OTAs your feed so they block dates you&rsquo;ve booked.
+                  <strong> Incoming</strong>: add each OTA&rsquo;s iCal link so <em>their</em> bookings block your calendar here. We pull incoming
+                  calendars every ~3 hours and whenever you press Sync. iCal isn&rsquo;t instant (the OTAs refresh their feeds on their own
+                  schedule), so an OTA booking can take a little while to appear.
                 </p>
               </div>
 
               <div className="panel" style={{ marginBottom: "1.6rem" }}>
-                <div className="panel__head"><h3>Your feed links</h3></div>
+                <div className="panel__head"><h3>Outgoing — your feed links (give these to the OTAs)</h3></div>
                 <ul className="kv">
                   {properties.map((p) => (
                     <li key={p.slug}>
@@ -56,6 +57,22 @@ export default async function CalendarSync() {
                       <span style={{ fontSize: "0.78rem", wordBreak: "break-all" }}>{SITE}/api/ical/{p.slug}</span>
                     </li>
                   ))}
+                </ul>
+              </div>
+
+              <div className="panel" style={{ marginBottom: "1.6rem" }}>
+                <div className="panel__head"><h3>Incoming — OTA calendars we pull in</h3></div>
+                <p className="panel__hint">Add each listing&rsquo;s iCal link (Airbnb, Booking.com, VRBO) under the home in <a className="textlink" href="/admin/properties">Properties &amp; pricing</a> so their bookings block your dates. This is what makes it block back.</p>
+                <ul className="kv">
+                  {properties.map((p) => {
+                    const urls = Array.isArray(p.ical_urls) ? (p.ical_urls as string[]) : [];
+                    return (
+                      <li key={p.slug}>
+                        <span>{p.name}</span>
+                        <span style={{ color: urls.length ? "var(--forest)" : "#a3412e" }}>{urls.length ? `${urls.length} calendar${urls.length === 1 ? "" : "s"} connected` : "None connected — OTA bookings won't block yet"}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
                 <div style={{ marginTop: "1.2rem" }}><SyncIcalButton /></div>
               </div>

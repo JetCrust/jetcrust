@@ -29,6 +29,16 @@ export default function UserRow({ userId, email, name, role, managedSlugs, prope
     router.refresh();
   }
 
+  async function resetPw() {
+    if (!confirm(`Reset the password for ${email}? A new temporary password will be shown.`)) return;
+    setBusy(true); setMsg(null);
+    const res = await fetch("/api/admin/users", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, resetPassword: true }) });
+    setBusy(false);
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { setMsg(d.error || "Could not reset."); return; }
+    setMsg(`New password: ${d.tempPassword}`);
+  }
+
   return (
     <div className="urow">
       <div className="urow__who">
@@ -52,7 +62,8 @@ export default function UserRow({ userId, email, name, role, managedSlugs, prope
       )}
       <div className="urow__save">
         {dirty && <button className="btn btn--dark cal-act" disabled={busy} onClick={save}>{busy ? "…" : "Save"}</button>}
-        {msg && <span style={{ fontSize: "0.78rem", color: "var(--stone)" }}>{msg}</span>}
+        {role !== "GUEST" && <button className="chip" disabled={busy} onClick={resetPw}>Reset password</button>}
+        {msg && <span style={{ fontSize: "0.78rem", color: msg.startsWith("New password") ? "var(--ink)" : "var(--stone)", fontFamily: msg.startsWith("New password") ? "monospace" : "inherit" }}>{msg}</span>}
       </div>
     </div>
   );

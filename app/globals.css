@@ -960,3 +960,6 @@ p { margin: 0 0 1em; }
 .task-row { margin: 0.5rem 0; }
 .task-assign { width: 100%; padding: 0.35rem 0.5rem; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 0.8rem; background: #fff; color: var(--ink); }
 .task-actions { display: flex; gap: 0.4rem; }
+
+/* Selected chip (add-user property picker) */
+.chip.is-on { background: var(--forest); color: var(--cream); border-color: var(--forest); }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import AppHeader from "../../components/AppHeader";
 import ConsoleNav from "../../components/ConsoleNav";
 import UserRow from "../../components/UserRow";
+import AddUser from "../../components/AddUser";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
@@ -37,6 +38,8 @@ export default async function AdminUsers() {
                 <h2 style={{ fontSize: "clamp(1.8rem,3.4vw,2.4rem)" }}>Users &amp; access</h2>
                 <p className="lead" style={{ marginBottom: 0 }}>Make someone a Property Manager and assign the homes they look after. Super Admins see everything; managers see only their assigned properties.</p>
               </div>
+
+              <AddUser properties={propList} />
 
               <div className="panel">
                 <div className="panel__head"><h3>Team</h3></div>

@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useCallback } from "react";
 import LocalTime from "./LocalTime";
 
 type Msg = { id: string; sender: string; body: string; createdAt: string };
@@ -8,18 +7,39 @@ type Msg = { id: string; sender: string; body: string; createdAt: string };
 export default function MessageThread({ bookingId, messages, me }: {
   bookingId: string; messages: Msg[]; me: "GUEST" | "ADMIN";
 }) {
-  const router = useRouter();
+  const [msgs, setMsgs] = useState<Msg[]>(messages);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const marked = useRef(false);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const atBottom = useRef(true);
 
-  // Mark the thread read for this viewer, once.
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}/messages`);
+      if (!res.ok) return;
+      const d = await res.json();
+      if (Array.isArray(d.messages)) setMsgs((prev) => (prev.length !== d.messages.length || JSON.stringify(prev) !== JSON.stringify(d.messages)) ? d.messages : prev);
+    } catch { /* offline; try again next tick */ }
+  }, [bookingId]);
+
+  // Live updates: poll every 8s (and once on mount, which also marks read).
   useEffect(() => {
-    if (marked.current || messages.length === 0) return;
-    marked.current = true;
-    fetch(`/api/bookings/${bookingId}/messages`, { method: "PATCH" }).catch(() => {});
-  }, [bookingId, messages.length]);
+    refresh();
+    const t = setInterval(refresh, 8000);
+    return () => clearInterval(t);
+  }, [refresh]);
+
+  // Keep scrolled to the newest message when already at the bottom.
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el && atBottom.current) el.scrollTop = el.scrollHeight;
+  }, [msgs]);
+
+  const onScroll = () => {
+    const el = threadRef.current;
+    if (el) atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+  };
 
   async function send() {
     if (!text.trim()) return;
@@ -30,16 +50,17 @@ export default function MessageThread({ bookingId, messages, me }: {
     setBusy(false);
     if (!res.ok) { const e = await res.json().catch(() => ({})); setError(e.error || "Could not send."); return; }
     setText("");
-    router.refresh();
+    atBottom.current = true;
+    refresh();
   }
 
   return (
     <div>
-      <div className="msg-thread">
-        {messages.length === 0 ? (
+      <div className="msg-thread" ref={threadRef} onScroll={onScroll}>
+        {msgs.length === 0 ? (
           <p style={{ color: "var(--stone)", margin: 0, fontSize: "0.9rem" }}>No messages yet. Say hello, ask a question, or request anything for the stay.</p>
         ) : (
-          messages.map((m) => {
+          msgs.map((m) => {
             const mine = m.sender === me;
             return (
               <div key={m.id} className={`msg ${mine ? "msg--me" : "msg--them"}`}>

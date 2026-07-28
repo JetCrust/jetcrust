@@ -65,6 +65,7 @@ model User {
   passwordHash String
   role         Role     @default(GUEST)
   managedSlugs String[] @default([]) // property slugs a MANAGER is assigned to
+  lastSeenAt   DateTime? // last activity, to skip notification emails when online
   createdAt    DateTime @default(now())
 
   // Profile & preferences
