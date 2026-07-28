@@ -791,3 +791,13 @@ p { margin: 0 0 1em; }
   .cal-toolbar { flex-direction: column; align-items: stretch; }
   .cal-controls { justify-content: space-between; }
 }
+
+/* ===== Reports & performance ===== */
+.rep-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.4rem; }
+.rep-kpi { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.2rem; text-align: center; }
+.rep-kpi__label { margin: 0 0 0.4rem; font-family: var(--sans); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.rep-kpi__value { margin: 0; font-family: var(--serif); font-size: clamp(1.5rem, 3vw, 2rem); color: var(--brass); line-height: 1; }
+.rep-kpi__hint { margin: 0.35rem 0 0; font-size: 0.72rem; color: var(--stone); }
+.rep-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.6rem; }
+.rep-svg { width: 100%; height: auto; display: block; }
+@media (max-width: 900px) { .rep-charts { grid-template-columns: 1fr; } }
