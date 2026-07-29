@@ -963,3 +963,9 @@ p { margin: 0 0 1em; }
 
 /* Selected chip (add-user property picker) */
 .chip.is-on { background: var(--forest); color: var(--cream); border-color: var(--forest); }
+
+/* Retreats feature card stacks on mobile */
+@media (max-width: 720px) {
+  .retreat-feature { grid-template-columns: 1fr !important; }
+  .retreat-feature > div:first-child { min-height: 220px !important; }
+}

@@ -91,38 +91,41 @@ export default async function Home() {
             ))}
           </div>
 
-          {residences.length > 0 && (
-            <div style={{ marginTop: "3.5rem" }}>
-              <div className="sec-head reveal" style={{ marginBottom: "1.6rem" }}>
-                <p className="overline eyebrow-line">Retreats</p>
-                <h2 style={{ fontSize: "clamp(1.6rem,3vw,2rem)" }}>A different kind of escape</h2>
-                <p className="lead">Not every stay is a grand estate. Soho Place is a cluster of geodesic domes under the Carpathian sky near Bran, playful and private, hosted to the same standard.</p>
-              </div>
-              <div className="collection">
-                {residences.map((p: Property) => (
-                  <article className="property reveal" key={p.slug}>
-                    <div className="property__figure">
-                      <div className="property__media slot has-photo" style={{ backgroundImage: `url('${imageUrl(p.img_key, p.card.image, 1400)}')` }} />
-                    </div>
-                    <div className="property__meta">
-                      <span className="property__loc">{p.location}</span>
-                      <span className="property__price">{priceLabel(p)}</span>
-                    </div>
-                    <h3 className="property__name">{p.name}</h3>
-                    <p className="property__desc">{p.card.desc}</p>
-                    <div className="property__tags">
-                      {p.card.tags.map((t) => <span className="tag" key={t}>{t}</span>)}
-                    </div>
-                    <div className="property__foot">
-                      <Link className="textlink" href={`/${p.slug}`}>Explore {p.name} <span className="arw">&rarr;</span></Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </section>
+
+      {/* RETREATS — a deliberately different tier (glamping domes, and more to come) */}
+      {residences.length > 0 && (
+        <section className="section" id="retreats" style={{ background: "linear-gradient(160deg, #26352a 0%, #1b271e 100%)", color: "var(--cream)" }}>
+          <div className="wrap">
+            <div className="sec-head reveal" style={{ textAlign: "center", marginBottom: "2rem" }}>
+              <p className="overline eyebrow-line" style={{ justifyContent: "center", color: "var(--brass-2)" }}>Unique Escapes</p>
+              <h2 style={{ color: "var(--cream)" }}>Retreats</h2>
+              <p className="lead" style={{ color: "rgba(246,241,231,0.82)", maxWidth: "56ch", margin: "0 auto" }}>
+                Not every stay is a grand estate. Our retreats are the playful, one-of-a-kind side of Jet Crust: hosted to the same standard, in a wilder setting.
+              </p>
+            </div>
+            {residences.map((p: Property) => (
+              <article key={p.slug} className="retreat-feature reveal" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: "0", borderRadius: "var(--radius, 16px)", overflow: "hidden", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(246,241,231,0.14)", maxWidth: 1040, margin: "0 auto" }}>
+                <div style={{ minHeight: 340, backgroundImage: `url('${imageUrl(p.img_key, p.card.image, 1400)}')`, backgroundSize: "cover", backgroundPosition: "center" }} />
+                <div style={{ padding: "clamp(1.6rem, 3vw, 2.6rem)", display: "flex", flexDirection: "column", justifyContent: "center", gap: "0.8rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", color: "rgba(246,241,231,0.7)", fontSize: "0.82rem", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                    <span>{p.location}</span><span>{priceLabel(p)}</span>
+                  </div>
+                  <h3 style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.6rem,3vw,2.1rem)", margin: 0 }}>{p.name}</h3>
+                  <p style={{ color: "rgba(246,241,231,0.82)", margin: 0 }}>{p.card.desc}</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                    {p.card.tags.map((t) => <span key={t} className="tag" style={{ borderColor: "rgba(246,241,231,0.3)", color: "rgba(246,241,231,0.85)" }}>{t}</span>)}
+                  </div>
+                  <div style={{ marginTop: "0.6rem" }}>
+                    <Link className="btn btn--ghost-light" href={`/${p.slug}`}>Explore {p.name}</Link>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* OUR STANDARD */}
       <section className="section section--forest" id="edge">
