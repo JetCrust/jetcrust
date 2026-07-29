@@ -46,7 +46,7 @@ export type Property = {
   story_heading: string;
   story: string[];
   features: { title: string; image: string; text: string }[];
-  gallery: { max: number; images: { file: string; caption: string }[] };
+  gallery: { max: number; images: { file: string; caption: string; area?: string }[] };
   videos: { provider: string; id: string; title: string }[];
   amenities: { category: string; items: string[] }[];
   setting: { heading: string; lead: string; map_image: string; proximity: { value: string; text: string }[] };

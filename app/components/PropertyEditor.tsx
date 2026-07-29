@@ -39,7 +39,7 @@ type PropObj = {
   costs?: { monthly_overhead_eur: number; cleaning_per_stay_eur: number; variable_per_night_eur: number };
   story_heading?: string;
   story?: string[];
-  gallery?: { max: number; images: { file: string; caption: string }[] };
+  gallery?: { max: number; images: { file: string; caption: string; area?: string }[] };
   card?: { image: string; desc: string; tags: string[] };
   ical_urls?: string[];
   [key: string]: unknown;
@@ -105,10 +105,10 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
   const addSeason = () => setPricing({ seasonal: [...seasonal, { name: "", from: "12-20", to: "01-05", nightly_eur: 0 }] });
   const removeSeason = (i: number) => setPricing({ seasonal: seasonal.filter((_, j) => j !== i) });
 
-  // Gallery as "file | caption" lines
-  const galleryText = (o.gallery?.images || []).map((g) => `${g.file} | ${g.caption}`).join("\n");
+  // Gallery as "file | caption | area" lines (area groups photos on the page: Living, Bedroom 1, Pool, Floor plan…)
+  const galleryText = (o.gallery?.images || []).map((g) => `${g.file} | ${g.caption}${g.area ? ` | ${g.area}` : ""}`).join("\n");
   const setGalleryText = (t: string) => {
-    const images = t.split("\n").map((l) => l.split("|")).filter((p) => p[0]?.trim()).map((p) => ({ file: p[0].trim(), caption: (p[1] || "").trim() }));
+    const images = t.split("\n").map((l) => l.split("|")).filter((p) => p[0]?.trim()).map((p) => ({ file: p[0].trim(), caption: (p[1] || "").trim(), area: (p[2] || "").trim() || undefined }));
     setO((s) => ({ ...s, gallery: { max: s.gallery?.max || 12, images } }));
   };
 
@@ -330,8 +330,8 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div className="full"><label>Card description</label><textarea value={o.card?.desc || ""} onChange={(e) => setCard({ desc: e.target.value })} /></div>
           <div className="full"><label>Card tags (comma separated)</label><input value={(o.card?.tags || []).join(", ")} onChange={(e) => setCard({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} /></div>
           <div className="full">
-            <label>Gallery images (one per line: file | caption)</label>
-            <textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} placeholder="castelaria-01 | The great hall" style={{ minHeight: 120 }} />
+            <label>Gallery images (one per line: file | caption | area)</label>
+            <textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} placeholder={"castelaria-01 | The great hall | Living\ncastelaria-07 | Master suite | Bedroom 1\ncastelaria-12 | Marble pool | Pool\ncastelaria-plan | Ground floor | Floor plan"} style={{ minHeight: 140 }} />
             <input ref={galFileRef} type="file" accept="image/*" multiple hidden onChange={(e) => uploadGallery(e.target.files)} />
             <button type="button" className="btn btn--ghost" style={{ marginTop: "0.5rem" }} disabled={uploading} onClick={() => galFileRef.current?.click()}>{uploading ? "Uploading…" : "＋ Upload photos"}</button>
           </div>

@@ -40,7 +40,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
   const other = await getProperty(p.cross_sell);
   const galleryImages: GalleryImage[] = p.gallery.images.map((g) => {
     const im = imageSet(p.img_key, g.file);
-    return { src: im.src, srcSet: im.srcSet, caption: g.caption };
+    return { src: im.src, srcSet: im.srcSet, caption: g.caption, area: g.area };
   });
 
   // Real review rating for structured data (stars in search results).
