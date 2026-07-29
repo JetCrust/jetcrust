@@ -28,7 +28,12 @@ export default function MarketingFooter() {
         </div>
         <div className="footer__bottom">
           <span>&copy; <span id="year"></span> Jet Crust. All rights reserved.</span>
-          <div className="footer__social"><a href="#">Instagram</a><a href="#">Facebook</a><a href="#">Pinterest</a></div>
+          <div className="footer__social">
+            <a href="https://instagram.com/jet.crust" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://www.facebook.com/jet.crust" target="_blank" rel="noopener noreferrer">Facebook</a>
+            <a href="https://es.pinterest.com/jetcrust/" target="_blank" rel="noopener noreferrer">Pinterest</a>
+            <a href="https://www.tiktok.com/@jet.crust" target="_blank" rel="noopener noreferrer">TikTok</a>
+          </div>
           <div className="footer__legal"><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/cookies">Cookies</Link><Link href="/gdpr">GDPR</Link></div>
         </div>
       </div>
