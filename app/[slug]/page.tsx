@@ -6,18 +6,30 @@ import MarketingFooter from "../components/MarketingFooter";
 import WhatsAppButton from "../components/WhatsAppButton";
 import ClientInteractions from "../components/ClientInteractions";
 import TrackView from "../components/TrackView";
+import PropertyJsonLd from "../components/PropertyJsonLd";
 import Gallery, { type GalleryImage } from "../components/Gallery";
 import { getProperties, getProperty, imageUrl, imageSet, type Property } from "@/lib/properties";
+import { prisma } from "@/lib/prisma";
+import { areaName, areaSlug } from "@/lib/seo";
 
 export async function generateStaticParams() {
   return (await getProperties()).map((p) => ({ slug: p.slug }));
 }
 
+const SITE = process.env.SITE_ORIGIN || "https://jetcrust.com";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const p = await getProperty(slug);
   if (!p) return {};
-  return { title: p.seo.title, description: p.seo.description };
+  const og = `${SITE}${imageUrl(p.img_key, p.hero_image, 2000)}`;
+  return {
+    title: p.seo.title,
+    description: p.seo.description,
+    alternates: { canonical: `${SITE}/${p.slug}` },
+    openGraph: { title: p.seo.title, description: p.seo.description, url: `${SITE}/${p.slug}`, type: "website", images: [{ url: og }] },
+    twitter: { card: "summary_large_image", title: p.seo.title, description: p.seo.description, images: [og] },
+  };
 }
 
 export default async function PropertyPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -31,9 +43,19 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
     return { src: im.src, srcSet: im.srcSet, caption: g.caption };
   });
 
+  // Real review rating for structured data (stars in search results).
+  const agg = await prisma.booking.aggregate({
+    where: { propertySlug: p.slug, status: "APPROVED", reviewRating: { not: null } },
+    _avg: { reviewRating: true }, _count: { reviewRating: true },
+  });
+  const reviewCount = agg._count.reviewRating || 0;
+  const rating = agg._avg.reviewRating || 0;
+  const area = areaName(p.location);
+
   return (
     <>
       <TrackView slug={p.slug} />
+      <PropertyJsonLd p={p} url={`${SITE}/${p.slug}`} image={`${SITE}${imageUrl(p.img_key, p.hero_image, 2000)}`} rating={rating} reviewCount={reviewCount} />
       <MarketingHeader />
 
       {/* HERO */}
@@ -178,6 +200,17 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
             <h2>{other.name}, {other.location}</h2>
             <p className="lead" style={{ color: "rgba(246,241,231,0.86)", margin: "1rem 0 1.8rem", maxWidth: "46ch" }}>{other.tagline}</p>
             <Link className="btn btn--ghost-light" href={`/${other.slug}`}>Discover {other.name}</Link>
+          </div>
+        </section>
+      )}
+
+      {area && (
+        <section className="section section--cream" style={{ padding: "2.5rem 0" }}>
+          <div className="wrap" style={{ textAlign: "center" }}>
+            <p className="overline eyebrow-line">The area</p>
+            <h2 style={{ marginBottom: "0.6rem" }}>More in {area}</h2>
+            <p className="lead" style={{ maxWidth: "52ch", margin: "0 auto 1.4rem" }}>Stays, stories and things to do around {area}.</p>
+            <Link className="btn btn--dark" href={`/destinations/${areaSlug(p.location)}`}>Explore {area} →</Link>
           </div>
         </section>
       )}
