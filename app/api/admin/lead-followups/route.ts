@@ -13,8 +13,10 @@ export async function GET(req: Request) {
   }
   const now = new Date();
   const endToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59));
+  // Any lead with a due follow-up date (including Lost — you may want to re-approach
+  // them next season). Won leads are already customers, so skip those.
   const due = await prisma.lead.findMany({
-    where: { followUpAt: { not: null, lte: endToday }, status: { notIn: ["WON", "LOST"] } },
+    where: { followUpAt: { not: null, lte: endToday }, status: { not: "WON" } },
     orderBy: { followUpAt: "asc" },
   });
 

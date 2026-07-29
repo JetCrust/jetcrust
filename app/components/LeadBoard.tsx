@@ -29,7 +29,7 @@ function LeadCard({ lead, properties }: { lead: Lead; properties: Prop[] }) {
   const [busy, setBusy] = useState(false);
   const nameOf = (s?: string | null) => properties.find((p) => p.slug === s)?.name || s || "Any / unsure";
   const log = lead.noteLog || [];
-  const overdue = lead.followUpAt && lead.followUpAt.slice(0, 10) <= todayIso() && status !== "WON" && status !== "LOST";
+  const overdue = lead.followUpAt && lead.followUpAt.slice(0, 10) <= todayIso() && status !== "WON";
 
   async function patch(body: Record<string, unknown>) {
     setBusy(true);
