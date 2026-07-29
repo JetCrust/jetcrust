@@ -298,6 +298,22 @@ model OtaBooking {
   @@index([propertySlug, checkIn])
 }
 
+// First-party demand analytics: a property page view or a date-range quote.
+// Feeds the analytics dashboard and, later, demand-aware pricing. No third party.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  type      String   // "view" | "quote"
+  slug      String
+  userId    String?  // set when the visitor is signed in
+  session   String?  // anonymous cookie id, to estimate unique/repeat visitors
+  checkIn   DateTime?
+  checkOut  DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([slug, createdAt])
+  @@index([type, createdAt])
+}
+
 model Expense {
   id           String          @id @default(cuid())
   propertySlug String?         // null = portfolio-wide / unattributed

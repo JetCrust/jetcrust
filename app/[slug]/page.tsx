@@ -5,6 +5,7 @@ import MarketingHeader from "../components/MarketingHeader";
 import MarketingFooter from "../components/MarketingFooter";
 import WhatsAppButton from "../components/WhatsAppButton";
 import ClientInteractions from "../components/ClientInteractions";
+import TrackView from "../components/TrackView";
 import Gallery, { type GalleryImage } from "../components/Gallery";
 import { getProperties, getProperty, imageUrl, imageSet, type Property } from "@/lib/properties";
 
@@ -32,6 +33,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
   return (
     <>
+      <TrackView slug={p.slug} />
       <MarketingHeader />
 
       {/* HERO */}

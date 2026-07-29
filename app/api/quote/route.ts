@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getProperty } from "@/lib/properties";
 import { quote } from "@/lib/pricing";
 import { occupancyRatio } from "@/lib/occupancy";
+import { prisma } from "@/lib/prisma";
 
 // Public price quote so guests can see availability + price before signing in.
 export async function GET(req: Request) {
@@ -20,5 +21,11 @@ export async function GET(req: Request) {
 
   const ratio = await occupancyRatio(p, checkIn, checkOut);
   const q = quote(p, checkIn, checkOut, ratio, addons);
+  // Record the date interest (fire-and-forget) for demand analytics.
+  if (q.valid) {
+    prisma.analyticsEvent.create({
+      data: { type: "quote", slug, checkIn: new Date(checkIn + "T00:00:00Z"), checkOut: new Date(checkOut + "T00:00:00Z") },
+    }).catch(() => {});
+  }
   return NextResponse.json(q);
 }

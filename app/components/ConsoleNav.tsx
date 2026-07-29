@@ -15,6 +15,7 @@ const LINKS: { href: string; label: string; exact?: boolean; manager?: boolean; 
   { href: "/admin/calendar", label: "Calendar & sync", manager: true },
   { href: "/admin/tasks", label: "Operations", manager: true },
   { href: "/admin/reports", label: "Reports & performance", sep: true },
+  { href: "/admin/analytics", label: "Demand & interest", manager: true },
   { href: "/admin/reviews", label: "Reviews & ratings", manager: true },
   { href: "/admin/finance", label: "Finance & P&L" },
   { href: "/admin/ota", label: "OTA bookings", manager: true },
