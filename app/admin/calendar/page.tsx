@@ -73,6 +73,7 @@ export default async function AdminCalendar({ searchParams }: { searchParams: Pr
       status: "blocked",
       label: bl.source === "ICAL" ? (bl.note || "Imported") : (bl.note || "Blocked"),
       source: bl.source,
+      meta: bl.meta ? (JSON.parse(bl.meta) as CalItem["meta"]) : null,
     })),
   ];
 

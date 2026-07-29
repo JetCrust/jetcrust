@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
-import { parseIcs } from "@/lib/ical";
+import { parseIcs, channelName, reservationMeta } from "@/lib/ical";
 
 // Pull external iCal feeds (Airbnb, Booking.com, VRBO, concierge) listed in each
 // property's data file (ical_urls) and refresh its imported AvailabilityBlocks.
@@ -11,22 +11,28 @@ async function runSync() {
   for (const property of await getProperties()) {
     const urls = (property.ical_urls as string[] | undefined) || [];
     const summary = { imported: 0, feeds: urls.length, errors: [] as string[] };
-    const events: { start: Date; end: Date }[] = [];
+    const rows: { propertySlug: string; start: Date; end: Date; source: "ICAL"; note: string; meta: string | null }[] = [];
     for (const url of urls) {
+      const channel = channelName(url);
       try {
         const res = await fetch(url, { headers: { "User-Agent": "JetCrust/1.0" } });
-        if (!res.ok) { summary.errors.push(`${url}: HTTP ${res.status}`); continue; }
-        events.push(...parseIcs(await res.text()));
+        if (!res.ok) { summary.errors.push(`${channel}: HTTP ${res.status}`); continue; }
+        for (const e of parseIcs(await res.text())) {
+          const m = reservationMeta(e);
+          rows.push({
+            propertySlug: property.slug, start: e.start, end: e.end, source: "ICAL",
+            note: channel, // shows the platform (Airbnb / Booking.com / VRBO) on the calendar
+            meta: JSON.stringify({ channel, ...m }),
+          });
+        }
       } catch (e) {
-        summary.errors.push(`${url}: ${(e as Error).message}`);
+        summary.errors.push(`${channel}: ${(e as Error).message}`);
       }
     }
     await prisma.availabilityBlock.deleteMany({ where: { propertySlug: property.slug, source: "ICAL" } });
-    if (events.length) {
-      await prisma.availabilityBlock.createMany({
-        data: events.map((e) => ({ propertySlug: property.slug, start: e.start, end: e.end, source: "ICAL" as const, note: "Imported" })),
-      });
-      summary.imported = events.length;
+    if (rows.length) {
+      await prisma.availabilityBlock.createMany({ data: rows });
+      summary.imported = rows.length;
     }
     results[property.slug] = summary;
   }

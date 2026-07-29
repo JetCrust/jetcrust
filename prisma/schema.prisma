@@ -180,6 +180,7 @@ model AvailabilityBlock {
   end          DateTime
   source       BlockSource @default(MANUAL)
   note         String?
+  meta         String?     // JSON for imported feeds: { link, phoneLast4, code, summary }
   createdAt    DateTime    @default(now())
 
   @@index([propertySlug, start, end])

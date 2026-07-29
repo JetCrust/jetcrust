@@ -14,6 +14,7 @@ export type CalItem = {
   guests?: number;
   amountCents?: number;
   source?: string; // blocks: MANUAL | ICAL
+  meta?: { channel?: string; link?: string; code?: string; phoneLast4?: string; summary?: string } | null;
 };
 type Prop = { slug: string; name: string };
 
@@ -355,7 +356,25 @@ function DetailPopover({ item, properties, onClose, onMove, onRemoveBlock }: {
           item.source === "MANUAL" ? (
             <button className="btn btn--ghost" style={{ width: "100%", justifyContent: "center" }} onClick={() => onRemoveBlock(item.id)}>Remove block</button>
           ) : (
-            <p className="panel__hint" style={{ margin: 0 }}>Imported from a connected calendar. It clears on the next sync.</p>
+            <>
+              {(item.meta?.summary || item.meta?.code || item.meta?.phoneLast4) && (
+                <ul className="kv" style={{ margin: "0 0 1rem" }}>
+                  {item.meta?.channel && <li><span>Booked via</span><span>{item.meta.channel}</span></li>}
+                  {item.meta?.summary && <li><span>Guest</span><span>{item.meta.summary}</span></li>}
+                  {item.meta?.code && <li><span>Confirmation</span><span>{item.meta.code}</span></li>}
+                  {item.meta?.phoneLast4 && <li><span>Phone (last 4)</span><span>••• {item.meta.phoneLast4}</span></li>}
+                </ul>
+              )}
+              {item.meta?.link ? (
+                <a href={item.meta.link} target="_blank" rel="noopener noreferrer" className="btn btn--dark" style={{ width: "100%", justifyContent: "center" }}>
+                  Open reservation on {item.meta.channel || "the platform"}
+                </a>
+              ) : null}
+              <p className="panel__hint" style={{ margin: item.meta?.link ? "0.8rem 0 0" : 0 }}>
+                {item.meta?.channel ? `Imported from ${item.meta.channel}. ` : "Imported from a connected calendar. "}
+                The platform keeps the guest&rsquo;s full name, email and phone — open the reservation to see them. This block clears on the next sync.
+              </p>
+            </>
           )
         )}
       </div>
