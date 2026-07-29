@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Task = { id: string; propertySlug: string; title: string; category: string; status: string; dueAt: string | null; assignedToId: string | null; notes: string | null };
+type Task = { id: string; propertySlug: string; title: string; category: string; status: string; dueAt: string | null; assignedToId: string | null; notes: string | null; vendor?: string | null; vendorPhone?: string | null; costCents?: number; confirmed?: boolean };
 type Prop = { slug: string; name: string };
 type Staff = { id: string; name: string; phone?: string | null };
 
-const CATS = ["CLEANING", "MAINTENANCE", "INSPECTION", "RESTOCK", "OTHER"];
+const CATS = ["CLEANING", "MAINTENANCE", "INSPECTION", "RESTOCK", "CHEF", "SPA", "TRANSFER", "EXPERIENCE", "OTHER"];
 const catLabel = (c: string) => c.charAt(0) + c.slice(1).toLowerCase();
+const money = (c: number) => `€${Math.round(c / 100).toLocaleString("en-US")}`;
 const COLUMNS: { key: string; label: string }[] = [
   { key: "OPEN", label: "Open" },
   { key: "IN_PROGRESS", label: "In progress" },
@@ -22,6 +23,9 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
   const [category, setCategory] = useState("CLEANING");
   const [dueAt, setDueAt] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
+  const [vendor, setVendor] = useState("");
+  const [vendorPhone, setVendorPhone] = useState("");
+  const [cost, setCost] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,12 +40,12 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
       `Jet Crust — job at ${propName(t.propertySlug)}`,
       `• ${t.title}`,
       `• Type: ${catLabel(t.category)}`,
-      t.dueAt ? `• Due: ${t.dueAt}` : null,
+      t.dueAt ? `• Date: ${t.dueAt}` : null,
       t.notes ? `• Notes: ${t.notes}` : null,
-      assignee ? `Assigned to ${assignee.name}.` : null,
+      `Please confirm you can do this.`,
     ].filter(Boolean);
     const text = encodeURIComponent(lines.join("\n"));
-    const digits = (assignee?.phone || "").replace(/\D/g, "");
+    const digits = (t.vendorPhone || assignee?.phone || "").replace(/\D/g, "");
     window.open(digits ? `https://wa.me/${digits}?text=${text}` : `https://wa.me/?text=${text}`, "_blank", "noopener");
   }
 
@@ -50,11 +54,11 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
     setBusy(true); setError(null);
     const res = await fetch("/api/admin/tasks", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ propertySlug: slug, title, category, dueAt: dueAt || null, assignedToId: assignedToId || null }),
+      body: JSON.stringify({ propertySlug: slug, title, category, dueAt: dueAt || null, assignedToId: assignedToId || null, vendor: vendor || null, vendorPhone: vendorPhone || null, costCents: Math.round((parseFloat(cost) || 0) * 100) }),
     });
     setBusy(false);
     if (!res.ok) { const e = await res.json().catch(() => ({})); setError(e.error || "Could not create."); return; }
-    setTitle(""); setDueAt(""); setOpen(false);
+    setTitle(""); setDueAt(""); setVendor(""); setVendorPhone(""); setCost(""); setOpen(false);
     router.refresh();
   }
 
@@ -79,8 +83,12 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
               <label>Property<select value={slug} onChange={(e) => setSlug(e.target.value)}>{properties.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}</select></label>
               <label>Category<select value={category} onChange={(e) => setCategory(e.target.value)}>{CATS.map((c) => <option key={c} value={c}>{catLabel(c)}</option>)}</select></label>
               <label>Due<input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} /></label>
-              <label>Assign to<select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)}><option value="">Unassigned</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+              <label>Assign to (staff)<select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)}><option value="">Unassigned</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+              <label>Vendor (chef, spa, driver…)<input value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="external provider name" /></label>
+              <label>Vendor WhatsApp<input value={vendorPhone} onChange={(e) => setVendorPhone(e.target.value)} placeholder="+40 770 000 000" /></label>
+              <label>Cost to us (€)<input type="number" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="what we pay them" /></label>
             </div>
+            <p className="panel__hint" style={{ margin: "0.2rem 0 0" }}>For a paid service (chef, massage, transfer): add the vendor + their WhatsApp + the cost. The cost books to expenses when the job is marked done.</p>
             {error && <p style={{ color: "#a3412e", fontSize: "0.85rem" }}>{error}</p>}
             <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.4rem" }}>
               <button className="btn btn--dark" disabled={busy} onClick={create}>{busy ? "Adding…" : "Add task"}</button>
@@ -108,6 +116,14 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
                     </div>
                     <p className="task-title">{t.title}</p>
                     <p className="task-meta">{propName(t.propertySlug)}{t.dueAt ? ` · due ${t.dueAt}${overdue ? " ⚠" : ""}` : ""}</p>
+                    {(t.vendor || (t.costCents || 0) > 0) && (
+                      <p className="task-meta" style={{ marginTop: 2 }}>
+                        {t.vendor || "Vendor"}{(t.costCents || 0) > 0 ? ` · ${money(t.costCents!)}` : ""}
+                        {" · "}
+                        <span style={{ color: t.confirmed ? "#25936b" : "#a3412e", fontWeight: 600 }}>{t.confirmed ? "confirmed" : "pending"}</span>
+                        {t.status === "DONE" && (t.costCents || 0) > 0 ? <span style={{ color: "var(--stone)" }}> · booked to expenses</span> : null}
+                      </p>
+                    )}
                     <div className="task-row" style={{ display: isWorker ? "none" : undefined }}>
                       <select className="task-assign" value={t.assignedToId || ""} onChange={(e) => patch(t.id, { assignedToId: e.target.value })}>
                         <option value="">Unassigned</option>
@@ -116,6 +132,7 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
                     </div>
                     <div className="task-actions">
                       {!isWorker && <button className="chip" title="Send this job to WhatsApp" onClick={() => whatsapp(t)} style={{ color: "#25936b" }}>WhatsApp</button>}
+                      {!isWorker && (t.vendor || (t.costCents || 0) > 0) && <button className="chip" onClick={() => patch(t.id, { confirmed: !t.confirmed })}>{t.confirmed ? "Set pending" : "Confirm ✓"}</button>}
                       {t.status !== "OPEN" && <button className="chip" onClick={() => patch(t.id, { status: t.status === "DONE" ? "IN_PROGRESS" : "OPEN" })}>‹ Back</button>}
                       {t.status !== "DONE" && <button className="chip" onClick={() => patch(t.id, { status: t.status === "OPEN" ? "IN_PROGRESS" : "DONE" })}>{t.status === "OPEN" ? "Start ›" : "Done ✓"}</button>}
                     </div>

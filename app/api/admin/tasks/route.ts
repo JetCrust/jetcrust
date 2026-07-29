@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { staffScope, opsScope, canAccessProperty } from "@/lib/access";
 
-const CATEGORIES = ["CLEANING", "MAINTENANCE", "INSPECTION", "RESTOCK", "OTHER"] as const;
+const CATEGORIES = ["CLEANING", "MAINTENANCE", "INSPECTION", "RESTOCK", "CHEF", "SPA", "TRANSFER", "EXPERIENCE", "OTHER"] as const;
 const STATUSES = ["OPEN", "IN_PROGRESS", "DONE"] as const;
 
 const createSchema = z.object({
@@ -13,6 +13,9 @@ const createSchema = z.object({
   category: z.enum(CATEGORIES).default("CLEANING"),
   dueAt: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
+  vendor: z.string().max(120).optional().nullable(),
+  vendorPhone: z.string().max(40).optional().nullable(),
+  costCents: z.number().int().min(0).optional(),
   notes: z.string().max(1000).optional().nullable(),
 });
 
@@ -23,6 +26,10 @@ const patchSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   category: z.enum(CATEGORIES).optional(),
   dueAt: z.string().optional().nullable(),
+  vendor: z.string().max(120).optional().nullable(),
+  vendorPhone: z.string().max(40).optional().nullable(),
+  costCents: z.number().int().min(0).optional(),
+  confirmed: z.boolean().optional(),
   notes: z.string().max(1000).optional().nullable(),
 });
 
@@ -38,6 +45,8 @@ export async function POST(req: Request) {
       propertySlug: d.propertySlug, bookingId: d.bookingId || null, title: d.title.trim(),
       category: d.category, dueAt: d.dueAt ? new Date(d.dueAt) : null,
       assignedToId: d.assignedToId || null, notes: d.notes?.trim() || null,
+      vendor: d.vendor?.trim() || null, vendorPhone: d.vendorPhone?.trim() || null,
+      costCents: d.costCents || 0,
     },
   });
   return NextResponse.json({ ok: true, id: task.id });
@@ -67,11 +76,35 @@ export async function PATCH(req: Request) {
     if (d.title) data.title = d.title.trim();
     if (d.category) data.category = d.category;
     if (d.dueAt !== undefined) data.dueAt = d.dueAt ? new Date(d.dueAt) : null;
+    if (d.vendor !== undefined) data.vendor = d.vendor?.trim() || null;
+    if (d.vendorPhone !== undefined) data.vendorPhone = d.vendorPhone?.trim() || null;
+    if (d.costCents !== undefined) data.costCents = d.costCents;
+    if (d.confirmed !== undefined) data.confirmed = d.confirmed;
   } else if (d.status === "IN_PROGRESS" && !task.assignedToId) {
     // A worker starting an unassigned job claims it.
     data.assignedToId = scope.userId;
   }
   await prisma.task.update({ where: { id: d.id }, data });
+
+  // Keep the vendor cost in sync with the ledger: booked as an expense once the
+  // job is Done, removed if it's reopened.
+  const after = await prisma.task.findUnique({ where: { id: d.id } });
+  if (after) {
+    if (after.status === "DONE" && after.costCents > 0 && !after.expenseId) {
+      const exp = await prisma.expense.create({
+        data: {
+          propertySlug: after.propertySlug, bookingId: after.bookingId,
+          category: "OTHER", amountCents: after.costCents,
+          description: `Service: ${after.title}${after.vendor ? ` (${after.vendor})` : ""}`,
+          date: after.dueAt || new Date(),
+        },
+      });
+      await prisma.task.update({ where: { id: after.id }, data: { expenseId: exp.id } });
+    } else if (after.status !== "DONE" && after.expenseId) {
+      await prisma.expense.delete({ where: { id: after.expenseId } }).catch(() => {});
+      await prisma.task.update({ where: { id: after.id }, data: { expenseId: null } });
+    }
+  }
   return NextResponse.json({ ok: true });
 }
 

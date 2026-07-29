@@ -204,6 +204,10 @@ enum TaskCategory {
   MAINTENANCE
   INSPECTION
   RESTOCK
+  CHEF
+  SPA
+  TRANSFER
+  EXPERIENCE
   OTHER
 }
 
@@ -217,7 +221,12 @@ model Task {
   category     TaskCategory @default(CLEANING)
   status       TaskStatus   @default(OPEN)
   dueAt        DateTime?
-  assignedToId String?      // a staff (ADMIN/MANAGER) user id
+  assignedToId String?      // internal staff user id
+  vendor       String?      // external provider name (chef, masseuse, driver…)
+  vendorPhone  String?      // their WhatsApp number
+  costCents    Int          @default(0)  // what we pay the provider
+  confirmed    Boolean      @default(false) // the provider confirmed the job
+  expenseId    String?      // linked Expense once the cost is booked (on done)
   notes        String?
   createdAt    DateTime     @default(now())
   completedAt  DateTime?
