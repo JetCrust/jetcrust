@@ -7,6 +7,7 @@ import WhatsAppButton from "../components/WhatsAppButton";
 import ClientInteractions from "../components/ClientInteractions";
 import TrackView from "../components/TrackView";
 import PropertyJsonLd from "../components/PropertyJsonLd";
+import InquiryForm from "../components/InquiryForm";
 import Gallery, { type GalleryImage } from "../components/Gallery";
 import { getProperties, getProperty, imageUrl, imageSet, type Property } from "@/lib/properties";
 import { prisma } from "@/lib/prisma";
@@ -185,9 +186,19 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           <h2>Reserve {p.name}</h2>
           <p className="lead">Check your dates, accept the agreement and place a hold. We confirm personally, and your card is charged only once approved.</p>
           <div className="cta-band__actions">
-            <Link className="btn btn--brass" href={`/book/${p.slug}`}>Check Availability</Link>
-            <a className="btn btn--ghost-light" href="tel:+40770111555">Call Us</a>
+            <Link className="btn btn--brass" href={`/book/${p.slug}`}>Check availability &amp; reserve</Link>
+            <a className="btn btn--ghost-light" href="tel:+40770111555">Call us</a>
           </div>
+        </div>
+      </section>
+
+      {/* INQUIRY */}
+      <section className="section section--cream" id="enquire">
+        <div className="wrap" style={{ maxWidth: 700, textAlign: "center" }}>
+          <p className="overline eyebrow-line">Have a question?</p>
+          <h2 style={{ marginBottom: "0.5rem" }}>Ask us about {p.name}</h2>
+          <p className="lead" style={{ marginBottom: "1.6rem" }}>Not ready to book? Tell us what you have in mind and we will reply personally.</p>
+          <InquiryForm propertySlug={p.slug} propertyName={p.name} />
         </div>
       </section>
 

@@ -1,9 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import MarketingHeader from "./components/MarketingHeader";
 import MarketingFooter from "./components/MarketingFooter";
 import WhatsAppButton from "./components/WhatsAppButton";
 import ClientInteractions from "./components/ClientInteractions";
 import { getProperties, imageUrl, priceLabel, type Property } from "@/lib/properties";
+
+export const metadata: Metadata = {
+  title: "Luxury Villas & Penthouses in Transylvania & Bucharest | Jet Crust",
+  description:
+    "Hand-selected luxury estates and penthouses in Transylvania and Bucharest. Historic villa near Bran Castle with a marble pool and private cinema. Direct booking, no platform fees.",
+  alternates: { canonical: process.env.SITE_ORIGIN || "https://jetcrust.com" },
+};
 
 export default async function Home() {
   const properties = await getProperties();
@@ -25,12 +33,12 @@ export default async function Home() {
           <p className="overline eyebrow-line">Transylvania · Bucharest · Beyond</p>
           <h1 className="hero__title">Where legend meets <em>private sanctuary</em></h1>
           <p className="hero__sub">
-            A hand-selected collection of historic estates and modern penthouses, hosted with quiet precision.
-            Extraordinary homes for travellers who expect more than a room.
+            Luxury villas in Transylvania near Bran Castle and a lakeside penthouse in Bucharest, hosted with quiet
+            precision. Extraordinary homes for travellers who expect more than a room. Book direct, with no platform fees.
           </p>
           <div className="hero__actions">
-            <a className="btn btn--brass" href="#collection">Explore the Collection</a>
-            <Link className="btn btn--ghost-light" href="/account">Sign In to Book</Link>
+            <a className="btn btn--brass" href="#collection">Check dates &amp; reserve</a>
+            <a className="btn btn--ghost-light" href="#enquire">Talk to us</a>
           </div>
         </div>
         <div className="hero__scroll">Scroll to discover</div>
@@ -224,11 +232,11 @@ export default async function Home() {
         <div className="cta-band__media slot has-photo" style={{ backgroundImage: `url('${imageUrl("castelaria", "castelaria-hero", 2000)}')` }} />
         <div className="wrap">
           <p className="overline eyebrow-line" style={{ justifyContent: "center" }}>Ready When You Are</p>
-          <h2>Begin your escape</h2>
-          <p className="lead">Tell us the dates, the party and the feeling you are after. We will shape the rest, personally.</p>
+          <h2>Check dates and reserve</h2>
+          <p className="lead">Pick your home, see live availability and pricing, and hold your dates in minutes. Prefer to talk it through? We are a message or a call away.</p>
           <div className="cta-band__actions">
-            <a className="btn btn--brass" href="#collection">Book a Stay</a>
-            <a className="btn btn--ghost-light" href="tel:+40770111555">Call Us</a>
+            <a className="btn btn--brass" href="#collection">Check dates &amp; reserve</a>
+            <a className="btn btn--ghost-light" href="tel:+40770111555">Call us</a>
           </div>
         </div>
       </section>
