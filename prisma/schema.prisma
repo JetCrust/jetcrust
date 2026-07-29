@@ -298,6 +298,38 @@ model OtaBooking {
   @@index([propertySlug, checkIn])
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  WON
+  LOST
+}
+
+// A prospective guest (inquiry or a call) before they book — the sales pipeline.
+// Auto-links to a User by email when that guest creates an account.
+model Lead {
+  id           String     @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  propertySlug String?    // the home they're interested in
+  source       String     @default("WEB") // WEB | PHONE | EMAIL | REFERRAL | OTHER
+  status       LeadStatus @default(NEW)
+  message      String?    // their original inquiry
+  notes        String?    // running internal notes
+  checkIn      DateTime?
+  checkOut     DateTime?
+  guests       Int?
+  userId       String?    // linked account, once they sign up with this email
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([status, createdAt])
+  @@index([propertySlug])
+  @@index([email])
+}
+
 // First-party demand analytics: a property page view or a date-range quote.
 // Feeds the analytics dashboard and, later, demand-aware pricing. No third party.
 model AnalyticsEvent {

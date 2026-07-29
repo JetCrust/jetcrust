@@ -11,6 +11,7 @@ const LINKS: { href: string; label: string; exact?: boolean; manager?: boolean; 
   { href: "/admin/overview", label: "Overview", manager: true },
   { href: "/admin", label: "Bookings", exact: true, manager: true },
   { href: "/admin/guests", label: "Guests", manager: true },
+  { href: "/admin/leads", label: "Leads & CRM", manager: true },
   { href: "/admin/inbox", label: "Inbox", manager: true },
   { href: "/admin/calendar", label: "Calendar & sync", manager: true },
   { href: "/admin/tasks", label: "Operations", manager: true },

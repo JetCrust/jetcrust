@@ -21,6 +21,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "An account with this email already exists. Please sign in." }, { status: 409 });
   }
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  await prisma.user.create({ data: { email, name: parsed.data.name, passwordHash } });
+  const user = await prisma.user.create({ data: { email, name: parsed.data.name, passwordHash } });
+  // Link any prior inquiries from this email to the new account (CRM continuity).
+  await prisma.lead.updateMany({ where: { email, userId: null }, data: { userId: user.id } }).catch(() => {});
   return NextResponse.json({ ok: true });
 }
