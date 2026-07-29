@@ -3,22 +3,32 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { staffScope, canAccessProperty } from "@/lib/access";
 
-// Staff: create a lead by hand ("someone called"), or update its status/notes.
+const SOURCES = ["PHONE", "WHATSAPP", "EMAIL", "INSTAGRAM", "FACEBOOK", "WEB", "REFERRAL", "OTHER"] as const;
+const ymd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+// Staff: create a lead by hand ("someone called"), or update it (status,
+// timestamped note, follow-up date, dates of interest).
 const createSchema = z.object({
   name: z.string().min(1).max(120),
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().max(40).optional(),
   propertySlug: z.string().max(80).optional().or(z.literal("")),
-  source: z.enum(["WEB", "PHONE", "EMAIL", "REFERRAL", "OTHER"]).default("PHONE"),
+  source: z.enum(SOURCES).default("PHONE"),
   message: z.string().max(2000).optional(),
+  checkIn: ymd.optional().or(z.literal("")),
+  checkOut: ymd.optional().or(z.literal("")),
+  followUpAt: ymd.optional().or(z.literal("")),
 });
 
 const patchSchema = z.object({
   id: z.string(),
   status: z.enum(["NEW", "CONTACTED", "QUOTED", "WON", "LOST"]).optional(),
-  notes: z.string().max(4000).optional(),
+  addNote: z.string().max(4000).optional(),
+  followUpAt: ymd.optional().or(z.literal("")).or(z.null()),
   propertySlug: z.string().max(80).optional().or(z.literal("")),
 });
+
+const toDate = (s?: string | null) => (s ? new Date(s + "T00:00:00Z") : null);
 
 export async function POST(req: Request) {
   const scope = await staffScope();
@@ -34,6 +44,7 @@ export async function POST(req: Request) {
     data: {
       name: d.name.trim(), email, phone: d.phone?.trim() || null,
       propertySlug: d.propertySlug || null, source: d.source, message: d.message?.trim() || null,
+      checkIn: toDate(d.checkIn), checkOut: toDate(d.checkOut), followUpAt: toDate(d.followUpAt),
       userId: user?.id || null,
     },
   });
@@ -52,11 +63,19 @@ export async function PATCH(req: Request) {
   // Managers may only touch leads for their properties (or unassigned ones).
   if (lead.propertySlug && !canAccessProperty(scope, lead.propertySlug)) return NextResponse.json({ error: "Not authorized." }, { status: 403 });
 
+  // Append a timestamped note to the log rather than overwriting.
+  let noteLog: { at: string; text: string }[] | undefined;
+  if (d.addNote && d.addNote.trim()) {
+    try { noteLog = JSON.parse(lead.noteLog || "[]"); } catch { noteLog = []; }
+    noteLog!.push({ at: new Date().toISOString(), text: d.addNote.trim() });
+  }
+
   await prisma.lead.update({
     where: { id: d.id },
     data: {
       ...(d.status ? { status: d.status } : {}),
-      ...(d.notes !== undefined ? { notes: d.notes } : {}),
+      ...(noteLog ? { noteLog: JSON.stringify(noteLog) } : {}),
+      ...(d.followUpAt !== undefined ? { followUpAt: d.followUpAt ? toDate(d.followUpAt) : null } : {}),
       ...(d.propertySlug !== undefined ? { propertySlug: d.propertySlug || null } : {}),
     },
   });

@@ -318,10 +318,12 @@ model Lead {
   source       String     @default("WEB") // WEB | PHONE | EMAIL | REFERRAL | OTHER
   status       LeadStatus @default(NEW)
   message      String?    // their original inquiry
-  notes        String?    // running internal notes
-  checkIn      DateTime?
+  notes        String?    // legacy single note (kept for old rows)
+  noteLog      String     @default("[]") // JSON array of { at, text } timestamped notes
+  checkIn      DateTime?  // dates they're interested in
   checkOut     DateTime?
   guests       Int?
+  followUpAt   DateTime?  // when to chase them next
   userId       String?    // linked account, once they sign up with this email
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -329,6 +331,7 @@ model Lead {
   @@index([status, createdAt])
   @@index([propertySlug])
   @@index([email])
+  @@index([followUpAt])
 }
 
 // First-party demand analytics: a property page view or a date-range quote.

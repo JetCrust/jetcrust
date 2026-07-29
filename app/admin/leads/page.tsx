@@ -19,12 +19,19 @@ export default async function AdminLeads() {
     prisma.booking.count({ where: { status: "REQUESTED", ...(slugs ? { propertySlug: { in: slugs } } : {}) } }),
   ]);
 
-  const leads: Lead[] = rows.map((l) => ({
-    id: l.id, name: l.name, email: l.email, phone: l.phone, propertySlug: l.propertySlug,
-    source: l.source, status: l.status, message: l.message, notes: l.notes, guests: l.guests,
-    checkIn: l.checkIn?.toISOString() || null, checkOut: l.checkOut?.toISOString() || null,
-    userId: l.userId, createdAt: l.createdAt.toISOString(),
-  }));
+  const leads: Lead[] = rows.map((l) => {
+    let noteLog: { at: string; text: string }[] = [];
+    try { noteLog = JSON.parse(l.noteLog || "[]"); } catch { noteLog = []; }
+    // Fold any legacy single note in as the first log entry.
+    if (l.notes && l.notes.trim() && noteLog.length === 0) noteLog = [{ at: l.createdAt.toISOString(), text: l.notes.trim() }];
+    return {
+      id: l.id, name: l.name, email: l.email, phone: l.phone, propertySlug: l.propertySlug,
+      source: l.source, status: l.status, message: l.message, guests: l.guests,
+      checkIn: l.checkIn?.toISOString() || null, checkOut: l.checkOut?.toISOString() || null,
+      followUpAt: l.followUpAt?.toISOString() || null, noteLog,
+      userId: l.userId, createdAt: l.createdAt.toISOString(),
+    };
+  });
   const propList = props.filter((p) => (slugs ? slugs.includes(p.slug) : true)).map((p) => ({ slug: p.slug, name: p.name }));
 
   const open = leads.filter((l) => l.status !== "WON" && l.status !== "LOST").length;

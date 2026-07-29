@@ -6,23 +6,30 @@ import { useRouter } from "next/navigation";
 export type Lead = {
   id: string; name: string; email?: string | null; phone?: string | null;
   propertySlug?: string | null; source: string; status: string;
-  message?: string | null; notes?: string | null; guests?: number | null;
-  checkIn?: string | null; checkOut?: string | null; userId?: string | null; createdAt: string;
+  message?: string | null; guests?: number | null;
+  checkIn?: string | null; checkOut?: string | null;
+  followUpAt?: string | null; noteLog?: { at: string; text: string }[];
+  userId?: string | null; createdAt: string;
 };
 type Prop = { slug: string; name: string };
 
 const STATUSES = ["NEW", "CONTACTED", "QUOTED", "WON", "LOST"] as const;
+const SOURCES = ["PHONE", "WHATSAPP", "EMAIL", "INSTAGRAM", "FACEBOOK", "WEB", "REFERRAL", "OTHER"] as const;
 const LABEL: Record<string, string> = { NEW: "New", CONTACTED: "Contacted", QUOTED: "Quoted", WON: "Won", LOST: "Lost" };
 const COLOR: Record<string, string> = { NEW: "#a3412e", CONTACTED: "#9a7b3f", QUOTED: "#3a6ea5", WON: "#253026", LOST: "#8a8375" };
 const fmt = (s?: string | null) => (s ? new Date(s).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "");
+const fmtFull = (s?: string | null) => (s ? new Date(s).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
+const todayIso = () => new Date().toISOString().slice(0, 10);
 
 function LeadCard({ lead, properties }: { lead: Lead; properties: Prop[] }) {
   const router = useRouter();
   const [status, setStatus] = useState(lead.status);
-  const [notes, setNotes] = useState(lead.notes || "");
-  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [followUp, setFollowUp] = useState(lead.followUpAt ? lead.followUpAt.slice(0, 10) : "");
   const [busy, setBusy] = useState(false);
   const nameOf = (s?: string | null) => properties.find((p) => p.slug === s)?.name || s || "Any / unsure";
+  const log = lead.noteLog || [];
+  const overdue = lead.followUpAt && lead.followUpAt.slice(0, 10) <= todayIso() && status !== "WON" && status !== "LOST";
 
   async function patch(body: Record<string, unknown>) {
     setBusy(true);
@@ -40,33 +47,47 @@ function LeadCard({ lead, properties }: { lead: Lead; properties: Prop[] }) {
       </div>
       <p className="panel__hint" style={{ margin: "0.3rem 0 0.4rem" }}>
         {nameOf(lead.propertySlug)} · <span className="tag" style={{ fontSize: "0.66rem" }}>{lead.source}</span>
-        {lead.checkIn && <> · {fmt(lead.checkIn)}{lead.checkOut ? `–${fmt(lead.checkOut)}` : ""}</>}
+        {lead.checkIn && <> · wants {fmt(lead.checkIn)}{lead.checkOut ? `–${fmt(lead.checkOut)}` : ""}</>}
         {lead.guests ? ` · ${lead.guests} guests` : ""} · in {fmt(lead.createdAt)}
       </p>
       <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
         {lead.email && <a className="textlink" href={`mailto:${lead.email}`}>{lead.email}</a>}
         {lead.email && lead.phone ? " · " : ""}
-        {lead.phone && <a className="textlink" href={`tel:${lead.phone}`}>{lead.phone}</a>}
+        {lead.phone && <a className="textlink" href={`tel:${lead.phone.replace(/\s/g, "")}`}>{lead.phone}</a>}
       </p>
-      {lead.message && <p style={{ margin: "0 0 0.4rem", color: "var(--ink-soft)", fontSize: "0.88rem" }}>&ldquo;{lead.message}&rdquo;</p>}
-      {open ? (
-        <div>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Notes — calls, quotes, follow-ups…" style={{ width: "100%", padding: "0.6rem", border: "1px solid var(--line)", borderRadius: 8, fontSize: "0.85rem" }} />
-          <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.4rem" }}>
-            <button className="btn btn--dark" style={{ padding: "0.4rem 0.9rem" }} disabled={busy} onClick={() => patch({ notes })}>Save notes</button>
-            <button className="btn btn--ghost" style={{ padding: "0.4rem 0.9rem" }} onClick={() => setOpen(false)}>Close</button>
-          </div>
-        </div>
-      ) : (
-        <button className="textlink" style={{ background: "none", border: 0, cursor: "pointer", padding: 0, fontSize: "0.82rem" }} onClick={() => setOpen(true)}>{notes ? "Notes ▾" : "Add notes"}</button>
+      {lead.message && <p style={{ margin: "0 0 0.5rem", color: "var(--ink-soft)", fontSize: "0.88rem" }}>&ldquo;{lead.message}&rdquo;</p>}
+
+      {/* Timestamped note log */}
+      {log.length > 0 && (
+        <ul style={{ listStyle: "none", padding: 0, margin: "0 0 0.5rem", borderLeft: "2px solid var(--line)", paddingLeft: "0.7rem" }}>
+          {log.map((n, i) => (
+            <li key={i} style={{ marginBottom: "0.4rem", fontSize: "0.85rem" }}>
+              <span style={{ color: "var(--stone)", fontSize: "0.72rem", display: "block" }}>{new Date(n.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+              {n.text}
+            </li>
+          ))}
+        </ul>
       )}
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.6rem" }}>
+        <input value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && note.trim()) { patch({ addNote: note }); setNote(""); } }}
+          placeholder="Add a note (saved with a timestamp)…" style={{ flex: 1, padding: "0.5rem 0.7rem", border: "1px solid var(--line)", borderRadius: 8, fontSize: "0.85rem" }} />
+        <button className="btn btn--ghost" style={{ padding: "0.4rem 0.9rem", flex: "0 0 auto" }} disabled={busy || !note.trim()} onClick={() => { patch({ addNote: note }); setNote(""); }}>Add note</button>
+      </div>
+
+      {/* Follow-up date */}
+      <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap", fontSize: "0.82rem" }}>
+        <span style={{ color: overdue ? "#a3412e" : "var(--stone)", fontWeight: overdue ? 600 : 400 }}>{overdue ? "⚠ Follow up due" : "Follow up"}</span>
+        <input type="date" value={followUp} onChange={(e) => { setFollowUp(e.target.value); patch({ followUpAt: e.target.value }); }} style={{ padding: "0.3rem 0.5rem", border: "1px solid var(--line)", borderRadius: 6, fontSize: "0.8rem" }} />
+        {followUp && <button className="textlink" style={{ background: "none", border: 0, cursor: "pointer", color: "#a3412e", fontSize: "0.78rem" }} onClick={() => { setFollowUp(""); patch({ followUpAt: null }); }}>clear</button>}
+      </div>
     </div>
   );
 }
 
 export default function LeadBoard({ leads, properties }: { leads: Lead[]; properties: Prop[] }) {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", phone: "", propertySlug: "", source: "PHONE", message: "" });
+  const blank = { name: "", email: "", phone: "", propertySlug: "", source: "PHONE", message: "", checkIn: "", checkOut: "", followUpAt: "" };
+  const [form, setForm] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const set = (patch: Partial<typeof form>) => setForm((s) => ({ ...s, ...patch }));
@@ -76,7 +97,7 @@ export default function LeadBoard({ leads, properties }: { leads: Lead[]; proper
     setBusy(true); setMsg(null);
     const res = await fetch("/api/admin/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     setBusy(false);
-    if (res.ok) { setForm({ name: "", email: "", phone: "", propertySlug: "", source: "PHONE", message: "" }); setMsg("Added."); router.refresh(); }
+    if (res.ok) { setForm(blank); setMsg("Added."); router.refresh(); }
     else setMsg("Could not add.");
   }
 
@@ -84,22 +105,25 @@ export default function LeadBoard({ leads, properties }: { leads: Lead[]; proper
     <div>
       <div className="panel" style={{ marginBottom: "1.6rem" }}>
         <div className="panel__head"><h3>Log a lead</h3></div>
-        <p className="panel__hint" style={{ marginTop: 0 }}>Someone called or emailed? Capture them here so they don&rsquo;t slip.</p>
+        <p className="panel__hint" style={{ marginTop: 0 }}>Someone called, messaged or emailed? Capture them here so they don&rsquo;t slip.</p>
         <div className="ef">
           <div><label>Name</label><input value={form.name} onChange={(e) => set({ name: e.target.value })} /></div>
           <div><label>Email</label><input value={form.email} onChange={(e) => set({ email: e.target.value })} placeholder="links to their account if they sign up" /></div>
-          <div><label>Phone</label><input value={form.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
+          <div><label>Phone (with country code)</label><input value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="+40 770 000 000" /></div>
+          <div><label>Source</label>
+            <select value={form.source} onChange={(e) => set({ source: e.target.value })}>
+              {SOURCES.map((s) => <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>)}
+            </select>
+          </div>
           <div><label>Property</label>
             <select value={form.propertySlug} onChange={(e) => set({ propertySlug: e.target.value })}>
               <option value="">Any / unsure</option>
               {properties.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}
             </select>
           </div>
-          <div><label>Source</label>
-            <select value={form.source} onChange={(e) => set({ source: e.target.value })}>
-              {["PHONE", "EMAIL", "WEB", "REFERRAL", "OTHER"].map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
+          <div><label>Guests interested from</label><input type="date" value={form.checkIn} onChange={(e) => set({ checkIn: e.target.value })} /></div>
+          <div><label>to</label><input type="date" value={form.checkOut} onChange={(e) => set({ checkOut: e.target.value })} /></div>
+          <div><label>Follow up on</label><input type="date" value={form.followUpAt} onChange={(e) => set({ followUpAt: e.target.value })} /></div>
           <div className="full"><label>What they want</label><input value={form.message} onChange={(e) => set({ message: e.target.value })} placeholder="dates, occasion, questions…" /></div>
         </div>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginTop: "0.7rem" }}>
