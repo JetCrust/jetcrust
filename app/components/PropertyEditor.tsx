@@ -1,7 +1,7 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { uploadPhoto } from "./photoUpload";
+import GalleryEditor from "./GalleryEditor";
 
 /* Minimal shapes for the fields the editor touches. The full object is passed
    through untouched, so advanced fields (features, amenities, etc.) are preserved. */
@@ -69,23 +69,6 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
   const setCosts = (patch: Partial<NonNullable<PropObj["costs"]>>) =>
     setO((s) => ({ ...s, costs: { monthly_overhead_eur: 0, cleaning_per_stay_eur: 0, variable_per_night_eur: 0, ...s.costs, ...patch } }));
 
-  const galFileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  async function uploadGallery(list: FileList | null) {
-    if (!list?.length) return;
-    setUploading(true);
-    const added: string[] = [];
-    for (const f of Array.from(list)) {
-      const url = await uploadPhoto(f);
-      if (url) added.push(`${url} | `);
-    }
-    setUploading(false);
-    if (added.length) {
-      const cur = (o.gallery?.images || []).map((g) => `${g.file} | ${g.caption}`).join("\n");
-      setGalleryText((cur ? cur + "\n" : "") + added.join("\n"));
-    }
-    if (galFileRef.current) galFileRef.current.value = "";
-  }
   const setSeo = (patch: Partial<PropObj["seo"]>) => setO((s) => ({ ...s, seo: { ...s.seo, ...patch } }));
   const setCard = (patch: Partial<NonNullable<PropObj["card"]>>) => setO((s) => ({ ...s, card: { image: "", desc: "", tags: [], ...s.card, ...patch } }));
 
@@ -337,15 +320,16 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div className="full"><label>Card description</label><textarea value={o.card?.desc || ""} onChange={(e) => setCard({ desc: e.target.value })} /></div>
           <div className="full"><label>Card tags (comma separated)</label><input value={(o.card?.tags || []).join(", ")} onChange={(e) => setCard({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} /></div>
           <div className="full">
-            <label>Gallery images (one per line: file | caption | area)</label>
-            <textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} placeholder={"castelaria-01 | The great hall | Living\ncastelaria-07 | Master suite | Bedroom 1\ncastelaria-12 | Marble pool | Pool\ncastelaria-plan | Ground floor | Floor plan"} style={{ minHeight: 140 }} />
-            <input ref={galFileRef} type="file" accept="image/*" multiple hidden onChange={(e) => uploadGallery(e.target.files)} />
-            <button type="button" className="btn btn--ghost" style={{ marginTop: "0.5rem" }} disabled={uploading} onClick={() => galFileRef.current?.click()}>{uploading ? "Uploading…" : "＋ Upload photos"}</button>
+            <label>Gallery photos</label>
+            <GalleryEditor
+              images={(o.gallery?.images || []) as { file: string; caption: string; area?: string }[]}
+              imgKey={o.img_key}
+              onChange={(images) => setO((s) => ({ ...s, gallery: { max: s.gallery?.max || 24, images } }))}
+            />
           </div>
           <div className="full"><label>Story heading</label><input value={o.story_heading || ""} onChange={(e) => set({ story_heading: e.target.value })} /></div>
           <div className="full"><label>Story (one paragraph per line)</label><textarea value={(o.story || []).join("\n")} onChange={(e) => set({ story: e.target.value.split("\n").filter((l) => l.trim()) })} style={{ minHeight: 120 }} /></div>
         </div>
-        <p className="panel__hint" style={{ marginBottom: 0 }}>Upload photos above (compressed on the device, stored on your hosting) or reference existing file names. Uploaded photos appear as full links in the list; add a caption after the “|”.</p>
       </div>
 
       {/* Calendar import */}
