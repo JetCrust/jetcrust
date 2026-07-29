@@ -82,10 +82,13 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
                   <li><span>Stays &amp; add-ons</span><span>{money(t.stayCents)}</span></li>
                   <li><span>Extras (bar, services)</span><span>{money(t.extrasCents)}</span></li>
                   <li><span>Deposit captures (damage)</span><span>{money(t.depositCents)}</span></li>
+                  {t.otaCents > 0 && <li><span>OTA payouts (Airbnb, Booking…)</span><span>{money(t.otaCents)}</span></li>}
                   <li><span>Gross income</span><span>{money(t.grossCents)}</span></li>
                   <li><span>Refunds</span><span>−{money(t.refundsCents)}</span></li>
                   <li style={{ fontWeight: 600 }}><span>Net income</span><span>{money(t.netIncomeCents)}</span></li>
-                  <li><span>Costs</span><span>−{money(t.costsCents)}</span></li>
+                  {t.overheadCents > 0 && <li><span>Fixed overhead (prorated)</span><span>−{money(t.overheadCents)}</span></li>}
+                  {t.variableCents > 0 && <li><span>Running &amp; cleaning costs</span><span>−{money(t.variableCents)}</span></li>}
+                  <li><span>Costs {(t.overheadCents > 0 || t.variableCents > 0) ? "(total)" : ""}</span><span>−{money(t.costsCents)}</span></li>
                   <li><span>Commissions</span><span>−{money(t.commissionCents)}</span></li>
                   <li style={{ fontWeight: 700, color: "var(--brass)" }}><span>Profit (P&amp;L)</span><span>{signed(t.plCents)}</span></li>
                 </ul>

@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import type { Booking, Expense } from "@prisma/client";
+import { getProperties } from "./properties";
 
 // One line item on a booking's extras ledger (bar bottles, late checkout, a
 // breakage the guest agreed to pay, etc.). Stored as JSON on Booking.extras.
@@ -61,7 +62,9 @@ export type PLTotals = {
   grossCents: number;
   refundsCents: number;
   netIncomeCents: number;   // gross − refunds
-  costsCents: number;       // non-commission expenses
+  overheadCents: number;    // fixed per-property monthly overhead, prorated to the range
+  variableCents: number;    // per-stay + per-night running costs (cleaning, heating…)
+  costsCents: number;       // all non-commission costs (logged expenses + overhead + variable)
   commissionCents: number;  // commission expenses
   expensesCents: number;    // costs + commission
   plCents: number;          // net income − costs − commission
@@ -79,7 +82,7 @@ export type PLReport = {
 function emptyTotals(): PLTotals {
   return {
     bookings: 0, stayCents: 0, extrasCents: 0, depositCents: 0, otaCents: 0, grossCents: 0,
-    refundsCents: 0, netIncomeCents: 0, costsCents: 0, commissionCents: 0,
+    refundsCents: 0, netIncomeCents: 0, overheadCents: 0, variableCents: 0, costsCents: 0, commissionCents: 0,
     expensesCents: 0, plCents: 0,
   };
 }
@@ -107,6 +110,12 @@ function addOta(t: PLTotals, o: { netCents: number }) {
   t.grossCents += o.netCents;
   t.netIncomeCents += o.netCents;
 }
+
+const DAY = 86400000;
+const nightsOf = (a: Date, b: Date) => Math.max(0, Math.round((b.getTime() - a.getTime()) / DAY));
+
+function addOverhead(t: PLTotals, cents: number) { t.overheadCents += cents; t.costsCents += cents; }
+function addVariable(t: PLTotals, cents: number) { t.variableCents += cents; t.costsCents += cents; }
 
 function finalize(t: PLTotals) {
   t.expensesCents = t.costsCents + t.commissionCents;
@@ -137,8 +146,9 @@ export async function buildPL(start: Date, end: Date, propertySlug?: string): Pr
       ...(propertySlug ? { propertySlug } : {}),
     },
   });
-  const props = await prisma.property.findMany({ select: { slug: true, name: true } });
+  const props = await getProperties(true);
   const nameOf = new Map(props.map((p) => [p.slug, p.name]));
+  const costOf = new Map(props.map((p) => [p.slug, p.costs]));
 
   const totals = emptyTotals();
   const groups = new Map<string, PLTotals>();
@@ -159,6 +169,33 @@ export async function buildPL(start: Date, end: Date, propertySlug?: string): Pr
   for (const o of otaBookings) {
     addOta(totals, o);
     addOta(groupFor(o.propertySlug), o);
+  }
+
+  // Variable running costs per stay (cleaning once + a per-night amount for
+  // utilities/heating), for both direct and OTA bookings.
+  const variableFor = (slug: string, ci: Date, co: Date) => {
+    const c = costOf.get(slug);
+    if (!c) return 0;
+    return Math.round((c.cleaning_per_stay_eur + c.variable_per_night_eur * nightsOf(ci, co)) * 100);
+  };
+  for (const b of bookings) {
+    const v = variableFor(b.propertySlug, b.checkIn, b.checkOut);
+    if (v) { addVariable(totals, v); addVariable(groupFor(b.propertySlug), v); }
+  }
+  for (const o of otaBookings) {
+    const v = variableFor(o.propertySlug, o.checkIn, o.checkOut);
+    if (v) { addVariable(totals, v); addVariable(groupFor(o.propertySlug), v); }
+  }
+
+  // Fixed monthly overhead you pay regardless (mortgage, insurance, base
+  // utilities, staff), prorated across the report's date span, for live homes.
+  const rangeDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / DAY) + 1);
+  const monthFactor = rangeDays / 30.44; // average days per month
+  for (const p of props) {
+    if (p.status !== "live") continue;
+    if (propertySlug && p.slug !== propertySlug) continue;
+    const overhead = Math.round((p.costs.monthly_overhead_eur || 0) * 100 * monthFactor);
+    if (overhead) { addOverhead(totals, overhead); addOverhead(groupFor(p.slug), overhead); }
   }
 
   const byProperty: PLByProperty[] = [...groups.entries()]

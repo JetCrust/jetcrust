@@ -34,6 +34,7 @@ type PropObj = {
   timezone?: string;
   guest_info?: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
   google_review_url?: string;
+  costs?: { monthly_overhead_eur: number; cleaning_per_stay_eur: number; variable_per_night_eur: number };
   story_heading?: string;
   story?: string[];
   gallery?: { max: number; images: { file: string; caption: string }[] };
@@ -63,6 +64,8 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
   const setHours = (patch: Partial<PropObj["hours"]>) => setO((s) => ({ ...s, hours: { ...s.hours, ...patch } }));
   const setGuestInfo = (patch: Partial<NonNullable<PropObj["guest_info"]>>) =>
     setO((s) => ({ ...s, guest_info: { house_rules: "", checkin_instructions: "", wifi: "", guidebook: "", ...s.guest_info, ...patch } }));
+  const setCosts = (patch: Partial<NonNullable<PropObj["costs"]>>) =>
+    setO((s) => ({ ...s, costs: { monthly_overhead_eur: 0, cleaning_per_stay_eur: 0, variable_per_night_eur: 0, ...s.costs, ...patch } }));
 
   const galFileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -266,6 +269,21 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div className="full"><label>Digital guidebook (recommendations)</label><textarea value={o.guest_info?.guidebook || ""} onChange={(e) => setGuestInfo({ guidebook: e.target.value })} placeholder="Restaurants, sights, transport, appliance tips, emergency contacts…" style={{ minHeight: 120 }} /></div>
           <div className="full"><label>Google review link</label><input value={o.google_review_url || ""} onChange={(e) => set({ google_review_url: e.target.value })} placeholder="https://g.page/r/…/review  (from Google Business → Ask for reviews)" /><p className="panel__hint" style={{ margin: "0.25rem 0 0" }}>After a guest leaves us feedback, we invite them to share it on Google using this link.</p></div>
         </div>
+      </div>
+
+      {/* Costs & overhead */}
+      <div className="panel">
+        <div className="panel__head"><h3>Costs & overhead</h3></div>
+        <p className="panel__hint">What this home costs you, so the P&amp;L shows true profit and your prices stay above cost. These feed Finance automatically.</p>
+        <div className="ef">
+          <div><label>Fixed overhead (€ / month)</label><input type="number" value={o.costs?.monthly_overhead_eur || 0} onChange={(e) => setCosts({ monthly_overhead_eur: num(e.target.value) })} placeholder="mortgage, insurance, base utilities, staff" /></div>
+          <div><label>Cleaning (€ / stay)</label><input type="number" value={o.costs?.cleaning_per_stay_eur || 0} onChange={(e) => setCosts({ cleaning_per_stay_eur: num(e.target.value) })} /></div>
+          <div><label>Running cost (€ / night)</label><input type="number" value={o.costs?.variable_per_night_eur || 0} onChange={(e) => setCosts({ variable_per_night_eur: num(e.target.value) })} placeholder="heating, pool/jacuzzi, utilities" /></div>
+        </div>
+        <p className="panel__hint" style={{ marginBottom: 0 }}>
+          Break-even guide: every occupied night costs about <strong>€{(o.costs?.variable_per_night_eur || 0).toLocaleString("en-US")}</strong> to run
+          (plus €{(o.costs?.cleaning_per_stay_eur || 0).toLocaleString("en-US")} cleaning per stay), on top of €{(o.costs?.monthly_overhead_eur || 0).toLocaleString("en-US")}/month you pay regardless. Keep your nightly floor comfortably above the running cost.
+        </p>
       </div>
 
       {/* Add-ons */}
