@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AppHeader from "../../../components/AppHeader";
 import ConsoleNav from "../../../components/ConsoleNav";
-import SyncIcalButton from "../../../components/SyncIcalButton";
+import IcalConnect from "../../../components/IcalConnect";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
@@ -62,19 +62,14 @@ export default async function CalendarSync() {
 
               <div className="panel" style={{ marginBottom: "1.6rem" }}>
                 <div className="panel__head"><h3>Incoming — OTA calendars we pull in</h3></div>
-                <p className="panel__hint">Add each listing&rsquo;s iCal link (Airbnb, Booking.com, VRBO) under the home in <a className="textlink" href="/admin/properties">Properties &amp; pricing</a> so their bookings block your dates. This is what makes it block back.</p>
-                <ul className="kv">
-                  {properties.map((p) => {
-                    const urls = Array.isArray(p.ical_urls) ? (p.ical_urls as string[]) : [];
-                    return (
-                      <li key={p.slug}>
-                        <span>{p.name}</span>
-                        <span style={{ color: urls.length ? "var(--forest)" : "#a3412e" }}>{urls.length ? `${urls.length} calendar${urls.length === 1 ? "" : "s"} connected` : "None connected — OTA bookings won't block yet"}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div style={{ marginTop: "1.2rem" }}><SyncIcalButton /></div>
+                <p className="panel__hint">Paste each listing&rsquo;s iCal link (Airbnb, Booking.com, VRBO) under its home and press Connect. Their bookings then block your dates here. You can add as many channels as you like per home.</p>
+                <IcalConnect
+                  properties={properties.map((p) => ({
+                    slug: p.slug,
+                    name: p.name,
+                    urls: Array.isArray(p.ical_urls) ? (p.ical_urls as string[]) : [],
+                  }))}
+                />
               </div>
 
               <div className="panel">
