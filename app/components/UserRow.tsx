@@ -20,7 +20,7 @@ export default function UserRow({ userId, email, name, role, managedSlugs, prope
     setBusy(true); setMsg(null);
     const res = await fetch("/api/admin/users", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, role: r, managedSlugs: r === "MANAGER" ? slugs : [] }),
+      body: JSON.stringify({ userId, role: r, managedSlugs: (r === "MANAGER" || r === "STAFF") ? slugs : [] }),
     });
     setBusy(false);
     const d = await res.json().catch(() => ({}));
@@ -47,10 +47,11 @@ export default function UserRow({ userId, email, name, role, managedSlugs, prope
       </div>
       <select className="cal-select" value={r} onChange={(e) => setR(e.target.value)} disabled={isSelf}>
         <option value="GUEST">Guest</option>
+        <option value="STAFF">Staff (tasks only)</option>
         <option value="MANAGER">Property Manager</option>
         <option value="ADMIN">Super Admin</option>
       </select>
-      {r === "MANAGER" && (
+      {(r === "MANAGER" || r === "STAFF") && (
         <div className="urow__props">
           {properties.map((p) => (
             <label key={p.slug} className={`chip${slugs.includes(p.slug) ? " is-on" : ""}`} style={{ cursor: "pointer" }}>

@@ -28,10 +28,12 @@ const LINKS: { href: string; label: string; exact?: boolean; manager?: boolean; 
 
 export default function ConsoleNav({ pendingCount = 0, role = "ADMIN" }: { pendingCount?: number; role?: string }) {
   const pathname = usePathname();
-  const links = role === "MANAGER" ? LINKS.filter((l) => l.manager) : LINKS;
+  const links = role === "STAFF"
+    ? LINKS.filter((l) => l.href === "/admin/tasks")
+    : role === "MANAGER" ? LINKS.filter((l) => l.manager) : LINKS;
   return (
     <nav className="console__nav" aria-label="Admin">
-      <span className="console__label">{role === "MANAGER" ? "Property manager" : "Manage"}</span>
+      <span className="console__label">{role === "STAFF" ? "Team" : role === "MANAGER" ? "Property manager" : "Manage"}</span>
       {links.map((l) => {
         const active = l.exact ? pathname === l.href : pathname.startsWith(l.href);
         return (

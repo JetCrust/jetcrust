@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
   userId: z.string(),
-  role: z.enum(["GUEST", "MANAGER", "ADMIN"]).optional(),
+  role: z.enum(["GUEST", "STAFF", "MANAGER", "ADMIN"]).optional(),
   managedSlugs: z.array(z.string()).optional(),
   resetPassword: z.boolean().optional(),
 });
@@ -15,7 +15,7 @@ const schema = z.object({
 const createSchema = z.object({
   email: z.string().email(),
   name: z.string().max(120).optional(),
-  role: z.enum(["MANAGER", "ADMIN"]).default("MANAGER"),
+  role: z.enum(["STAFF", "MANAGER", "ADMIN"]).default("MANAGER"),
   managedSlugs: z.array(z.string()).default([]),
 });
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   if (existing) return NextResponse.json({ error: "Someone already has that email. Change their role in the list instead." }, { status: 409 });
   const tempPassword = "jc-" + randomBytes(4).toString("hex");
   await prisma.user.create({
-    data: { email, name: d.name?.trim() || null, role: d.role, managedSlugs: d.role === "MANAGER" ? d.managedSlugs : [], passwordHash: await bcrypt.hash(tempPassword, 10) },
+    data: { email, name: d.name?.trim() || null, role: d.role, managedSlugs: (d.role === "MANAGER" || d.role === "STAFF") ? d.managedSlugs : [], passwordHash: await bcrypt.hash(tempPassword, 10) },
   });
   return NextResponse.json({ ok: true, tempPassword });
 }
@@ -62,11 +62,11 @@ export async function PATCH(req: Request) {
     if (admins <= 1) return NextResponse.json({ error: "There must be at least one Super Admin." }, { status: 400 });
   }
 
-  const data: { role?: "GUEST" | "MANAGER" | "ADMIN"; managedSlugs?: string[]; passwordHash?: string } = {};
+  const data: { role?: "GUEST" | "STAFF" | "MANAGER" | "ADMIN"; managedSlugs?: string[]; passwordHash?: string } = {};
   if (role) data.role = role;
   if (managedSlugs) data.managedSlugs = managedSlugs;
-  // A non-manager holds no property assignments.
-  if (role && role !== "MANAGER") data.managedSlugs = [];
+  // Only managers and staff hold property assignments.
+  if (role && role !== "MANAGER" && role !== "STAFF") data.managedSlugs = [];
 
   let tempPassword: string | undefined;
   if (resetPassword) {

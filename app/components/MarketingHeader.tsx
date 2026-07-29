@@ -7,7 +7,8 @@ export default async function MarketingHeader() {
   const session = await auth();
   const signedIn = !!session;
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const isStaff = role === "ADMIN" || role === "MANAGER";
+  const isStaff = role === "ADMIN" || role === "MANAGER" || role === "STAFF";
+  const consoleHref = role === "STAFF" ? "/admin/tasks" : "/admin";
   return (
     <header className="site-header" id="header">
       <div className="wrap nav">
@@ -25,7 +26,7 @@ export default async function MarketingHeader() {
           </ul>
         </nav>
         <div className="nav__right">
-          {isStaff && <Link className="nav__link" href="/admin">Console</Link>}
+          {isStaff && <Link className="nav__link" href={consoleHref}>Console</Link>}
           <Link className="nav__link" href="/account">{signedIn ? "My Account" : "Sign In"}</Link>
           <Link className="btn btn--brass nav__cta" href="/#collection">Book a Stay</Link>
           <button className="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">

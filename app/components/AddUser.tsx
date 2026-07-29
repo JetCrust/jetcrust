@@ -22,7 +22,7 @@ export default function AddUser({ properties }: { properties: Prop[] }) {
     setBusy(true); setError(null);
     const res = await fetch("/api/admin/users", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, name, role, managedSlugs: role === "MANAGER" ? slugs : [] }),
+      body: JSON.stringify({ email, name, role, managedSlugs: (role === "MANAGER" || role === "STAFF") ? slugs : [] }),
     });
     setBusy(false);
     const d = await res.json().catch(() => ({}));
@@ -51,11 +51,11 @@ export default function AddUser({ properties }: { properties: Prop[] }) {
           <div className="cal-form" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" /></label>
             <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" /></label>
-            <label>Role<select value={role} onChange={(e) => setRole(e.target.value)}><option value="MANAGER">Property Manager</option><option value="ADMIN">Super Admin</option></select></label>
+            <label>Role<select value={role} onChange={(e) => setRole(e.target.value)}><option value="STAFF">Staff (tasks only)</option><option value="MANAGER">Property Manager</option><option value="ADMIN">Super Admin</option></select></label>
           </div>
-          {role === "MANAGER" && (
+          {(role === "MANAGER" || role === "STAFF") && (
             <div style={{ margin: "0.2rem 0 0.6rem" }}>
-              <p className="panel__hint" style={{ marginTop: 0 }}>Properties they manage</p>
+              <p className="panel__hint" style={{ marginTop: 0 }}>{role === "STAFF" ? "Properties they work at" : "Properties they manage"}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {properties.map((p) => (
                   <label key={p.slug} className={`chip${slugs.includes(p.slug) ? " is-on" : ""}`} style={{ cursor: "pointer" }}>

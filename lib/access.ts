@@ -17,6 +17,23 @@ export async function staffScope(): Promise<StaffScope | null> {
   return null;
 }
 
+// Operations scope: like staffScope but also lets a STAFF worker in, limited to
+// their assigned properties. Used only by the tasks board — STAFF get no other
+// admin access. `isWorker` is true for STAFF (a read-mostly, mark-done view).
+export type OpsScope = StaffScope & { isWorker: boolean };
+
+export async function opsScope(): Promise<OpsScope | null> {
+  const session = await auth();
+  const u = session?.user as { id?: string; role?: string } | undefined;
+  if (!u?.id) return null;
+  if (u.role === "ADMIN") return { userId: u.id, isSuper: true, slugs: null, isWorker: false };
+  if (u.role === "MANAGER" || u.role === "STAFF") {
+    const dbUser = await prisma.user.findUnique({ where: { id: u.id }, select: { managedSlugs: true } });
+    return { userId: u.id, isSuper: false, slugs: dbUser?.managedSlugs ?? [], isWorker: u.role === "STAFF" };
+  }
+  return null;
+}
+
 // Prisma where-fragment that limits by property when the viewer is scoped.
 export function slugFilter(scope: StaffScope): { propertySlug?: { in: string[] } } {
   return scope.slugs ? { propertySlug: { in: scope.slugs } } : {};

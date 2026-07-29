@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { staffScope, canAccessProperty } from "@/lib/access";
+import { staffScope, opsScope, canAccessProperty } from "@/lib/access";
 
 const CATEGORIES = ["CLEANING", "MAINTENANCE", "INSPECTION", "RESTOCK", "OTHER"] as const;
 const STATUSES = ["OPEN", "IN_PROGRESS", "DONE"] as const;
@@ -44,7 +44,9 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const scope = await staffScope();
+  // Workers (STAFF) may update tasks too, but only status + notes on jobs at
+  // their property; managers/admins can change everything.
+  const scope = await opsScope();
   if (!scope) return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
@@ -52,14 +54,23 @@ export async function PATCH(req: Request) {
   const task = await prisma.task.findUnique({ where: { id: d.id } });
   if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
   if (!canAccessProperty(scope, task.propertySlug)) return NextResponse.json({ error: "Not your property." }, { status: 403 });
+  if (scope.isWorker && task.assignedToId && task.assignedToId !== scope.userId) {
+    return NextResponse.json({ error: "This task is assigned to someone else." }, { status: 403 });
+  }
 
   const data: Record<string, unknown> = {};
   if (d.status) { data.status = d.status; data.completedAt = d.status === "DONE" ? new Date() : null; }
-  if (d.assignedToId !== undefined) data.assignedToId = d.assignedToId || null;
-  if (d.title) data.title = d.title.trim();
-  if (d.category) data.category = d.category;
-  if (d.dueAt !== undefined) data.dueAt = d.dueAt ? new Date(d.dueAt) : null;
   if (d.notes !== undefined) data.notes = d.notes?.trim() || null;
+  // Reassignment and edits are for managers/admins only.
+  if (!scope.isWorker) {
+    if (d.assignedToId !== undefined) data.assignedToId = d.assignedToId || null;
+    if (d.title) data.title = d.title.trim();
+    if (d.category) data.category = d.category;
+    if (d.dueAt !== undefined) data.dueAt = d.dueAt ? new Date(d.dueAt) : null;
+  } else if (d.status === "IN_PROGRESS" && !task.assignedToId) {
+    // A worker starting an unassigned job claims it.
+    data.assignedToId = scope.userId;
+  }
   await prisma.task.update({ where: { id: d.id }, data });
   return NextResponse.json({ ok: true });
 }

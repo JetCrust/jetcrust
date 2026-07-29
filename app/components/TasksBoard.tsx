@@ -14,7 +14,7 @@ const COLUMNS: { key: string; label: string }[] = [
   { key: "DONE", label: "Done" },
 ];
 
-export default function TasksBoard({ tasks, properties, staff }: { tasks: Task[]; properties: Prop[]; staff: Staff[] }) {
+export default function TasksBoard({ tasks, properties, staff, isWorker = false }: { tasks: Task[]; properties: Prop[]; staff: Staff[]; isWorker?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [slug, setSlug] = useState(properties[0]?.slug || "");
@@ -53,7 +53,7 @@ export default function TasksBoard({ tasks, properties, staff }: { tasks: Task[]
 
   return (
     <div>
-      <div style={{ marginBottom: "1.2rem" }}>
+      <div style={{ marginBottom: "1.2rem", display: isWorker ? "none" : "block" }}>
         {open ? (
           <div className="panel" style={{ margin: 0 }}>
             <div className="panel__head"><h3>New task</h3></div>
@@ -87,11 +87,11 @@ export default function TasksBoard({ tasks, properties, staff }: { tasks: Task[]
                   <div key={t.id} className="task-card">
                     <div className="task-card__top">
                       <span className={`task-cat task-cat--${t.category.toLowerCase()}`}>{catLabel(t.category)}</span>
-                      <button className="task-x" onClick={() => remove(t.id)} title="Delete">×</button>
+                      {!isWorker && <button className="task-x" onClick={() => remove(t.id)} title="Delete">×</button>}
                     </div>
                     <p className="task-title">{t.title}</p>
                     <p className="task-meta">{propName(t.propertySlug)}{t.dueAt ? ` · due ${t.dueAt}${overdue ? " ⚠" : ""}` : ""}</p>
-                    <div className="task-row">
+                    <div className="task-row" style={{ display: isWorker ? "none" : undefined }}>
                       <select className="task-assign" value={t.assignedToId || ""} onChange={(e) => patch(t.id, { assignedToId: e.target.value })}>
                         <option value="">Unassigned</option>
                         {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}

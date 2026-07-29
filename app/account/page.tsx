@@ -54,14 +54,17 @@ export default async function AccountPage() {
             <div>
               {(() => {
                 const role = (session.user as { role?: string } | undefined)?.role;
-                if (role !== "ADMIN" && role !== "MANAGER") return null;
+                if (role !== "ADMIN" && role !== "MANAGER" && role !== "STAFF") return null;
+                const href = role === "STAFF" ? "/admin/tasks" : "/admin";
+                const who = role === "ADMIN" ? "You're an administrator." : role === "MANAGER" ? "You're a property manager." : "You're on the operations team.";
+                const what = role === "ADMIN" ? "the portfolio — bookings, calendar, guests" : role === "MANAGER" ? "your properties — bookings, calendar, guests" : "your tasks — cleaning, restocking, maintenance";
                 return (
                   <div className="panel" style={{ marginBottom: "1.4rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", borderLeft: "3px solid var(--forest, #253026)" }}>
                     <div>
-                      <strong>{role === "ADMIN" ? "You're an administrator." : "You're a property manager."}</strong>
-                      <p className="panel__hint" style={{ margin: "0.15rem 0 0" }}>This is your personal guest account. To manage {role === "ADMIN" ? "the portfolio" : "your properties"} — bookings, calendar, guests — open the console.</p>
+                      <strong>{who}</strong>
+                      <p className="panel__hint" style={{ margin: "0.15rem 0 0" }}>This is your personal guest account. To see {what}, open the console.</p>
                     </div>
-                    <Link className="btn btn--dark" href="/admin" style={{ flex: "0 0 auto" }}>Open the console →</Link>
+                    <Link className="btn btn--dark" href={href} style={{ flex: "0 0 auto" }}>{role === "STAFF" ? "Open my tasks →" : "Open the console →"}</Link>
                   </div>
                 );
               })()}
