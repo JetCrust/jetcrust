@@ -6,16 +6,15 @@ export const metadata: Metadata = {
   description: "How Jet Crust collects, uses and protects your personal data.",
 };
 
-const PH = ({ children }: { children: React.ReactNode }) => <span className="placeholder">{children}</span>;
 
 export default function Privacy() {
   return (
     <LegalLayout title="Privacy Policy" updated="18 July 2026">
       <p>
-        This Privacy Policy explains how <PH>[Company legal name]</PH>, trading as Jet Crust (&quot;we&quot;, &quot;us&quot;,
+        This Privacy Policy explains how Astoria Of AG SRL, trading as Jet Crust (&quot;we&quot;, &quot;us&quot;,
         &quot;our&quot;), collects, uses and protects your personal data when you use jetcrust.com and book a stay with us.
         We are the data controller. You can reach us at <a href="mailto:contact@jetcrust.com">contact@jetcrust.com</a> or
-        +40 770 111 555. Our registered address is <PH>[registered address]</PH> and our company number is <PH>[registration number]</PH>.
+        +40 770 111 555. Our registered address is Calea Bucurestilor Nr. 78, Parter, 075100 Otopeni, Romania.
       </p>
 
       <h2>The data we collect</h2>
@@ -70,7 +69,7 @@ export default function Privacy() {
 
       <h2>How long we keep it</h2>
       <p>
-        We keep your account data while your account is active. We keep booking and agreement records for <PH>[retention period, e.g. 5 years]</PH>{" "}
+        We keep your account data while your account is active. We keep booking and agreement records for as long as needed to provide our services, and financial records for 10 years as required by Romanian accounting law{" "}
         to meet legal, tax and accounting obligations, after which they are deleted or anonymised.
       </p>
 

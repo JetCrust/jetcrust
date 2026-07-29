@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   description: "Your data protection rights under the GDPR and how to exercise them with Jet Crust.",
 };
 
-const PH = ({ children }: { children: React.ReactNode }) => <span className="placeholder">{children}</span>;
 
 export default function Gdpr() {
   return (
@@ -19,9 +18,8 @@ export default function Gdpr() {
 
       <h2>Who is responsible</h2>
       <p>
-        The data controller is <PH>[Company legal name]</PH>, trading as Jet Crust, <PH>[registered address]</PH>, company
-        number <PH>[registration number]</PH>. Contact: <a href="mailto:contact@jetcrust.com">contact@jetcrust.com</a>.
-        <PH>[If you appoint a Data Protection Officer, add their contact here.]</PH>
+        The data controller is Astoria Of AG SRL, trading as Jet Crust, Calea Bucurestilor Nr. 78, Parter, 075100 Otopeni, Romania.
+        Contact: <a href="mailto:contact@jetcrust.com">contact@jetcrust.com</a>.
       </p>
 
       <h2>The legal bases we rely on</h2>
@@ -58,7 +56,7 @@ export default function Gdpr() {
 
       <h2>How long we keep your data</h2>
       <p>
-        We keep account data while your account is active, and booking and agreement records for <PH>[retention period]</PH> to
+        We keep account data while your account is active, and booking and agreement records for as long as needed to provide our services, and financial records for 10 years as required by Romanian accounting law to
         meet legal and tax obligations, after which they are deleted or anonymised.
       </p>
 

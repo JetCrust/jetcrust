@@ -6,13 +6,12 @@ export const metadata: Metadata = {
   description: "The terms that govern the use of Jet Crust and bookings made through it.",
 };
 
-const PH = ({ children }: { children: React.ReactNode }) => <span className="placeholder">{children}</span>;
 
 export default function Terms() {
   return (
     <LegalLayout title="Terms & Conditions" updated="18 July 2026">
       <p>
-        These terms govern your use of jetcrust.com and any booking you make through it with <PH>[Company legal name]</PH>,
+        These terms govern your use of jetcrust.com and any booking you make through it with Astoria Of AG SRL,
         trading as Jet Crust. By using the site or requesting a booking, you agree to these terms. Each stay is also subject to
         the rental agreement you accept at the time of booking; if the two differ, the rental agreement applies to that stay.
       </p>
@@ -29,7 +28,7 @@ export default function Terms() {
       <h2>3. Prices</h2>
       <p>Prices are shown per stay for the dates you select and are quoted in euros. Nightly rates vary by season, by weekend,
         and by demand, and the total for your dates is shown before you book. Any applicable taxes, tourist fees, cleaning or
-        add-on charges are <PH>[described here / added at checkout]</PH>.</p>
+        add-on charges are shown to you at checkout before you pay.</p>
 
       <h2>4. Payment, holds and charges</h2>
       <p>When you request a booking, your card is authorized (a hold is placed) for the total shown, through our payment
@@ -39,8 +38,8 @@ export default function Terms() {
 
       <h2>5. Cancellations and changes</h2>
       <p>You may cancel a pending request at any time from your account, which releases the hold. For confirmed bookings, our
-        cancellation policy is: <PH>[state your cancellation terms, e.g. free cancellation up to 30 days before arrival; the
-        stay is non-refundable within 30 days]</PH>. In cases of force majeure we will work with you in good faith to reschedule
+        cancellation policy is: free cancellation up to 30 days before arrival, a 50% refund from 14 to 29 days before arrival, and
+        non-refundable within 14 days of arrival. In cases of force majeure we will work with you in good faith to reschedule
         or refund where appropriate.</p>
 
       <h2>6. Your stay</h2>
@@ -69,8 +68,7 @@ export default function Terms() {
       <p>We handle your data as described in our <a href="/privacy">Privacy Policy</a>.</p>
 
       <h2>11. Governing law</h2>
-      <p>These terms are governed by the laws of Romania, and disputes are subject to the courts of <PH>[jurisdiction, e.g.
-        Bucharest]</PH>, without affecting any consumer rights you have under mandatory law.</p>
+      <p>These terms are governed by the laws of Romania, and disputes are subject to the competent courts of Bucharest, Romania, without affecting any consumer rights you have under mandatory law.</p>
 
       <h2>12. Changes and contact</h2>
       <p>We may update these terms and will post the new version here. Questions: <a href="mailto:contact@jetcrust.com">contact@jetcrust.com</a>.</p>
