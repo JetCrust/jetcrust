@@ -57,6 +57,7 @@ export type PLTotals = {
   stayCents: number;
   extrasCents: number;
   depositCents: number;
+  otaCents: number;         // OTA (Airbnb/Booking/VRBO) net payouts logged by hand
   grossCents: number;
   refundsCents: number;
   netIncomeCents: number;   // gross − refunds
@@ -77,7 +78,7 @@ export type PLReport = {
 
 function emptyTotals(): PLTotals {
   return {
-    bookings: 0, stayCents: 0, extrasCents: 0, depositCents: 0, grossCents: 0,
+    bookings: 0, stayCents: 0, extrasCents: 0, depositCents: 0, otaCents: 0, grossCents: 0,
     refundsCents: 0, netIncomeCents: 0, costsCents: 0, commissionCents: 0,
     expensesCents: 0, plCents: 0,
   };
@@ -97,6 +98,14 @@ function addBooking(t: PLTotals, b: Booking) {
 function addExpense(t: PLTotals, e: Expense) {
   if (e.category === COMMISSION) t.commissionCents += e.amountCents;
   else t.costsCents += e.amountCents;
+}
+
+// An OTA reservation's net payout counts as income (recognised on check-in).
+function addOta(t: PLTotals, o: { netCents: number }) {
+  t.bookings += 1;
+  t.otaCents += o.netCents;
+  t.grossCents += o.netCents;
+  t.netIncomeCents += o.netCents;
 }
 
 function finalize(t: PLTotals) {
@@ -122,6 +131,12 @@ export async function buildPL(start: Date, end: Date, propertySlug?: string): Pr
       ...(propertySlug ? { propertySlug } : {}),
     },
   });
+  const otaBookings = await prisma.otaBooking.findMany({
+    where: {
+      checkIn: { gte: start, lte: end },
+      ...(propertySlug ? { propertySlug } : {}),
+    },
+  });
   const props = await prisma.property.findMany({ select: { slug: true, name: true } });
   const nameOf = new Map(props.map((p) => [p.slug, p.name]));
 
@@ -140,6 +155,10 @@ export async function buildPL(start: Date, end: Date, propertySlug?: string): Pr
   for (const e of expenses) {
     addExpense(totals, e);
     addExpense(groupFor(e.propertySlug || "—"), e);
+  }
+  for (const o of otaBookings) {
+    addOta(totals, o);
+    addOta(groupFor(o.propertySlug), o);
   }
 
   const byProperty: PLByProperty[] = [...groups.entries()]

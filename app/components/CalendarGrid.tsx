@@ -370,7 +370,10 @@ function DetailPopover({ item, properties, onClose, onMove, onRemoveBlock }: {
                   Open reservation on {item.meta.channel || "the platform"}
                 </a>
               ) : null}
-              <p className="panel__hint" style={{ margin: item.meta?.link ? "0.8rem 0 0" : 0 }}>
+              <a href="/admin/ota" className="btn btn--ghost" style={{ width: "100%", justifyContent: "center", marginTop: "0.6rem" }}>
+                Log payout for accounting →
+              </a>
+              <p className="panel__hint" style={{ margin: "0.8rem 0 0" }}>
                 {item.meta?.channel ? `Imported from ${item.meta.channel}. ` : "Imported from a connected calendar. "}
                 The platform keeps the guest&rsquo;s full name, email and phone — open the reservation to see them. This block clears on the next sync.
               </p>

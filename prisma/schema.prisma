@@ -276,6 +276,28 @@ enum ExpenseCategory {
 
 // Costs for the P&L (Stage 3). Entered by admin. `commission` is a category so
 // OTA/partner fees appear on their own line. Optionally tied to a property and/or booking.
+// A reservation that came in through an OTA (Airbnb, Booking.com, VRBO). iCal
+// only blocks the dates; the money is entered by hand from the channel's payout
+// so OTA revenue counts in the P&L. Matched to the imported block by
+// confirmationCode when the feed provides one, else by property + dates.
+model OtaBooking {
+  id               String   @id @default(cuid())
+  propertySlug     String
+  channel          String   @default("AIRBNB") // AIRBNB | BOOKING | VRBO | OTHER
+  confirmationCode String?
+  guestName        String?
+  checkIn          DateTime
+  checkOut         DateTime
+  grossCents       Int      @default(0) // what the guest paid (optional)
+  feeCents         Int      @default(0) // channel commission / fees (optional)
+  netCents         Int      @default(0) // our payout — the revenue recognised
+  note             String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([propertySlug, checkIn])
+}
+
 model Expense {
   id           String          @id @default(cuid())
   propertySlug String?         // null = portfolio-wide / unattributed
