@@ -170,6 +170,13 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
             </select>
           </div>
           <div><label>Order</label><input type="number" value={o.order} onChange={(e) => set({ order: num(e.target.value) })} /></div>
+          <div>
+            <label>Tier</label>
+            <select value={(o.tier as string) || "estate"} onChange={(e) => set({ tier: e.target.value })}>
+              <option value="estate">Estate (flagship)</option>
+              <option value="residence">City residence</option>
+            </select>
+          </div>
           <div className="full"><label>Tagline</label><input value={o.tagline} onChange={(e) => set({ tagline: e.target.value })} /></div>
           {!isNew && <div><label>Web address</label><input value={`/${o.slug}`} readOnly /></div>}
           <div><label>Photo folder key</label><input value={o.img_key} onChange={(e) => set({ img_key: e.target.value })} placeholder="e.g. castelaria" /></div>

@@ -7,6 +7,8 @@ import { getProperties, imageUrl, priceLabel, type Property } from "@/lib/proper
 
 export default async function Home() {
   const properties = await getProperties();
+  const estates = properties.filter((p) => p.tier !== "residence");
+  const residences = properties.filter((p) => p.tier === "residence");
   const heroImg = imageUrl("castelaria", "castelaria-pool", 2000);
   const heroStyle = {
     backgroundImage: `linear-gradient(180deg, rgba(14,17,14,0.34) 0%, rgba(14,17,14,0.12) 38%, rgba(14,17,14,0.78) 100%), url('${heroImg}')`,
@@ -55,7 +57,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="collection">
-            {properties.map((p: Property) => (
+            {estates.map((p: Property) => (
               <article className="property reveal" key={p.slug}>
                 <div className="property__figure">
                   <div
@@ -80,6 +82,37 @@ export default async function Home() {
               </article>
             ))}
           </div>
+
+          {residences.length > 0 && (
+            <div style={{ marginTop: "3.5rem" }}>
+              <div className="sec-head reveal" style={{ marginBottom: "1.6rem" }}>
+                <p className="overline eyebrow-line">City Residences</p>
+                <h2 style={{ fontSize: "clamp(1.6rem,3vw,2rem)" }}>For a shorter city stay</h2>
+                <p className="lead">Refined apartments in the city, for a night or two between the estates. Same standard of hosting, a more intimate scale.</p>
+              </div>
+              <div className="collection">
+                {residences.map((p: Property) => (
+                  <article className="property reveal" key={p.slug}>
+                    <div className="property__figure">
+                      <div className="property__media slot has-photo" style={{ backgroundImage: `url('${imageUrl(p.img_key, p.card.image, 1400)}')` }} />
+                    </div>
+                    <div className="property__meta">
+                      <span className="property__loc">{p.location}</span>
+                      <span className="property__price">{priceLabel(p)}</span>
+                    </div>
+                    <h3 className="property__name">{p.name}</h3>
+                    <p className="property__desc">{p.card.desc}</p>
+                    <div className="property__tags">
+                      {p.card.tags.map((t) => <span className="tag" key={t}>{t}</span>)}
+                    </div>
+                    <div className="property__foot">
+                      <Link className="textlink" href={`/${p.slug}`}>Explore {p.name} <span className="arw">&rarr;</span></Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

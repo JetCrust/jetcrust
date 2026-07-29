@@ -27,6 +27,7 @@ export type Property = {
   slug: string;
   name: string;
   status: string;
+  tier: string; // "estate" (flagship) | "residence" (city apartment tier)
   order: number;
   location: string;
   img_key: string;
@@ -69,6 +70,7 @@ function normalize(p: Partial<Property>): Property {
     slug: p.slug || "",
     name: p.name || "",
     status: p.status || "draft",
+    tier: p.tier === "residence" ? "residence" : "estate",
     order: p.order ?? 99,
     location: p.location || "",
     img_key: p.img_key || "",
