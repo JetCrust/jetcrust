@@ -94,9 +94,9 @@ export default async function Home() {
           {residences.length > 0 && (
             <div style={{ marginTop: "3.5rem" }}>
               <div className="sec-head reveal" style={{ marginBottom: "1.6rem" }}>
-                <p className="overline eyebrow-line">City Residences</p>
-                <h2 style={{ fontSize: "clamp(1.6rem,3vw,2rem)" }}>For a shorter city stay</h2>
-                <p className="lead">Refined apartments in the city, for a night or two between the estates. Same standard of hosting, a more intimate scale.</p>
+                <p className="overline eyebrow-line">Retreats</p>
+                <h2 style={{ fontSize: "clamp(1.6rem,3vw,2rem)" }}>A different kind of escape</h2>
+                <p className="lead">Not every stay is a grand estate. Soho Place is a cluster of geodesic domes under the Carpathian sky near Bran, playful and private, hosted to the same standard.</p>
               </div>
               <div className="collection">
                 {residences.map((p: Property) => (
