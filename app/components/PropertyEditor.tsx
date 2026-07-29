@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { compress } from "./StayFormBits";
+import { uploadPhoto } from "./photoUpload";
 
 /* Minimal shapes for the fields the editor touches. The full object is passed
    through untouched, so advanced fields (features, amenities, etc.) are preserved. */
@@ -70,13 +70,8 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
     setUploading(true);
     const added: string[] = [];
     for (const f of Array.from(list)) {
-      try {
-        const blob = await compress(f, 2000, 0.82);
-        const fd = new FormData(); fd.append("file", blob, "photo.jpg");
-        const res = await fetch("/api/admin/properties/photo", { method: "POST", body: fd });
-        const d = await res.json().catch(() => ({}));
-        if (res.ok && d.url) added.push(`${d.url} | `);
-      } catch { /* skip */ }
+      const url = await uploadPhoto(f);
+      if (url) added.push(`${url} | `);
     }
     setUploading(false);
     if (added.length) {
@@ -253,7 +248,16 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
       {/* Guest info & guidebook */}
       <div className="panel">
         <div className="panel__head"><h3>Guest info & guidebook</h3></div>
-        <p className="panel__hint">Shown to confirmed guests in their booking (document vault + guidebook). Leave blank to hide a section.</p>
+        {!isNew && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", background: "var(--cream-2, #f6f2ea)", border: "1px solid var(--line)", borderRadius: "var(--radius-sm, 10px)", padding: "0.9rem 1.1rem", marginBottom: "1rem" }}>
+            <div>
+              <strong>Digital guidebook</strong>
+              <p className="panel__hint" style={{ margin: "0.15rem 0 0" }}>The full mobile guidebook guests see — sections, rooms, Wi-Fi, local picks, videos.</p>
+            </div>
+            <a className="btn btn--dark" style={{ flex: "0 0 auto" }} href={`/admin/properties/${o.slug}/guidebook`}>Edit guidebook →</a>
+          </div>
+        )}
+        <p className="panel__hint">The fields below are a simple fallback shown in the booking when the guidebook is empty. Leave blank to hide a section.</p>
         <div className="ef">
           <div className="full"><label>House rules</label><textarea value={o.guest_info?.house_rules || ""} onChange={(e) => setGuestInfo({ house_rules: e.target.value })} placeholder="Quiet hours, no smoking indoors, pets, events…" style={{ minHeight: 90 }} /></div>
           <div className="full"><label>Check-in instructions</label><textarea value={o.guest_info?.checkin_instructions || ""} onChange={(e) => setGuestInfo({ checkin_instructions: e.target.value })} placeholder="Directions, gate/lockbox code guidance, parking, who to call on arrival…" style={{ minHeight: 90 }} /></div>

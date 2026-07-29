@@ -139,12 +139,18 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             )}
           </div>
 
-          {p?.guest_info?.guidebook && (
+          {p?.guidebook?.enabled ? (
+            <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>Your digital guidebook</h3>
+              <p className="panel__hint" style={{ marginTop: 0, marginBottom: "0.9rem" }}>Getting in, Wi-Fi, how everything works, and our local picks — all in one place.</p>
+              <Link href={`/account/bookings/${b.id}/guide`} className="btn btn--dark" style={{ width: "100%", justifyContent: "center" }}>Open your guidebook →</Link>
+            </div>
+          ) : p?.guest_info?.guidebook ? (
             <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
               <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Local guidebook</h3>
               <p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: 0 }}>{p.guest_info.guidebook}</p>
             </div>
-          )}
+          ) : null}
 
           <GuestStayForms
             bookingId={b.id}

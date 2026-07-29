@@ -19,6 +19,8 @@ export type Pricing = {
   seasonal?: { name: string; from: string; to: string; nightly_eur: number }[];
 };
 
+import type { Guidebook } from "./guidebook";
+
 export type Property = {
   slug: string;
   name: string;
@@ -34,6 +36,7 @@ export type Property = {
   hours: { check_in: string; check_out: string };
   timezone: string; // IANA tz of the property (e.g. Europe/Bucharest), for on-site events
   guest_info: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
+  guidebook: Guidebook;
   hero_stats: { n: string; label: string }[];
   aside_facts: { label: string; value: string }[];
   story_heading: string;
@@ -103,6 +106,11 @@ function normalize(p: Partial<Property>): Property {
       checkin_instructions: p.guest_info?.checkin_instructions || "",
       wifi: p.guest_info?.wifi || "",
       guidebook: p.guest_info?.guidebook || "",
+    },
+    guidebook: {
+      enabled: !!p.guidebook?.enabled,
+      intro: p.guidebook?.intro || "",
+      sections: Array.isArray(p.guidebook?.sections) ? p.guidebook!.sections : [],
     },
     hero_stats: p.hero_stats || [],
     aside_facts: p.aside_facts || [],

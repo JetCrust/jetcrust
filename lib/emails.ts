@@ -122,7 +122,8 @@ export function bookingApprovedEmail(d: BookingData) {
         paymentLine +
         detailsTable(d) +
         p("We will be in touch before arrival with directions and everything you need. If there is anything that would make the stay yours, simply reply to this email.") +
-        button(`${SITE}/account`, "View My Booking"),
+        p(`Your digital guidebook — getting in, Wi-Fi, how everything works, and our local picks — is here: <a href="${SITE}/account/bookings/${d.bookingId}/guide" style="color:#9a7b3f;">open your guidebook</a>.`) +
+        button(`${SITE}/account/bookings/${d.bookingId}`, "View My Booking"),
     }),
   };
 }
