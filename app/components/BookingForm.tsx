@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import AvailabilityCalendar from "./AvailabilityCalendar";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, AddressElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
@@ -39,6 +40,7 @@ type Props = {
   contract: string;
   signedIn: boolean;
   initial?: { checkIn?: string; checkOut?: string; guests?: number; addons?: string[]; note?: string };
+  blocked?: string[];
 };
 
 const money = (n: number) => `€${Math.round(n).toLocaleString("en-US")}`;
@@ -188,8 +190,18 @@ export default function BookingForm(props: Props) {
 
   return (
     <form className="ef" onSubmit={requestBooking}>
-      <div><label>Check in</label><input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} required /></div>
-      <div><label>Check out</label><input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} required /></div>
+      <div className="full">
+        <label>Your dates</label>
+        <div style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--radius-sm,10px)", padding: "1rem" }}>
+          <AvailabilityCalendar
+            blocked={props.blocked || []}
+            months={2}
+            minNights={props.minNights}
+            value={{ checkIn, checkOut }}
+            onSelect={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
+          />
+        </div>
+      </div>
       <div><label>Guests</label><input type="number" min={1} max={props.maxGuests} value={guests} onChange={(e) => setGuests(Number(e.target.value))} /></div>
       <div><label>Minimum stay</label><input type="text" readOnly value={`${props.minNights} night${props.minNights === 1 ? "" : "s"}`} /></div>
 

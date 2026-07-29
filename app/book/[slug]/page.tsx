@@ -4,6 +4,7 @@ import AppHeader from "../../components/AppHeader";
 import BookingForm from "../../components/BookingForm";
 import { auth } from "@/auth";
 import { getProperty, imageUrl, type Property } from "@/lib/properties";
+import { blockedDates } from "@/lib/availability";
 import { CONTRACT_TEXT } from "@/lib/contract";
 
 export default async function BookPage({
@@ -27,6 +28,7 @@ export default async function BookPage({
     note: sp.note,
   };
   const hero = imageUrl(property.img_key, property.hero_image, 2000);
+  const blocked = await blockedDates(property.slug);
 
   return (
     <>
@@ -59,6 +61,7 @@ export default async function BookPage({
               contract={CONTRACT_TEXT}
               signedIn={!!session}
               initial={initial}
+              blocked={blocked}
             />
           </div>
 

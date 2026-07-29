@@ -8,6 +8,8 @@ import ClientInteractions from "../components/ClientInteractions";
 import TrackView from "../components/TrackView";
 import PropertyJsonLd from "../components/PropertyJsonLd";
 import InquiryForm from "../components/InquiryForm";
+import PropertyAvailability from "../components/PropertyAvailability";
+import { blockedDates } from "@/lib/availability";
 import Gallery, { type GalleryImage } from "../components/Gallery";
 import { getProperties, getProperty, imageUrl, imageSet, type Property } from "@/lib/properties";
 import { prisma } from "@/lib/prisma";
@@ -52,6 +54,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
   const reviewCount = agg._count.reviewRating || 0;
   const rating = agg._avg.reviewRating || 0;
   const area = areaName(p.location);
+  const blocked = await blockedDates(p.slug);
 
   return (
     <>
@@ -175,6 +178,16 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* AVAILABILITY */}
+      <section className="section section--cream" id="availability">
+        <div className="wrap" style={{ maxWidth: 820, textAlign: "center" }}>
+          <p className="overline eyebrow-line">Availability</p>
+          <h2 style={{ marginBottom: "0.4rem" }}>Check dates for {p.name}</h2>
+          <p className="lead" style={{ marginBottom: "1.6rem" }}>Open dates are yours to pick. Booked nights are greyed out. Choose your stay and carry it straight to checkout.</p>
+          <PropertyAvailability slug={p.slug} blocked={blocked} minNights={p.pricing.min_nights || 1} />
         </div>
       </section>
 
