@@ -33,6 +33,7 @@ type PropObj = {
   hours: { check_in: string; check_out: string };
   timezone?: string;
   guest_info?: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
+  google_review_url?: string;
   story_heading?: string;
   story?: string[];
   gallery?: { max: number; images: { file: string; caption: string }[] };
@@ -263,6 +264,7 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div className="full"><label>Check-in instructions</label><textarea value={o.guest_info?.checkin_instructions || ""} onChange={(e) => setGuestInfo({ checkin_instructions: e.target.value })} placeholder="Directions, gate/lockbox code guidance, parking, who to call on arrival…" style={{ minHeight: 90 }} /></div>
           <div className="full"><label>WiFi & access</label><textarea value={o.guest_info?.wifi || ""} onChange={(e) => setGuestInfo({ wifi: e.target.value })} placeholder="Network name + password, smart-home notes…" style={{ minHeight: 60 }} /></div>
           <div className="full"><label>Digital guidebook (recommendations)</label><textarea value={o.guest_info?.guidebook || ""} onChange={(e) => setGuestInfo({ guidebook: e.target.value })} placeholder="Restaurants, sights, transport, appliance tips, emergency contacts…" style={{ minHeight: 120 }} /></div>
+          <div className="full"><label>Google review link</label><input value={o.google_review_url || ""} onChange={(e) => set({ google_review_url: e.target.value })} placeholder="https://g.page/r/…/review  (from Google Business → Ask for reviews)" /><p className="panel__hint" style={{ margin: "0.25rem 0 0" }}>After a guest leaves us feedback, we invite them to share it on Google using this link.</p></div>
         </div>
       </div>
 

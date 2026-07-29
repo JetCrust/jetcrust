@@ -94,7 +94,10 @@ export default async function GuestProfile({ params }: { params: Promise<{ userI
                       <tbody>
                         {user.bookings.map((b) => (
                           <tr key={b.id}>
-                            <td>{nameOf(b.propertySlug)}{b.status === "APPROVED" && b.checkOut > now ? " · upcoming" : ""}</td>
+                            <td>
+                              {nameOf(b.propertySlug)}{b.status === "APPROVED" && b.checkOut > now ? " · upcoming" : ""}
+                              {b.reviewRating ? <span title={`${b.reviewRating}/5`} style={{ marginLeft: "0.4rem", color: b.reviewRating <= 3 ? "#a3412e" : "var(--brass, #9a7b3f)" }}>{"★★★★★".slice(0, b.reviewRating)}</span> : null}
+                            </td>
                             <td>{fmt(b.checkIn)} → {fmt(b.checkOut)}</td>
                             <td><span className={`pill pill--${(STATUS[b.status] || b.status).toLowerCase()}`}>{STATUS[b.status] || b.status}</span></td>
                             <td>{money(b.amountCents)}</td>

@@ -196,6 +196,26 @@ export function adminNewRequestEmail(d: BookingData) {
   };
 }
 
+// Internal alert when a guest leaves a low private rating, so the team can
+// reach out and make it right before it ever becomes a public review.
+export function lowReviewAlertEmail(d: { propertyName: string; guestName: string; guestEmail: string; rating: number; text: string; bookingId: string }) {
+  const stars = "★★★★★".slice(0, d.rating) + "☆☆☆☆☆".slice(0, 5 - d.rating);
+  return {
+    subject: `Follow up: ${d.rating}-star review for ${d.propertyName}`,
+    html: layout({
+      preheader: `${d.guestName} rated ${d.propertyName} ${d.rating}/5. Reach out before it goes public.`,
+      heading: "A guest needs attention",
+      accent: "#a3412e",
+      bodyHtml:
+        h2(`${d.rating} of 5 — ${esc(d.propertyName)}`) +
+        p(`<strong>${esc(d.guestName)}</strong> (${esc(d.guestEmail)}) left a private rating of <strong>${stars}</strong>.`) +
+        (d.text ? p(`&ldquo;${esc(d.text)}&rdquo;`) : p("No comment left.")) +
+        p("Reach out personally and resolve it. A quick, genuine fix now is the best way to keep a bad experience from becoming a public review.") +
+        button(`${SITE}/admin/bookings/${d.bookingId}`, "Open the booking"),
+    }),
+  };
+}
+
 const DEPOSIT_LINE: Record<string, string> = {
   refund: "Your security deposit will be refunded in full. Please allow 7 to 10 days for it to clear.",
   partial: "A partial charge will be applied to your security deposit for the items noted below. The remainder is released.",

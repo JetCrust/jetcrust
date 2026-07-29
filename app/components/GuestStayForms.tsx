@@ -3,13 +3,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function GuestStayForms({
-  bookingId, preferences, showPreferences, canReview, review,
+  bookingId, preferences, showPreferences, canReview, review, googleReviewUrl,
 }: {
   bookingId: string;
   preferences: string;
   showPreferences: boolean;
   canReview: boolean;
   review: { rating: number; text: string } | null;
+  googleReviewUrl?: string;
 }) {
   const router = useRouter();
   const [prefs, setPrefs] = useState(preferences);
@@ -84,6 +85,34 @@ export default function GuestStayForms({
                 <button className="btn btn--dark" disabled={revBusy} onClick={submitReview}>{revBusy ? "Sending…" : "Submit review"}</button>
                 {revMsg && <span style={{ fontSize: "0.85rem", color: "var(--stone)" }}>{revMsg}</span>}
               </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* After a review is left, thank everyone and invite a public share. Low
+          ratings are led to a private fix first, but the public option is still
+          offered to all (no review gating). */}
+      {review && (
+        <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+          {review.rating >= 4 ? (
+            <>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>Thank you</h3>
+              <p className="panel__hint" style={{ marginTop: 0 }}>We are so glad you enjoyed your stay. If you have a moment, sharing it publicly means a great deal to our small team.</p>
+              {googleReviewUrl
+                ? <a className="btn btn--brass" href={googleReviewUrl} target="_blank" rel="noopener noreferrer">Share your stay on Google</a>
+                : <p style={{ margin: 0, color: "var(--stone)", fontSize: "0.85rem" }}>Thank you again for your kind words.</p>}
+            </>
+          ) : (
+            <>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>Thank you for the honest feedback</h3>
+              <p className="panel__hint" style={{ marginTop: 0 }}>We are sorry it was not perfect. We would genuinely like to make it right. Tell us what happened and we will follow up with you personally.</p>
+              <a className="btn btn--dark" href="/account/messages">Message our team</a>
+              {googleReviewUrl && (
+                <p className="panel__hint" style={{ marginTop: "0.9rem", marginBottom: 0 }}>
+                  You are also welcome to <a className="textlink" href={googleReviewUrl} target="_blank" rel="noopener noreferrer">review us on Google</a>.
+                </p>
+              )}
             </>
           )}
         </div>

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getProperty } from "@/lib/properties";
+import { sendEmail } from "@/lib/email";
+import { lowReviewAlertEmail } from "@/lib/emails";
 
 const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("preferences"), text: z.string().max(1000) }),
@@ -37,5 +40,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     where: { id },
     data: { reviewRating: d.rating, reviewText: d.text?.trim() || null, reviewedAt: new Date() },
   });
+
+  // Low private rating → alert the team to follow up before it goes public.
+  if (d.rating <= 3) {
+    try {
+      const to = process.env.EMAIL_ADMIN || process.env.EMAIL_FROM;
+      if (to) {
+        const [property, guest] = await Promise.all([getProperty(b.propertySlug), prisma.user.findUnique({ where: { id: userId } })]);
+        const mail = lowReviewAlertEmail({
+          propertyName: property?.name || b.propertySlug,
+          guestName: guest?.name || guest?.email?.split("@")[0] || "A guest",
+          guestEmail: guest?.email || "",
+          rating: d.rating,
+          text: d.text?.trim() || "",
+          bookingId: id,
+        });
+        await sendEmail({ to, subject: mail.subject, html: mail.html });
+      }
+    } catch { /* alert is best-effort */ }
+  }
+
   return NextResponse.json({ ok: true });
 }

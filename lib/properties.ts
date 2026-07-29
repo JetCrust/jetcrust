@@ -36,6 +36,7 @@ export type Property = {
   hours: { check_in: string; check_out: string };
   timezone: string; // IANA tz of the property (e.g. Europe/Bucharest), for on-site events
   guest_info: { house_rules: string; checkin_instructions: string; wifi: string; guidebook: string };
+  google_review_url: string; // public Google review link for this property's listing
   guidebook: Guidebook;
   hero_stats: { n: string; label: string }[];
   aside_facts: { label: string; value: string }[];
@@ -107,6 +108,7 @@ function normalize(p: Partial<Property>): Property {
       wifi: p.guest_info?.wifi || "",
       guidebook: p.guest_info?.guidebook || "",
     },
+    google_review_url: p.google_review_url || "",
     guidebook: {
       enabled: !!p.guidebook?.enabled,
       intro: p.guidebook?.intro || "",

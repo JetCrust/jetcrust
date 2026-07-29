@@ -158,6 +158,7 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             showPreferences={!["CANCELLED", "DECLINED", "EXPIRED"].includes(b.status) && b.checkOut > new Date()}
             canReview={b.status === "APPROVED" && b.checkOut <= new Date()}
             review={b.reviewRating ? { rating: b.reviewRating, text: b.reviewText || "" } : null}
+            googleReviewUrl={p?.google_review_url || ""}
           />
 
           {b.status === "APPROVED" && b.checkIn > new Date() && (() => {
