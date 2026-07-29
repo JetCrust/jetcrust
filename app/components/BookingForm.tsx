@@ -16,6 +16,8 @@ type Quote = {
   currency: string;
   rateLines: RateLine[];
   stayTotal: number;
+  discountLines?: { label: string; pct: number; amount: number }[];
+  discountTotal?: number;
   addonLines: AddonLine[];
   addonsTotal: number;
   total: number;
@@ -63,10 +65,17 @@ function PriceBreakdown({ q }: { q: Quote }) {
         </div>
       ))}
 
-      {q.addonLines.length > 0 && (
+      {(q.discountLines?.length || 0) > 0 && q.discountLines!.map((l, i) => (
+        <div className="breakdown__row" key={`d${i}`} style={{ color: "var(--forest, #253026)" }}>
+          <span>{l.label} <small>−{l.pct}%</small></span>
+          <span>−{money(l.amount)}</span>
+        </div>
+      ))}
+
+      {(q.addonLines.length > 0 || (q.discountLines?.length || 0) > 0) && (
         <div className="breakdown__row breakdown__row--sub">
           <span>Stay subtotal</span>
-          <span>{money(q.stayTotal)}</span>
+          <span>{money(q.stayTotal - (q.discountTotal || 0))}</span>
         </div>
       )}
 

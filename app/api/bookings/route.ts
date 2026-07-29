@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
   const ratio = await occupancyRatio(property, checkIn, checkOut);
   // Add-ons are priced into the total, so the hold matches what the guest saw.
-  const q = quote(property, checkIn, checkOut, ratio, addons);
+  const q = quote(property, checkIn, checkOut, ratio, addons, new Date());
   if (!q.valid) {
     return NextResponse.json({ error: `Please choose at least ${q.minNights} night(s), with check-out after check-in.` }, { status: 400 });
   }

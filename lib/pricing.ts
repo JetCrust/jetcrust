@@ -47,6 +47,7 @@ export type AddonUnit = "night" | "day" | "stay";
 
 export type RateLine = { kind: "base" | "weekend" | "season"; label: string; nights: number; rate: number; total: number };
 export type AddonLine = { value: string; title: string; unit: AddonUnit; unitPrice: number; qty: number; total: number };
+export type DiscountLine = { label: string; pct: number; amount: number };
 
 export type Quote = {
   nights: number;
@@ -54,12 +55,14 @@ export type Quote = {
   valid: boolean;
   currency: string;
   rateLines: RateLine[];
-  stayTotal: number;
+  stayTotal: number;        // stay before discounts
+  discountLines: DiscountLine[];
+  discountTotal: number;
   addonLines: AddonLine[];
   addonsTotal: number;
   total: number;
   amountCents: number;
-  avgNightly: number;
+  avgNightly: number;       // discounted stay ÷ nights
   hasWeekend: boolean;
   hasSeason: boolean;
   demandApplied: boolean;
@@ -96,13 +99,14 @@ export function quote(
   checkOut: string,
   occupancyRatio = 0,
   selectedAddons: string[] = [],
+  now?: Date,
 ): Quote {
   const nights = nightsBetween(checkIn, checkOut);
   const minNights = p.pricing.min_nights || 1;
   const currency = p.pricing.currency || "eur";
   const empty: Quote = {
     nights: 0, minNights, valid: false, currency,
-    rateLines: [], stayTotal: 0, addonLines: [], addonsTotal: 0,
+    rateLines: [], stayTotal: 0, discountLines: [], discountTotal: 0, addonLines: [], addonsTotal: 0,
     total: 0, amountCents: 0, avgNightly: 0,
     hasWeekend: false, hasSeason: false, demandApplied: false,
   };
@@ -137,9 +141,26 @@ export function quote(
     }
   }
 
+  // Discounts on the stay (never on add-ons): length-of-stay, then last-minute.
+  const discountLines: DiscountLine[] = [];
+  const los = p.pricing.los_discounts;
+  if (los) {
+    if (nights >= 28 && los.monthly_pct > 0) discountLines.push({ label: "Monthly stay discount", pct: los.monthly_pct, amount: Math.round(stayTotal * los.monthly_pct / 100) });
+    else if (nights >= 7 && los.weekly_pct > 0) discountLines.push({ label: "Weekly stay discount", pct: los.weekly_pct, amount: Math.round(stayTotal * los.weekly_pct / 100) });
+  }
+  const lm = p.pricing.lastminute;
+  if (lm && lm.pct > 0 && now) {
+    const leadDays = Math.ceil((new Date(checkIn + "T00:00:00Z").getTime() - now.getTime()) / 86400000);
+    if (leadDays >= 0 && leadDays <= lm.days) discountLines.push({ label: "Last-minute", pct: lm.pct, amount: Math.round(stayTotal * lm.pct / 100) });
+  }
+  let discountTotal = discountLines.reduce((s, l) => s + l.amount, 0);
+  const cap = Math.round(stayTotal * 0.5); // never discount a stay by more than half
+  if (discountTotal > cap) discountTotal = cap;
+  const discountedStay = stayTotal - discountTotal;
+
   const addonLines = priceAddons(p, selectedAddons, nights);
   const addonsTotal = addonLines.reduce((s, l) => s + l.total, 0);
-  const total = stayTotal + addonsTotal;
+  const total = discountedStay + addonsTotal;
 
   return {
     nights,
@@ -148,11 +169,13 @@ export function quote(
     currency,
     rateLines: [...groups.values()],
     stayTotal,
+    discountLines,
+    discountTotal,
     addonLines,
     addonsTotal,
     total,
     amountCents: Math.round(total * 100),
-    avgNightly: Math.round(stayTotal / nights),
+    avgNightly: Math.round(discountedStay / nights),
     hasWeekend,
     hasSeason,
     demandApplied,

@@ -28,6 +28,8 @@ type PropObj = {
     balance_days_before?: number;
     dynamic?: { enabled: boolean; floor_eur: number; ceiling_eur: number; occupancy?: { enabled: boolean; window_days: number; max_uplift_pct: number } };
     seasonal?: Seasonal[];
+    los_discounts?: { weekly_pct: number; monthly_pct: number };
+    lastminute?: { days: number; pct: number };
   };
   capacity: { sleeps: number; max_adults: number; max_children: number; bedrooms: number; bathrooms: number };
   hours: { check_in: string; check_out: string };
@@ -208,6 +210,18 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           </div>
         ))}
         <button type="button" className="btn btn--ghost" onClick={addSeason} style={{ marginTop: "0.4rem" }}>Add a seasonal rate</button>
+
+        <p className="panel__hint" style={{ marginTop: "1.4rem", marginBottom: "0.4rem" }}>Length-of-stay discounts (off the stay, before add-ons)</p>
+        <div className="ef">
+          <div><label>Weekly (7+ nights) %</label><input type="number" value={o.pricing.los_discounts?.weekly_pct || 0} onChange={(e) => setPricing({ los_discounts: { weekly_pct: num(e.target.value), monthly_pct: o.pricing.los_discounts?.monthly_pct || 0 } })} placeholder="e.g. 5" /></div>
+          <div><label>Monthly (28+ nights) %</label><input type="number" value={o.pricing.los_discounts?.monthly_pct || 0} onChange={(e) => setPricing({ los_discounts: { weekly_pct: o.pricing.los_discounts?.weekly_pct || 0, monthly_pct: num(e.target.value) } })} placeholder="e.g. 10" /></div>
+        </div>
+
+        <p className="panel__hint" style={{ marginTop: "1.2rem", marginBottom: "0.4rem" }}>Last-minute discount (fills near, unsold dates)</p>
+        <div className="ef">
+          <div><label>Within (days of arrival)</label><input type="number" value={o.pricing.lastminute?.days || 0} onChange={(e) => setPricing({ lastminute: { days: num(e.target.value), pct: o.pricing.lastminute?.pct || 0 } })} placeholder="e.g. 7" /></div>
+          <div><label>Discount %</label><input type="number" value={o.pricing.lastminute?.pct || 0} onChange={(e) => setPricing({ lastminute: { days: o.pricing.lastminute?.days || 0, pct: num(e.target.value) } })} placeholder="e.g. 15" /></div>
+        </div>
 
         <p className="panel__hint" style={{ marginTop: "1.4rem", marginBottom: "0.4rem" }}>Demand pricing (same price for everyone, rises as the calendar fills)</p>
         <div className="ef">

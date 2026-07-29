@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   }
 
   const ratio = await occupancyRatio(p, checkIn, checkOut);
-  const q = quote(p, checkIn, checkOut, ratio, addons);
+  const q = quote(p, checkIn, checkOut, ratio, addons, new Date());
   // Record the date interest (fire-and-forget) for demand analytics.
   if (q.valid) {
     prisma.analyticsEvent.create({

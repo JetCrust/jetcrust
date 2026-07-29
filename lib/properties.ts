@@ -17,6 +17,8 @@ export type Pricing = {
     occupancy?: { enabled: boolean; window_days: number; max_uplift_pct: number };
   };
   seasonal?: { name: string; from: string; to: string; nightly_eur: number }[];
+  los_discounts?: { weekly_pct: number; monthly_pct: number };   // 7+ / 28+ nights
+  lastminute?: { days: number; pct: number };                    // within N days of arrival
 };
 
 import type { Guidebook } from "./guidebook";
@@ -93,6 +95,12 @@ function normalize(p: Partial<Property>): Property {
           }
         : undefined,
       seasonal: pricing.seasonal || [],
+      los_discounts: pricing.los_discounts
+        ? { weekly_pct: pricing.los_discounts.weekly_pct || 0, monthly_pct: pricing.los_discounts.monthly_pct || 0 }
+        : undefined,
+      lastminute: pricing.lastminute
+        ? { days: pricing.lastminute.days || 0, pct: pricing.lastminute.pct || 0 }
+        : undefined,
     },
     capacity: {
       sleeps: p.capacity?.sleeps || 1,

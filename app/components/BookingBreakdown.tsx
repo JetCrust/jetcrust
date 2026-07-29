@@ -2,10 +2,13 @@
 // see exactly how the total was built at the time of booking.
 type RateLine = { kind: string; label: string; nights: number; rate: number; total: number };
 type AddonLine = { value: string; title: string; unit: string; unitPrice: number; qty: number; total: number };
+type DiscountLine = { label: string; pct: number; amount: number };
 export type StoredBreakdown = {
   nights: number;
   rateLines: RateLine[];
   stayTotal: number;
+  discountLines?: DiscountLine[];
+  discountTotal?: number;
   addonLines: AddonLine[];
   addonsTotal: number;
   total: number;
@@ -59,7 +62,22 @@ export default function BookingBreakdown({
         </div>
       ))}
 
-      {breakdown.addonLines.length > 0 && (
+      {(breakdown.discountLines?.length || 0) > 0 && (
+        <>
+          {breakdown.discountLines!.map((l, i) => (
+            <div className="breakdown__row" key={`d${i}`} style={{ color: "var(--forest, #253026)" }}>
+              <span>{l.label} <small>−{l.pct}%</small></span>
+              <span>−{money(l.amount)}</span>
+            </div>
+          ))}
+          <div className="breakdown__row breakdown__row--sub">
+            <span>Stay subtotal</span>
+            <span>{money(breakdown.stayTotal - (breakdown.discountTotal || 0))}</span>
+          </div>
+        </>
+      )}
+
+      {breakdown.addonLines.length > 0 && (breakdown.discountLines?.length || 0) === 0 && (
         <div className="breakdown__row breakdown__row--sub">
           <span>Stay subtotal</span>
           <span>{money(breakdown.stayTotal)}</span>
