@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AvailabilityCalendar from "./AvailabilityCalendar";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, AddressElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -133,11 +133,34 @@ export default function BookingForm(props: Props) {
     return () => { active = false; };
   }, [checkIn, checkOut, addonKey, props.slug]);
 
-  const priceValid = !!q && q.valid && guests >= 1 && guests <= props.maxGuests;
+  // Refs + a flash cue so a missed step (dates, min nights, guests, terms, age)
+  // is pointed out clearly instead of the button silently doing nothing.
+  const datesRef = useRef<HTMLDivElement>(null);
+  const guestsRef = useRef<HTMLDivElement>(null);
+  const agreeRef = useRef<HTMLDivElement>(null);
+  const [flash, setFlash] = useState<string>("");
+
+  function firstDatesProblem() {
+    if (!checkIn || !checkOut) return { key: "dates", ref: datesRef, msg: "Please pick your arrival and departure dates on the calendar." };
+    if (!q || !q.valid) return { key: "dates", ref: datesRef, msg: `This home has a minimum stay of ${props.minNights} night${props.minNights === 1 ? "" : "s"}. Please extend your dates.` };
+    if (guests < 1 || guests > props.maxGuests) return { key: "guests", ref: guestsRef, msg: `Please enter between 1 and ${props.maxGuests} guests.` };
+    return null;
+  }
+  function flag(p: { key: string; ref: React.RefObject<HTMLDivElement | null>; msg: string }) {
+    setError(p.msg);
+    setFlash(p.key);
+    p.ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => setFlash(""), 1700);
+  }
+  const cls = (key: string) => (flash === key ? " field-flash" : "");
 
   async function requestBooking(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const problem = firstDatesProblem()
+      || (!accepted ? { key: "agree", ref: agreeRef, msg: "Please accept the rental agreement to continue." } : null)
+      || (!over18 ? { key: "agree", ref: agreeRef, msg: "Please confirm the lead guest is 18 or over." } : null);
+    if (problem) { flag(problem); return; }
     setBusy(true);
     const res = await fetch("/api/bookings", {
       method: "POST",
@@ -190,7 +213,7 @@ export default function BookingForm(props: Props) {
 
   return (
     <form className="ef" onSubmit={requestBooking}>
-      <div className="full">
+      <div className={`full${cls("dates")}`} ref={datesRef}>
         <label>Your dates</label>
         <div style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--radius-sm,10px)", padding: "1rem" }}>
           <AvailabilityCalendar
@@ -202,7 +225,7 @@ export default function BookingForm(props: Props) {
           />
         </div>
       </div>
-      <div><label>Guests</label><input type="number" min={1} max={props.maxGuests} value={guests} onChange={(e) => setGuests(Number(e.target.value))} /></div>
+      <div className={cls("guests").trim()} ref={guestsRef}><label>Guests</label><input type="number" min={1} max={props.maxGuests} value={guests} onChange={(e) => setGuests(Number(e.target.value))} /></div>
       <div><label>Minimum stay</label><input type="text" readOnly value={`${props.minNights} night${props.minNights === 1 ? "" : "s"}`} /></div>
 
       {guests > props.maxGuests && (
@@ -253,12 +276,13 @@ export default function BookingForm(props: Props) {
               Review your dates and price above. To hold your dates you will create an account or sign in, then accept
               the rental agreement.
             </p>
-            <button type="button" className="btn btn--brass" onClick={toSignIn}>Sign In or Create Account</button>
+            {error && <p style={{ color: "#a3412e", background: "rgba(163,65,46,0.08)", border: "1px solid rgba(163,65,46,0.3)", borderRadius: 8, padding: "0.6rem 0.9rem", margin: "0 0 0.9rem", fontSize: "0.9rem", fontWeight: 500 }}>{error}</p>}
+            <button type="button" className="btn btn--brass" onClick={() => { const p = firstDatesProblem(); if (p) { flag(p); return; } toSignIn(); }}>Sign In or Create Account</button>
           </div>
         </div>
       ) : (
         <>
-          <div className="full">
+          <div className={`full${cls("agree")}`} ref={agreeRef} style={{ borderRadius: 12 }}>
             <label>Rental agreement</label>
             <div style={{ maxHeight: 200, overflow: "auto", border: "1px solid var(--line)", borderRadius: "var(--radius-sm)", padding: "1rem", background: "var(--white)", fontSize: "0.86rem", whiteSpace: "pre-wrap", color: "var(--ink-soft)" }}>
               {props.contract}
@@ -272,9 +296,9 @@ export default function BookingForm(props: Props) {
               <span>I confirm the lead guest is 18 or over.</span>
             </label>
           </div>
-          {error && <p className="full" style={{ color: "#a3412e", margin: 0, fontSize: "0.9rem" }}>{error}</p>}
+          {error && <p className="full" style={{ color: "#a3412e", background: "rgba(163,65,46,0.08)", border: "1px solid rgba(163,65,46,0.3)", borderRadius: 8, padding: "0.6rem 0.9rem", margin: 0, fontSize: "0.9rem", fontWeight: 500 }}>{error}</p>}
           <div className="full">
-            <button className="btn btn--brass" type="submit" disabled={!priceValid || !accepted || !over18 || busy}>
+            <button className="btn btn--brass" type="submit" disabled={busy}>
               {busy ? "Please wait…" : "Continue to secure hold"}
             </button>
             <p className="note" style={{ marginTop: "0.8rem", color: "var(--stone)", fontSize: "0.8rem" }}>
