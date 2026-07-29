@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 type Task = { id: string; propertySlug: string; title: string; category: string; status: string; dueAt: string | null; assignedToId: string | null; notes: string | null };
 type Prop = { slug: string; name: string };
-type Staff = { id: string; name: string };
+type Staff = { id: string; name: string; phone?: string | null };
 
 const CATS = ["CLEANING", "MAINTENANCE", "INSPECTION", "RESTOCK", "OTHER"];
 const catLabel = (c: string) => c.charAt(0) + c.slice(1).toLowerCase();
@@ -27,6 +27,23 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
 
   const propName = (s: string) => properties.find((p) => p.slug === s)?.name || s;
   const staffName = (id: string | null) => (id ? staff.find((s) => s.id === id)?.name || "Someone" : "Unassigned");
+
+  // Send a job to WhatsApp: pre-fills the message to the assignee's number (they
+  // just press send). No number on file → opens WhatsApp to pick a contact.
+  function whatsapp(t: Task) {
+    const assignee = staff.find((s) => s.id === t.assignedToId);
+    const lines = [
+      `Jet Crust — job at ${propName(t.propertySlug)}`,
+      `• ${t.title}`,
+      `• Type: ${catLabel(t.category)}`,
+      t.dueAt ? `• Due: ${t.dueAt}` : null,
+      t.notes ? `• Notes: ${t.notes}` : null,
+      assignee ? `Assigned to ${assignee.name}.` : null,
+    ].filter(Boolean);
+    const text = encodeURIComponent(lines.join("\n"));
+    const digits = (assignee?.phone || "").replace(/\D/g, "");
+    window.open(digits ? `https://wa.me/${digits}?text=${text}` : `https://wa.me/?text=${text}`, "_blank", "noopener");
+  }
 
   async function create() {
     if (!title.trim() || !slug) { setError("Add a property and a title."); return; }
@@ -98,6 +115,7 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
                       </select>
                     </div>
                     <div className="task-actions">
+                      {!isWorker && <button className="chip" title="Send this job to WhatsApp" onClick={() => whatsapp(t)} style={{ color: "#25936b" }}>WhatsApp</button>}
                       {t.status !== "OPEN" && <button className="chip" onClick={() => patch(t.id, { status: t.status === "DONE" ? "IN_PROGRESS" : "OPEN" })}>‹ Back</button>}
                       {t.status !== "DONE" && <button className="chip" onClick={() => patch(t.id, { status: t.status === "OPEN" ? "IN_PROGRESS" : "DONE" })}>{t.status === "OPEN" ? "Start ›" : "Done ✓"}</button>}
                     </div>

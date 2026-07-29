@@ -23,7 +23,7 @@ export default async function AdminTasks() {
   });
   const allProps = await getProperties(true);
   const properties = (scope.slugs ? allProps.filter((p) => scope.slugs!.includes(p.slug)) : allProps).map((p) => ({ slug: p.slug, name: p.name }));
-  const staff = await prisma.user.findMany({ where: { role: { in: ["ADMIN", "MANAGER", "STAFF"] } }, select: { id: true, name: true, email: true } });
+  const staff = await prisma.user.findMany({ where: { role: { in: ["ADMIN", "MANAGER", "STAFF"] } }, select: { id: true, name: true, email: true, phone: true } });
 
   const serialized = tasks.map((t) => ({
     id: t.id, propertySlug: t.propertySlug, title: t.title, category: t.category, status: t.status,
@@ -46,7 +46,7 @@ export default async function AdminTasks() {
               <TasksBoard
                 tasks={serialized}
                 properties={properties}
-                staff={staff.map((s) => ({ id: s.id, name: s.name || s.email.split("@")[0] }))}
+                staff={staff.map((s) => ({ id: s.id, name: s.name || s.email.split("@")[0], phone: s.phone }))}
                 isWorker={scope.isWorker}
               />
             </div>

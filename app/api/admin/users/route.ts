@@ -9,6 +9,7 @@ const schema = z.object({
   userId: z.string(),
   role: z.enum(["GUEST", "STAFF", "MANAGER", "ADMIN"]).optional(),
   managedSlugs: z.array(z.string()).optional(),
+  phone: z.string().max(40).optional(),
   resetPassword: z.boolean().optional(),
 });
 
@@ -17,6 +18,7 @@ const createSchema = z.object({
   name: z.string().max(120).optional(),
   role: z.enum(["STAFF", "MANAGER", "ADMIN"]).default("MANAGER"),
   managedSlugs: z.array(z.string()).default([]),
+  phone: z.string().max(40).optional(),
 });
 
 async function requireSuper() {
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
   if (existing) return NextResponse.json({ error: "Someone already has that email. Change their role in the list instead." }, { status: 409 });
   const tempPassword = "jc-" + randomBytes(4).toString("hex");
   await prisma.user.create({
-    data: { email, name: d.name?.trim() || null, role: d.role, managedSlugs: (d.role === "MANAGER" || d.role === "STAFF") ? d.managedSlugs : [], passwordHash: await bcrypt.hash(tempPassword, 10) },
+    data: { email, name: d.name?.trim() || null, phone: d.phone?.trim() || null, role: d.role, managedSlugs: (d.role === "MANAGER" || d.role === "STAFF") ? d.managedSlugs : [], passwordHash: await bcrypt.hash(tempPassword, 10) },
   });
   return NextResponse.json({ ok: true, tempPassword });
 }
@@ -50,7 +52,7 @@ export async function PATCH(req: Request) {
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  const { userId, role, managedSlugs, resetPassword } = parsed.data;
+  const { userId, role, managedSlugs, phone, resetPassword } = parsed.data;
 
   const target = await prisma.user.findUnique({ where: { id: userId } });
   if (!target) return NextResponse.json({ error: "User not found." }, { status: 404 });
@@ -62,9 +64,10 @@ export async function PATCH(req: Request) {
     if (admins <= 1) return NextResponse.json({ error: "There must be at least one Super Admin." }, { status: 400 });
   }
 
-  const data: { role?: "GUEST" | "STAFF" | "MANAGER" | "ADMIN"; managedSlugs?: string[]; passwordHash?: string } = {};
+  const data: { role?: "GUEST" | "STAFF" | "MANAGER" | "ADMIN"; managedSlugs?: string[]; phone?: string | null; passwordHash?: string } = {};
   if (role) data.role = role;
   if (managedSlugs) data.managedSlugs = managedSlugs;
+  if (phone !== undefined) data.phone = phone.trim() || null;
   // Only managers and staff hold property assignments.
   if (role && role !== "MANAGER" && role !== "STAFF") data.managedSlugs = [];
 

@@ -44,7 +44,7 @@ export default async function AdminUsers() {
               <div className="panel">
                 <div className="panel__head"><h3>Team</h3></div>
                 {staff.map((u) => (
-                  <UserRow key={u.id} userId={u.id} email={u.email} name={u.name} role={u.role} managedSlugs={u.managedSlugs} properties={propList} isSelf={u.id === me.id} />
+                  <UserRow key={u.id} userId={u.id} email={u.email} name={u.name} phone={u.phone} role={u.role} managedSlugs={u.managedSlugs} properties={propList} isSelf={u.id === me.id} />
                 ))}
               </div>
 
@@ -52,7 +52,7 @@ export default async function AdminUsers() {
                 <div className="panel__head"><h3>Guests</h3><span className="console__count">{guests.length}</span></div>
                 <p className="panel__hint">Promote any guest to Property Manager here. They keep their existing login.</p>
                 {guests.slice(0, 100).map((u) => (
-                  <UserRow key={u.id} userId={u.id} email={u.email} name={u.name} role={u.role} managedSlugs={u.managedSlugs} properties={propList} isSelf={u.id === me.id} />
+                  <UserRow key={u.id} userId={u.id} email={u.email} name={u.name} phone={u.phone} role={u.role} managedSlugs={u.managedSlugs} properties={propList} isSelf={u.id === me.id} />
                 ))}
                 {guests.length > 100 && <p className="panel__hint">Showing the first 100 guests.</p>}
               </div>

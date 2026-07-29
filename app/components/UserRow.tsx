@@ -4,15 +4,16 @@ import { useRouter } from "next/navigation";
 
 type Prop = { slug: string; name: string };
 
-export default function UserRow({ userId, email, name, role, managedSlugs, properties, isSelf }: {
-  userId: string; email: string; name: string | null; role: string; managedSlugs: string[]; properties: Prop[]; isSelf: boolean;
+export default function UserRow({ userId, email, name, phone, role, managedSlugs, properties, isSelf }: {
+  userId: string; email: string; name: string | null; phone?: string | null; role: string; managedSlugs: string[]; properties: Prop[]; isSelf: boolean;
 }) {
   const router = useRouter();
   const [r, setR] = useState(role);
   const [slugs, setSlugs] = useState<string[]>(managedSlugs);
+  const [ph, setPh] = useState(phone || "");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const dirty = r !== role || JSON.stringify(slugs) !== JSON.stringify(managedSlugs);
+  const dirty = r !== role || JSON.stringify(slugs) !== JSON.stringify(managedSlugs) || ph !== (phone || "");
 
   const toggle = (s: string) => setSlugs((x) => x.includes(s) ? x.filter((v) => v !== s) : [...x, s]);
 
@@ -20,7 +21,7 @@ export default function UserRow({ userId, email, name, role, managedSlugs, prope
     setBusy(true); setMsg(null);
     const res = await fetch("/api/admin/users", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, role: r, managedSlugs: (r === "MANAGER" || r === "STAFF") ? slugs : [] }),
+      body: JSON.stringify({ userId, role: r, managedSlugs: (r === "MANAGER" || r === "STAFF") ? slugs : [], phone: ph }),
     });
     setBusy(false);
     const d = await res.json().catch(() => ({}));
@@ -51,6 +52,9 @@ export default function UserRow({ userId, email, name, role, managedSlugs, prope
         <option value="MANAGER">Property Manager</option>
         <option value="ADMIN">Super Admin</option>
       </select>
+      {(r === "MANAGER" || r === "STAFF") && (
+        <input value={ph} onChange={(e) => setPh(e.target.value)} placeholder="+40 phone (WhatsApp)" style={{ padding: "0.3rem 0.5rem", border: "1px solid var(--line)", borderRadius: 6, fontSize: "0.8rem", maxWidth: 170 }} />
+      )}
       {(r === "MANAGER" || r === "STAFF") && (
         <div className="urow__props">
           {properties.map((p) => (

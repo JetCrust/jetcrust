@@ -9,6 +9,7 @@ export default function AddUser({ properties }: { properties: Prop[] }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState("MANAGER");
   const [slugs, setSlugs] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -22,7 +23,7 @@ export default function AddUser({ properties }: { properties: Prop[] }) {
     setBusy(true); setError(null);
     const res = await fetch("/api/admin/users", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, name, role, managedSlugs: (role === "MANAGER" || role === "STAFF") ? slugs : [] }),
+      body: JSON.stringify({ email, name, phone, role, managedSlugs: (role === "MANAGER" || role === "STAFF") ? slugs : [] }),
     });
     setBusy(false);
     const d = await res.json().catch(() => ({}));
@@ -51,6 +52,7 @@ export default function AddUser({ properties }: { properties: Prop[] }) {
           <div className="cal-form" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" /></label>
             <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" /></label>
+            <label>Phone (for WhatsApp jobs)<input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+40 770 000 000" /></label>
             <label>Role<select value={role} onChange={(e) => setRole(e.target.value)}><option value="STAFF">Staff (tasks only)</option><option value="MANAGER">Property Manager</option><option value="ADMIN">Super Admin</option></select></label>
           </div>
           {(role === "MANAGER" || role === "STAFF") && (
