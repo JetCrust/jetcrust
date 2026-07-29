@@ -17,7 +17,7 @@ export default async function AppHeader() {
           <ul className="nav__menu">
             <li><Link className="nav__link" href="/#collection">The Collection</Link></li>
             {session && <li><Link className="nav__link" href="/account">My Bookings</Link></li>}
-            {role === "ADMIN" && <li><Link className="nav__link" href="/admin">Admin</Link></li>}
+            {(role === "ADMIN" || role === "MANAGER") && <li><Link className="nav__link" href="/admin">Console</Link></li>}
           </ul>
         </nav>
         <div className="nav__right">

@@ -52,6 +52,19 @@ export default async function AccountPage() {
           <div className="console">
             <AccountNav />
             <div>
+              {(() => {
+                const role = (session.user as { role?: string } | undefined)?.role;
+                if (role !== "ADMIN" && role !== "MANAGER") return null;
+                return (
+                  <div className="panel" style={{ marginBottom: "1.4rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", borderLeft: "3px solid var(--forest, #253026)" }}>
+                    <div>
+                      <strong>{role === "ADMIN" ? "You're an administrator." : "You're a property manager."}</strong>
+                      <p className="panel__hint" style={{ margin: "0.15rem 0 0" }}>This is your personal guest account. To manage {role === "ADMIN" ? "the portfolio" : "your properties"} — bookings, calendar, guests — open the console.</p>
+                    </div>
+                    <Link className="btn btn--dark" href="/admin" style={{ flex: "0 0 auto" }}>Open the console →</Link>
+                  </div>
+                );
+              })()}
               <AccountDashboard userId={(session.user as { id: string }).id} name={session.user?.name || session.user?.email || "there"} />
             </div>
           </div>
