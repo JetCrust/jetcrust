@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/account", label: "My bookings", exact: true },
+  { href: "/account/messages", label: "Messages" },
   { href: "/account/details", label: "My details" },
   { href: "/account/billing", label: "Billing & cards" },
 ];

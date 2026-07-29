@@ -4,9 +4,10 @@ import LocalTime from "./LocalTime";
 
 type Msg = { id: string; sender: string; body: string; createdAt: string };
 
-export default function MessageThread({ bookingId, messages, me }: {
-  bookingId: string; messages: Msg[]; me: "GUEST" | "ADMIN";
+export default function MessageThread({ endpoint, bookingId, messages, me, placeholder }: {
+  endpoint?: string; bookingId?: string; messages: Msg[]; me: "GUEST" | "ADMIN"; placeholder?: string;
 }) {
+  const url = endpoint ?? `/api/bookings/${bookingId}/messages`;
   const [msgs, setMsgs] = useState<Msg[]>(messages);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -16,12 +17,12 @@ export default function MessageThread({ bookingId, messages, me }: {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`/api/bookings/${bookingId}/messages`);
+      const res = await fetch(url);
       if (!res.ok) return;
       const d = await res.json();
       if (Array.isArray(d.messages)) setMsgs((prev) => (prev.length !== d.messages.length || JSON.stringify(prev) !== JSON.stringify(d.messages)) ? d.messages : prev);
     } catch { /* offline; try again next tick */ }
-  }, [bookingId]);
+  }, [url]);
 
   // Live updates: poll every 8s (and once on mount, which also marks read).
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function MessageThread({ bookingId, messages, me }: {
   async function send() {
     if (!text.trim()) return;
     setBusy(true); setError(null);
-    const res = await fetch(`/api/bookings/${bookingId}/messages`, {
+    const res = await fetch(url, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: text.trim() }),
     });
     setBusy(false);
@@ -58,7 +59,7 @@ export default function MessageThread({ bookingId, messages, me }: {
     <div>
       <div className="msg-thread" ref={threadRef} onScroll={onScroll}>
         {msgs.length === 0 ? (
-          <p style={{ color: "var(--stone)", margin: 0, fontSize: "0.9rem" }}>No messages yet. Say hello, ask a question, or request anything for the stay.</p>
+          <p style={{ color: "var(--stone)", margin: 0, fontSize: "0.9rem" }}>{placeholder || "No messages yet. Say hello, ask a question, or request anything for the stay."}</p>
         ) : (
           msgs.map((m) => {
             const mine = m.sender === me;

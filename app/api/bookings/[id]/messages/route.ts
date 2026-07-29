@@ -48,7 +48,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!parsed.success) return NextResponse.json({ error: "Write a message first." }, { status: 400 });
 
   const sender = isAdmin ? "ADMIN" : "GUEST";
-  await prisma.message.create({ data: { bookingId: id, sender, body: parsed.data.body.trim(), readByAdmin: isAdmin, readByGuest: !isAdmin } });
+  // Anchor to the guest (booking.userId) so it also shows in their cross-booking thread.
+  await prisma.message.create({ data: { bookingId: id, userId: booking.userId, sender, body: parsed.data.body.trim(), readByAdmin: isAdmin, readByGuest: !isAdmin } });
   await touchSeen(userId);
 
   // Only email the other party if they don't appear to be online right now.

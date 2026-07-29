@@ -3,10 +3,12 @@ import { redirect, notFound } from "next/navigation";
 import AppHeader from "../../../components/AppHeader";
 import ConsoleNav from "../../../components/ConsoleNav";
 import LocalTime from "../../../components/LocalTime";
+import MessageThread from "../../../components/MessageThread";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { bookingIncome } from "@/lib/accounting";
 import { staffScope, slugFilter } from "@/lib/access";
+import { serializeMessages } from "@/lib/threads";
 
 const money = (c: number) => `€${Math.round(c / 100).toLocaleString("en-US")}`;
 const fmt = (d: Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -29,6 +31,11 @@ export default async function GuestProfile({ params }: { params: Promise<{ userI
   const lifetime = approved.reduce((s, b) => s + bookingIncome(b).netCents, 0);
   const nights = approved.reduce((s, b) => s + Math.max(0, Math.round((b.checkOut.getTime() - b.checkIn.getTime()) / 86400000)), 0);
   const now = new Date();
+
+  // The guest's continuous thread, scoped: super sees all; managers see only
+  // messages tied to the bookings visible to them (user.bookings is already sf-scoped).
+  const msgWhere = scope.isSuper ? { userId } : { userId, bookingId: { in: user.bookings.map((b) => b.id) } };
+  const messages = await prisma.message.findMany({ where: msgWhere, orderBy: { createdAt: "asc" } });
 
   return (
     <>
@@ -65,6 +72,17 @@ export default async function GuestProfile({ params }: { params: Promise<{ userI
                     <p style={{ margin: 0, color: "var(--ink-soft)" }}>{user.preferences}</p>
                   </>
                 )}
+              </div>
+
+              <div className="panel">
+                <div className="panel__head"><h3>Messages</h3></div>
+                <p className="panel__hint" style={{ marginTop: 0 }}>One continuous conversation with this guest across all their stays. Replies reach them here and by email.</p>
+                <MessageThread
+                  endpoint={`/api/admin/guests/${userId}/messages`}
+                  me="ADMIN"
+                  messages={serializeMessages(messages)}
+                  placeholder="No messages with this guest yet."
+                />
               </div>
 
               <div className="panel">

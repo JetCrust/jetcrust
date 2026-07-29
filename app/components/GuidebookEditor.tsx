@@ -5,7 +5,7 @@ import { uploadPhoto } from "./photoUpload";
 import {
   seedGuidebook, parseVideo, iconFor, SECTION_META,
   type Guidebook, type GuideSection, type GuideSectionKind, type GuideVideo,
-  type GuideRoom, type GuidePlace, type GuideStep,
+  type GuideRoom, type GuidePlace, type GuideStep, type GuideDevice,
 } from "@/lib/guidebook";
 
 const uid = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
@@ -98,6 +98,43 @@ function StepFields({ s, patch }: { s: GuideSection; patch: (p: Partial<GuideSec
   );
 }
 
+function DeviceFields({ devices, onChange }: { devices: GuideDevice[]; onChange: (d: GuideDevice[]) => void }) {
+  const set = (i: number, p: Partial<GuideDevice>) => onChange(devices.map((d, j) => (j === i ? { ...d, ...p } : d)));
+  return (
+    <div style={{ marginTop: "0.6rem", borderTop: "1px dashed var(--line)", paddingTop: "0.6rem" }}>
+      <p className="panel__hint" style={{ margin: "0 0 0.4rem" }}>Devices in this room (TV, sound, sauna, pool cover…) — for guests + troubleshooting</p>
+      {devices.map((d, i) => {
+        const ts = d.troubleshooting || [];
+        const setTs = (k: number, p: Partial<{ problem: string; fix: string }>) => set(i, { troubleshooting: ts.map((t, j) => (j === k ? { ...t, ...p } : t)) });
+        return (
+          <div key={d.id} style={{ background: "var(--cream-2, #f6f2ea)", borderRadius: 8, padding: "0.7rem", marginBottom: "0.6rem" }}>
+            <div className="ef">
+              <div><label>Device</label><input value={d.name} onChange={(e) => set(i, { name: e.target.value })} placeholder="Living-room TV" /></div>
+              <div><label>Brand</label><input value={d.brand || ""} onChange={(e) => set(i, { brand: e.target.value })} placeholder="Samsung" /></div>
+              <div><label>Model</label><input value={d.model || ""} onChange={(e) => set(i, { model: e.target.value })} placeholder="QN90C 65&quot;" /></div>
+              <div className="full"><label>How to use it (notes)</label><textarea value={d.notes || ""} onChange={(e) => set(i, { notes: e.target.value })} placeholder="Remote is in the drawer under the TV. Netflix & Disney+ are already signed in — press the coloured button to open." style={{ minHeight: 52 }} /></div>
+              <div className="full"><VideoInput video={d.video} onChange={(v) => set(i, { video: v })} /></div>
+            </div>
+            <div style={{ marginTop: "0.5rem" }}>
+              <p className="panel__hint" style={{ margin: "0 0 0.35rem" }}>Troubleshooting (problem → fix)</p>
+              {ts.map((t, k) => (
+                <div key={k} style={{ display: "flex", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
+                  <input value={t.problem} onChange={(e) => setTs(k, { problem: e.target.value })} placeholder="No picture" style={{ flex: "1 1 140px" }} />
+                  <input value={t.fix} onChange={(e) => setTs(k, { fix: e.target.value })} placeholder="Press Source and choose HDMI 1" style={{ flex: "2 1 200px" }} />
+                  <button type="button" title="Remove" onClick={() => set(i, { troubleshooting: ts.filter((_, j) => j !== k) })} style={{ border: "none", background: "none", color: "#a3412e", cursor: "pointer" }}>×</button>
+                </div>
+              ))}
+              <button type="button" className="btn btn--ghost" style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem" }} onClick={() => set(i, { troubleshooting: [...ts, { problem: "", fix: "" }] })}>＋ Troubleshooting</button>
+            </div>
+            <div style={{ marginTop: "0.5rem" }}><button type="button" className="textlink" style={{ background: "none", border: 0, cursor: "pointer", color: "#a3412e", fontSize: "0.82rem" }} onClick={() => onChange(devices.filter((_, j) => j !== i))}>Remove device</button></div>
+          </div>
+        );
+      })}
+      <button type="button" className="btn btn--ghost" style={{ padding: "0.35rem 0.8rem", fontSize: "0.82rem" }} onClick={() => onChange([...devices, { id: uid(), name: "" }])}>＋ Device</button>
+    </div>
+  );
+}
+
 function RoomFields({ s, patch }: { s: GuideSection; patch: (p: Partial<GuideSection>) => void }) {
   const rooms = s.rooms || [];
   const set = (i: number, p: Partial<GuideRoom>) => patch({ rooms: rooms.map((r, j) => (j === i ? { ...r, ...p } : r)) });
@@ -112,6 +149,7 @@ function RoomFields({ s, patch }: { s: GuideSection; patch: (p: Partial<GuideSec
           <textarea value={r.body || ""} onChange={(e) => set(i, { body: e.target.value })} placeholder="How things work in this room: thermostat, blinds, coffee machine, where the remote lives…" style={{ minHeight: 64, marginBottom: "0.5rem" }} />
           <div style={{ marginBottom: "0.5rem" }}><PhotoList photos={r.photos || []} onChange={(ph) => set(i, { photos: ph })} /></div>
           <VideoInput video={r.video} onChange={(v) => set(i, { video: v })} />
+          <DeviceFields devices={r.devices || []} onChange={(d) => set(i, { devices: d })} />
         </div>
       ))}
       <button type="button" className="btn btn--ghost" style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }} onClick={() => patch({ rooms: [...rooms, { id: uid(), name: "" }] })}>＋ Room / zone</button>

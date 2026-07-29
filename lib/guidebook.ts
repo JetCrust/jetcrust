@@ -99,3 +99,45 @@ export function visibleSections(book: Guidebook, checkIn: Date | null, now: Date
     return daysUntil(checkIn, now) <= gate;
   });
 }
+
+// ---- Smart (non-AI) help search over the guidebook + device library ----
+export type GuideHit = { sectionIndex: number; title: string; snippet: string };
+
+function snippet(text: string, terms: string[]): string {
+  const hay = text.toLowerCase();
+  let at = -1;
+  for (const t of terms) { const i = hay.indexOf(t); if (i >= 0 && (at < 0 || i < at)) at = i; }
+  const start = Math.max(0, at - 40);
+  const s = text.slice(start, start + 140).trim();
+  return (start > 0 ? "…" : "") + s + (start + 140 < text.length ? "…" : "");
+}
+
+// Rank sections/rooms/devices by how many query terms they contain. Returns the
+// top matches, each pointing at the section to open. Pure + instant (no network).
+export function searchGuide(sections: GuideSection[], query: string): GuideHit[] {
+  const terms = query.toLowerCase().split(/\s+/).map((t) => t.trim()).filter(Boolean);
+  if (!terms.length) return [];
+  const scored: (GuideHit & { score: number })[] = [];
+  sections.forEach((s, idx) => {
+    const entries: { title: string; text: string }[] = [];
+    entries.push({
+      title: s.title,
+      text: [s.title, s.body, ...(s.steps || []).map((x) => x.text), s.wifi?.note,
+        ...(s.places || []).map((p) => `${p.name} ${p.category || ""} ${p.note || ""}`)].filter(Boolean).join(" "),
+    });
+    (s.rooms || []).forEach((r) => {
+      entries.push({ title: `${s.title} · ${r.name}`, text: [r.name, r.body].filter(Boolean).join(" ") });
+      (r.devices || []).forEach((d) => {
+        const ts = (d.troubleshooting || []).map((t) => `${t.problem} ${t.fix}`).join(" ");
+        entries.push({ title: `${r.name} · ${d.name}`, text: [d.name, d.brand, d.model, d.notes, ts].filter(Boolean).join(" ") });
+      });
+    });
+    for (const e of entries) {
+      const hay = e.text.toLowerCase();
+      const score = terms.reduce((n, t) => n + (hay.includes(t) ? 1 : 0), 0);
+      if (score > 0) scored.push({ sectionIndex: idx, title: e.title, snippet: snippet(e.text, terms), score });
+    }
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, 8).map(({ sectionIndex, title, snippet }) => ({ sectionIndex, title, snippet }));
+}

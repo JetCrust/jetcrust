@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { videoEmbedUrl, iconFor, type GuideSection } from "@/lib/guidebook";
+import { videoEmbedUrl, iconFor, searchGuide, type GuideSection, type GuideDevice } from "@/lib/guidebook";
 
 /* Mobile-first guest guidebook: a home screen of big tappable cards, each one
    tap from its detail. Built on the existing design tokens (no new CSS file). */
@@ -50,6 +50,33 @@ function Body({ text }: { text?: string }) {
   return <p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: "0 0 0.6rem", lineHeight: 1.6 }}>{text}</p>;
 }
 
+function Devices({ devices }: { devices?: GuideDevice[] }) {
+  if (!devices?.length) return null;
+  return (
+    <div style={{ marginTop: "0.6rem" }}>
+      {devices.map((d) => (
+        <details key={d.id} style={{ background: "var(--cream-2, #f6f2ea)", borderRadius: 10, padding: "0.7rem 0.9rem", marginBottom: "0.5rem" }}>
+          <summary style={{ cursor: "pointer", fontWeight: 600 }}>
+            {d.name}{(d.brand || d.model) ? <span style={{ fontWeight: 400, color: "var(--stone, #8a8375)" }}> — {[d.brand, d.model].filter(Boolean).join(" ")}</span> : null}
+          </summary>
+          <div style={{ marginTop: "0.5rem" }}>
+            <Body text={d.notes} />
+            {d.video && <Video video={d.video} />}
+            {(d.troubleshooting || []).length > 0 && (
+              <div style={{ marginTop: "0.3rem" }}>
+                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--stone, #8a8375)", marginBottom: "0.3rem" }}>Troubleshooting</div>
+                {(d.troubleshooting || []).map((t, i) => (
+                  <p key={i} style={{ margin: "0 0 0.35rem", lineHeight: 1.5 }}><strong>{t.problem}</strong> — {t.fix}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
 function SectionDetail({ s, hours, onOpenPhoto }: { s: GuideSection; hours?: { check_in: string; check_out: string }; onOpenPhoto: (src: string) => void }) {
   if (s.kind === "wifi") {
     const w = s.wifi;
@@ -91,6 +118,7 @@ function SectionDetail({ s, hours, onOpenPhoto }: { s: GuideSection; hours?: { c
             <Body text={r.body} />
             <Photos photos={r.photos} onOpen={onOpenPhoto} />
             <Video video={r.video} />
+            <Devices devices={r.devices} />
           </div>
         ))}
       </>
@@ -128,7 +156,9 @@ export default function GuidebookView({ sections, intro, propertyName, hours }: 
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const active = open != null ? sections[open] : null;
+  const hits = query.trim() ? searchGuide(sections, query) : [];
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto" }}>
@@ -148,6 +178,29 @@ export default function GuidebookView({ sections, intro, propertyName, hours }: 
             <h2 style={{ marginBottom: intro ? "0.4rem" : 0 }}>{propertyName}</h2>
             {intro && <p className="lead" style={{ marginBottom: 0 }}>{intro}</p>}
           </div>
+
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search — e.g. Wi-Fi, TV won’t turn on, parking…"
+            style={{ width: "100%", padding: "0.8rem 1rem", borderRadius: 12, border: "1px solid var(--line)", fontSize: "1rem", marginBottom: "1rem" }}
+          />
+
+          {query.trim() ? (
+            <div>
+              {hits.length === 0 ? (
+                <p style={{ color: "var(--stone)" }}>Nothing matched “{query}”. Try a simpler word, or browse the sections below.</p>
+              ) : (
+                hits.map((h, i) => (
+                  <button key={i} onClick={() => { setOpen(h.sectionIndex); setQuery(""); }}
+                    style={{ display: "block", width: "100%", textAlign: "left", background: "#fff", border: "1px solid var(--line)", borderRadius: 12, padding: "0.8rem 1rem", marginBottom: "0.6rem", cursor: "pointer" }}>
+                    <div style={{ fontWeight: 600, marginBottom: "0.2rem" }}>{h.title}</div>
+                    <div style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>{h.snippet}</div>
+                  </button>
+                ))
+              )}
+            </div>
+          ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "0.8rem" }}>
             {sections.map((s, i) => (
               <button key={s.id} onClick={() => setOpen(i)}
@@ -157,7 +210,8 @@ export default function GuidebookView({ sections, intro, propertyName, hours }: 
               </button>
             ))}
           </div>
-          {sections.length === 0 && <p style={{ color: "var(--stone)" }}>The guidebook for this stay will appear here shortly.</p>}
+          )}
+          {!query.trim() && sections.length === 0 && <p style={{ color: "var(--stone)" }}>The guidebook for this stay will appear here shortly.</p>}
         </div>
       )}
 

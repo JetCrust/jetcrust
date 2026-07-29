@@ -87,6 +87,7 @@ model User {
 
   bookings     Booking[]
   acceptances  ContractAcceptance[]
+  messages     Message[]
 }
 
 // Properties live in the database so they can be added and managed from the admin.
@@ -223,10 +224,14 @@ model Task {
   @@index([propertySlug, status])
 }
 
-// Two-way message thread between a guest and the host, per booking.
+// Two-way message thread between a guest and the host. Anchored to a booking for
+// context/scoping, and to the guest (userId) so their conversation is continuous
+// across bookings (client dashboard + admin guest profile).
 model Message {
   id          String   @id @default(cuid())
   bookingId   String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   sender      String   // "GUEST" | "ADMIN"
   body        String
   createdAt   DateTime @default(now())
@@ -234,6 +239,7 @@ model Message {
   readByGuest Boolean  @default(false)
 
   @@index([bookingId, createdAt])
+  @@index([userId, createdAt])
 }
 
 // Digital check-in / check-out report (tablet-first). Condition photos, extras
