@@ -129,7 +129,7 @@ export default async function Home() {
         <div className="wrap edge">
           <div
             className="edge__media slot has-photo reveal"
-            style={{ backgroundImage: `url('${imageUrl("castelaria", "castelaria-04", 1400)}')` }}
+            style={{ backgroundImage: `url('${imageUrl("castelaria", "cast-pool-day", 1400)}')` }}
           />
           <div className="reveal">
             <p className="overline eyebrow-line">Our Standard</p>
