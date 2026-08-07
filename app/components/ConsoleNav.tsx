@@ -24,6 +24,7 @@ const LINKS: { href: string; label: string; exact?: boolean; manager?: boolean; 
   { href: "/admin/properties", label: "Properties & pricing", sep: true },
   { href: "/admin/journal", label: "Journal" },
   { href: "/admin/users", label: "Users & access", sep: true },
+  { href: "/admin/diagnostics", label: "System check" },
 ];
 
 export default function ConsoleNav({ pendingCount = 0, role = "ADMIN" }: { pendingCount?: number; role?: string }) {
