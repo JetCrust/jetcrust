@@ -2,8 +2,11 @@ import { stripe } from "./stripe";
 import { prisma } from "./prisma";
 
 const DAY = 86400000;
-export const HOLD_LEAD_DAYS = 2; // place the hold this many days before check-in
-export const RELEASE_AFTER_DAYS = 1; // auto-release this many days after checkout
+// A card authorization only lasts ~7 days, so anchor the hold to CHECK-OUT (not
+// check-in) — that way it is fresh and valid right when damage is assessed,
+// whatever the stay length (a 14-night stay's hold would otherwise expire mid-stay).
+export const HOLD_LEAD_DAYS = 2;   // place the hold this many days before check-OUT
+export const RELEASE_AFTER_DAYS = 2; // auto-release this many days after checkout (a clean stay)
 
 type Result = { ok?: boolean; error?: string; already?: boolean; capturedCents?: number };
 
@@ -80,12 +83,13 @@ export async function runSecurityDeposits(now: Date) {
   const held: { id: string; ok: boolean; error?: string }[] = [];
   const released: { id: string; ok: boolean; error?: string }[] = [];
 
+  // Place the hold shortly before check-OUT (so it survives to checkout for any length).
   const toHold = await prisma.booking.findMany({
     where: {
       status: "APPROVED",
       securityCents: { gt: 0 },
       securityStatus: "none",
-      checkIn: { lte: new Date(now.getTime() + HOLD_LEAD_DAYS * DAY), gte: now },
+      checkOut: { lte: new Date(now.getTime() + HOLD_LEAD_DAYS * DAY), gte: now },
     },
   });
   for (const b of toHold) {
@@ -97,6 +101,10 @@ export async function runSecurityDeposits(now: Date) {
     where: { status: "APPROVED", securityStatus: "held", checkOut: { lte: new Date(now.getTime() - RELEASE_AFTER_DAYS * DAY) } },
   });
   for (const b of toRelease) {
+    // Do not auto-release if the checkout report recorded additional charges —
+    // leave that hold for the host to capture or resolve by hand.
+    const report = await prisma.stayReport.findFirst({ where: { bookingId: b.id, kind: "CHECKOUT", completedAt: { not: null } }, orderBy: { createdAt: "desc" } });
+    if (report && report.additionalCents > 0) continue;
     const r = await releaseSecurityHold(b.id);
     released.push({ id: b.id, ok: !!r.ok, error: r.error });
   }
