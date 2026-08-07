@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { placeSecurityHold, releaseSecurityHold, captureSecurityHold } from "@/lib/security-deposit";
+import { placeSecurityHold, chargeSecurityDeposit, secureDeposit, releaseSecurityHold, captureSecurityHold } from "@/lib/security-deposit";
 
 const schema = z.object({
-  action: z.enum(["hold", "release", "capture"]),
+  action: z.enum(["hold", "charge", "secure", "release", "capture"]),
   amountCents: z.number().int().positive().optional(),
 });
 
@@ -19,10 +19,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
+  const { action, amountCents } = parsed.data;
   let r;
-  if (parsed.data.action === "hold") r = await placeSecurityHold(id);
-  else if (parsed.data.action === "release") r = await releaseSecurityHold(id);
-  else r = await captureSecurityHold(id, parsed.data.amountCents ?? 0);
+  if (action === "hold") r = await placeSecurityHold(id);
+  else if (action === "charge") r = await chargeSecurityDeposit(id);
+  else if (action === "secure") r = await secureDeposit(id);
+  else if (action === "release") r = await releaseSecurityHold(id);
+  else r = await captureSecurityHold(id, amountCents ?? 0);
 
   if (r.error) return NextResponse.json({ error: r.error }, { status: 400 });
   return NextResponse.json({ ok: true, ...r });

@@ -7,6 +7,7 @@ import BalanceButton from "../../../components/BalanceButton";
 import AdminNotes from "../../../components/AdminNotes";
 import MessageThread from "../../../components/MessageThread";
 import SecurityDeposit from "../../../components/SecurityDeposit";
+import { depositIsCharge } from "@/lib/security-deposit";
 import ExtrasLedger from "../../../components/ExtrasLedger";
 import RefundControl from "../../../components/RefundControl";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
@@ -169,7 +170,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                 {b.status === "APPROVED" && (
                   <div className="panel">
                     <div className="panel__head"><h3>Security deposit</h3></div>
-                    <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} />
+                    <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} willCharge={depositIsCharge(b.checkIn, b.checkOut)} />
                   </div>
                 )}
 

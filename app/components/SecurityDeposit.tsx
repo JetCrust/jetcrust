@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 const money = (c: number) => `€${(c / 100).toLocaleString("en-US")}`;
 
 const STATUS: Record<string, string> = {
-  none: "Not held yet",
-  held: "Held",
+  none: "Not secured yet",
+  held: "Held (nothing charged)",
+  charged: "Charged (refundable)",
   released: "Released",
-  captured: "Charged",
+  captured: "Kept for damage",
   expired: "Expired",
 };
 
@@ -17,24 +18,26 @@ export default function SecurityDeposit({
   cents,
   status,
   capturedCents,
+  willCharge,
 }: {
   bookingId: string;
   cents: number;
   status: string;
   capturedCents: number;
+  willCharge?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [captureEur, setCaptureEur] = useState<string>("");
 
-  async function act(action: "hold" | "release" | "capture") {
+  async function act(action: "secure" | "release" | "capture") {
     setBusy(action);
     setError(null);
     const body: { action: string; amountCents?: number } = { action };
     if (action === "capture") {
       const amt = Math.round(Number(captureEur) * 100);
-      if (!amt || amt <= 0) { setError("Enter an amount to charge."); setBusy(null); return; }
+      if (!amt || amt <= 0) { setError("Enter an amount to keep."); setBusy(null); return; }
       body.amountCents = amt;
     }
     const res = await fetch(`/api/admin/bookings/${bookingId}/deposit`, {
@@ -55,6 +58,9 @@ export default function SecurityDeposit({
     return <p style={{ margin: 0, color: "var(--stone)" }}>No security deposit is set for this home. Add one in Properties &amp; pricing.</p>;
   }
 
+  const active = status === "held" || status === "charged";
+  const isCharged = status === "charged";
+
   return (
     <div>
       <ul className="kv" style={{ marginBottom: "1rem" }}>
@@ -64,28 +70,46 @@ export default function SecurityDeposit({
 
       {status === "none" && (
         <>
-          <p className="panel__hint">It holds automatically ~2 days before check-in. You can also place it now.</p>
-          <button className="btn btn--ghost" disabled={!!busy} onClick={() => act("hold")}>{busy === "hold" ? "Holding…" : "Place hold now"}</button>
+          <p className="panel__hint">
+            {willCharge
+              ? "Long stay: a card hold can't last the whole stay, so the deposit is charged near check-in and refunded after a clean check-out. This happens automatically, or secure it now."
+              : "Short stay: a hold is placed automatically ~2 days before check-out (nothing is charged). You can also place it now."}
+          </p>
+          <button className="btn btn--ghost" disabled={!!busy} onClick={() => act("secure")}>
+            {busy === "secure" ? "Working…" : willCharge ? "Charge deposit now" : "Place hold now"}
+          </button>
         </>
       )}
 
-      {status === "held" && (
+      {active && (
         <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
-          <button className="btn btn--ghost" disabled={!!busy} onClick={() => act("release")}>{busy === "release" ? "Releasing…" : "Release (clean checkout)"}</button>
+          <button className="btn btn--ghost" disabled={!!busy} onClick={() => act("release")}>
+            {busy === "release" ? "Working…" : isCharged ? "Refund to guest (clean)" : "Release (clean checkout)"}
+          </button>
           <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>or charge €</span>
+            <span style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>or keep €</span>
             <input type="number" min={1} value={captureEur} onChange={(e) => setCaptureEur(e.target.value)} placeholder="0"
               style={{ width: 90, padding: "0.5rem 0.6rem", border: "1px solid var(--line)", borderRadius: "var(--radius-sm)" }} />
-            <button className="btn btn--brass" disabled={!!busy} onClick={() => act("capture")}>{busy === "capture" ? "Charging…" : "Charge for damage"}</button>
+            <button className="btn btn--brass" disabled={!!busy} onClick={() => act("capture")}>
+              {busy === "capture" ? "Working…" : "for damage"}
+            </button>
           </span>
         </div>
       )}
 
+      {active && (
+        <p className="panel__hint" style={{ marginTop: "0.8rem", marginBottom: 0 }}>
+          {isCharged
+            ? "The deposit is charged. “Refund” returns all of it; “keep €X” refunds the rest and keeps that amount for damage."
+            : "“Release” cancels the hold; “keep €X” charges that amount for damage and releases the rest. A hold expires ~7 days after it is placed, so decide within that window (or keep it and refund later)."}
+        </p>
+      )}
+
       {(status === "released" || status === "captured" || status === "expired") && (
         <p className="panel__hint" style={{ marginBottom: 0 }}>
-          {status === "released" && "Released back to the guest, nothing charged."}
-          {status === "captured" && `Charged ${money(capturedCents)} for damage/extras; the rest was released.`}
-          {status === "expired" && "The hold expired on Stripe's side. Place a new hold if needed."}
+          {status === "released" && "Resolved — the guest was made whole (hold released or charge refunded)."}
+          {status === "captured" && `Kept ${money(capturedCents)} for damage/extras; the rest was released or refunded.`}
+          {status === "expired" && "The hold expired on Stripe's side. Secure it again if needed."}
         </p>
       )}
 
