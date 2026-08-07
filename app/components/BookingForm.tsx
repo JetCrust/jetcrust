@@ -6,9 +6,9 @@ import { Elements, PaymentElement, AddressElement, useStripe, useElements } from
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
-type AddonUnit = "night" | "day" | "stay";
+type AddonUnit = "night" | "day" | "stay" | "each";
 type RateLine = { kind: string; label: string; nights: number; rate: number; total: number };
-type AddonLine = { value: string; title: string; unit: AddonUnit; unitPrice: number; qty: number; total: number };
+type AddonLine = { value: string; title: string; unit: AddonUnit; unitPrice: number; qty: number; total: number; qtyNoun?: string };
 
 type Quote = {
   nights: number;
@@ -29,7 +29,7 @@ type Quote = {
   demandApplied: boolean;
 };
 
-type Addon = { icon?: string; title: string; value: string; text: string; price_eur?: number; unit?: AddonUnit };
+type Addon = { icon?: string; title: string; value: string; text: string; price_eur?: number; unit?: AddonUnit; min_qty?: number; max_qty?: number; qty_noun?: string };
 
 type Props = {
   slug: string;
@@ -45,8 +45,14 @@ type Props = {
 
 const money = (n: number) => `€${Math.round(n).toLocaleString("en-US")}`;
 
-function unitLabel(unit: AddonUnit): string {
+function unitLabel(unit: AddonUnit, qtyNoun?: string): string {
+  if (unit === "each") return qtyNoun ? `per ${qtyNoun}` : "each";
   return unit === "stay" ? "per stay" : unit === "day" ? "per day" : "per night";
+}
+// Pluralise a noun for the stepper count ("2 sessions", "1 hour").
+function nounFor(n: number, noun?: string): string {
+  const base = noun || "unit";
+  return `${n} ${n === 1 ? base : base + "s"}`;
 }
 
 function fmtDate(s: string) {
@@ -84,7 +90,7 @@ function PriceBreakdown({ q }: { q: Quote }) {
       {q.addonLines.map((l) => (
         <div className="breakdown__row" key={l.value}>
           <span>
-            {l.title} <small>{money(l.unitPrice)} {unitLabel(l.unit)}{l.qty > 1 ? ` × ${l.qty}` : ""}</small>
+            {l.title} <small>{money(l.unitPrice)} {unitLabel(l.unit, l.qtyNoun)}{l.qty > 1 ? ` × ${l.qty}` : ""}</small>
           </span>
           <span>{money(l.total)}</span>
         </div>
@@ -107,7 +113,22 @@ export default function BookingForm(props: Props) {
   const [checkIn, setCheckIn] = useState(props.initial?.checkIn || "");
   const [checkOut, setCheckOut] = useState(props.initial?.checkOut || "");
   const [guests, setGuests] = useState(props.initial?.guests || 2);
-  const [addons, setAddons] = useState<string[]>(props.initial?.addons || []);
+  // value → quantity (1 for simple add-ons, N for "each" add-ons). 0/absent = off.
+  const [addons, setAddons] = useState<Record<string, number>>(() => {
+    const m: Record<string, number> = {};
+    for (const v of props.initial?.addons || []) {
+      const [value, qty] = String(v).split(":");
+      if (value) m[value] = Math.max(1, Math.round(Number(qty) || 1));
+    }
+    return m;
+  });
+  const setAddonQty = (value: string, qty: number) =>
+    setAddons((prev) => {
+      const next = { ...prev };
+      if (qty <= 0) delete next[value];
+      else next[value] = qty;
+      return next;
+    });
   const [note, setNote] = useState(props.initial?.note || "");
   const [accepted, setAccepted] = useState(false);
   const [over18, setOver18] = useState(false);
@@ -121,7 +142,8 @@ export default function BookingForm(props: Props) {
   const [quoting, setQuoting] = useState(false);
 
   // Live price (public), re-quoted whenever dates or add-ons change.
-  const addonKey = addons.join(",");
+  // Encoded as value:qty pairs so quantities reach the quote.
+  const addonKey = Object.entries(addons).map(([v, q]) => `${v}:${q}`).join(",");
   useEffect(() => {
     if (!checkIn || !checkOut) { setQ(null); return; }
     let active = true;
@@ -166,7 +188,7 @@ export default function BookingForm(props: Props) {
     const res = await fetch("/api/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: props.slug, checkIn, checkOut, guests, addons, note, acceptContract: true }),
+      body: JSON.stringify({ slug: props.slug, checkIn, checkOut, guests, addons: Object.entries(addons).map(([value, qty]) => ({ value, qty })), note, acceptContract: true }),
     });
     const data = await res.json().catch(() => ({}));
     if (data.captured) { setCaptured(data.message || "We have received your request and will confirm with you personally, shortly."); setBusy(false); return; }
@@ -185,7 +207,7 @@ export default function BookingForm(props: Props) {
   function toSignIn() {
     // Carry the whole selection (dates, guests, add-ons, note) through sign-in.
     const p = new URLSearchParams({ checkIn, checkOut, guests: String(guests) });
-    if (addons.length) p.set("addons", addons.join(","));
+    if (Object.keys(addons).length) p.set("addons", addonKey);
     if (note.trim()) p.set("note", note.trim());
     const next = `/book/${props.slug}?${p.toString()}`;
     window.location.href = `/account?next=${encodeURIComponent(next)}`;
@@ -249,21 +271,40 @@ export default function BookingForm(props: Props) {
 
       <div className="full"><label>Add to your stay</label>
         <div className="addon-checks">
-          {props.addons.map((a) => (
-            <label className="addon-check" key={a.value}>
-              <input type="checkbox" checked={addons.includes(a.value)}
-                onChange={(e) => setAddons((prev) => (e.target.checked ? [...prev, a.value] : prev.filter((v) => v !== a.value)))} />
-              <span>
-                {a.title}
-                {a.price_eur ? (
-                  <small style={{ display: "block", color: "var(--stone)", fontSize: "0.78rem" }}>
-                    {money(a.price_eur)} {unitLabel((a.unit as AddonUnit) || "stay")}
-                  </small>
-                ) : null}
-              </span>
-            </label>
-          ))}
+          {props.addons.map((a) => {
+            const unit = (a.unit as AddonUnit) || "stay";
+            const isEach = unit === "each";
+            const min = Math.max(1, Number(a.min_qty) || 1);
+            const max = Math.max(min, Number(a.max_qty) || 12);
+            const qty = addons[a.value] || 0;
+            const on = qty > 0;
+            const stepBtn: React.CSSProperties = { width: 30, height: 30, borderRadius: 8, border: "1px solid var(--line)", background: "var(--white)", cursor: "pointer", fontSize: "1.1rem", lineHeight: 1 };
+            return (
+              <div className="addon-check" key={a.value} style={{ alignItems: "flex-start" }}>
+                <input type="checkbox" checked={on} onChange={(e) => setAddonQty(a.value, e.target.checked ? min : 0)} />
+                <span style={{ flex: 1 }}>
+                  <span style={{ fontWeight: 600 }}>{a.title}</span>
+                  {a.price_eur ? (
+                    <small style={{ display: "block", color: "var(--stone)", fontSize: "0.78rem" }}>
+                      {money(a.price_eur)} {unitLabel(unit, a.qty_noun)}
+                    </small>
+                  ) : null}
+                  {a.text ? <small style={{ display: "block", color: "var(--ink-soft)", fontSize: "0.8rem", marginTop: "0.2rem", whiteSpace: "pre-wrap" }}>{a.text}</small> : null}
+                  {isEach && on && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.6rem", marginTop: "0.55rem" }}>
+                      <button type="button" style={stepBtn} onClick={() => setAddonQty(a.value, Math.max(min, qty - 1))} aria-label="Fewer">–</button>
+                      <span style={{ minWidth: 96, textAlign: "center", fontSize: "0.85rem", fontWeight: 500 }}>{nounFor(qty, a.qty_noun)}</span>
+                      <button type="button" style={stepBtn} onClick={() => setAddonQty(a.value, Math.min(max, qty + 1))} aria-label="More">+</button>
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
+        <p className="panel__hint" style={{ marginTop: "0.7rem", marginBottom: 0, fontSize: "0.8rem" }}>
+          Experiences are arranged with trusted local partners and are subject to availability — booking ahead secures them, last-minute requests can&rsquo;t always be guaranteed. Tell us your preferred days and times in <em>Anything else</em> below and we&rsquo;ll confirm the schedule with you.
+        </p>
       </div>
 
       <div className="full">

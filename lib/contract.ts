@@ -15,14 +15,16 @@ export const CONTRACT_TEXT = `JET CRUST — SHORT-TERM RENTAL AGREEMENT
 
 5. Security deposit. A refundable security deposit covers damage and any unpaid charges. It is separate from the rent. For shorter stays we place a temporary hold (an authorisation, not a charge) on your card shortly before departure; nothing is taken unless there is damage or an unpaid charge, and the hold is released after a clean check-out. Because a card hold expires after a few days, for longer stays the deposit is instead charged to your card at or shortly before check-in and refunded in full after a clean check-out, normally within a few business days. If the cost of damage or unpaid charges is more than the deposit, you authorise Jet Crust to charge the difference to the card on file. The deposit amount for your stay is shown before you book.
 
-6. Cancellation. Cancellation terms will be confirmed with your approval. Unless stated otherwise, the nights are non-refundable within thirty days of arrival.
+6. Experiences and extras. Optional experiences (such as a private chef, in-villa massage, sauna, ski instruction and similar) are arranged with independent local partners and are subject to their availability. An experience is confirmed with you before it is treated as booked; requests made close to arrival cannot always be fulfilled, so we recommend booking ahead. Where an experience you have paid for cannot be provided, the amount for it is refunded.
 
-7. Check-in and check-out. Times are as shown for the property unless agreed otherwise in writing.
+7. Cancellation. Cancellation terms will be confirmed with your approval. Unless stated otherwise, the nights are non-refundable within thirty days of arrival.
 
-8. Liability. Jet Crust is not liable for personal injury, loss or damage to guests' belongings except where caused by its negligence and to the extent required by law.
+8. Check-in and check-out. Times are as shown for the property unless agreed otherwise in writing.
 
-9. Data. Your account details, this acceptance, your IP address and the time of acceptance are recorded as evidence of this agreement and processed in line with the privacy policy.
+9. Liability. Jet Crust is not liable for personal injury, loss or damage to guests' belongings except where caused by its negligence and to the extent required by law.
 
-10. Governing law. This agreement is governed by the laws of Romania.
+10. Data. Your account details, this acceptance, your IP address and the time of acceptance are recorded as evidence of this agreement and processed in line with the privacy policy.
+
+11. Governing law. This agreement is governed by the laws of Romania.
 
 By ticking to accept, you confirm you have read and agree to this agreement and the terms and privacy policy.`;

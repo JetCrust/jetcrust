@@ -41,12 +41,15 @@ export function applyDynamic(rate: number, p: Property, occupancyRatio: number):
   return Math.round(price);
 }
 
-// How an add-on is charged. "day" bills the same count as nights; the wording
-// just reflects how the service is sold (a chef per night, an ATV per day).
-export type AddonUnit = "night" | "day" | "stay";
+// How an add-on is charged. "day"/"night" bill the same count as nights; "each"
+// lets the guest choose how many (sessions, hours, people…), within min/max.
+export type AddonUnit = "night" | "day" | "stay" | "each";
+
+// What the guest selected: add-on value → quantity (0 or missing = not selected).
+export type AddonSelection = Record<string, number>;
 
 export type RateLine = { kind: "base" | "weekend" | "season"; label: string; nights: number; rate: number; total: number };
-export type AddonLine = { value: string; title: string; unit: AddonUnit; unitPrice: number; qty: number; total: number };
+export type AddonLine = { value: string; title: string; unit: AddonUnit; unitPrice: number; qty: number; total: number; qtyNoun?: string };
 export type DiscountLine = { label: string; pct: number; amount: number };
 
 export type Quote = {
@@ -74,21 +77,51 @@ const RATE_LABEL: Record<RateLine["kind"], string> = {
   season: "Seasonal night",
 };
 
-export function unitLabel(unit: AddonUnit): string {
+export function unitLabel(unit: AddonUnit, qtyNoun?: string): string {
+  if (unit === "each") return qtyNoun ? `per ${qtyNoun}` : "each";
   return unit === "stay" ? "per stay" : unit === "day" ? "per day" : "per night";
 }
 
+// Accept either a plain list of values (each qty 1) or a value→qty map.
+function toSelection(sel: string[] | AddonSelection): AddonSelection {
+  if (Array.isArray(sel)) { const m: AddonSelection = {}; for (const v of sel) m[v] = 1; return m; }
+  return sel || {};
+}
+
+// Read a stored booking.addons JSON (old string[] or new [{value,qty}]) into a map.
+export function parseAddonSelection(json: string | null | undefined): AddonSelection {
+  const m: AddonSelection = {};
+  try {
+    const arr = JSON.parse(json || "[]");
+    if (Array.isArray(arr)) {
+      for (const it of arr) {
+        if (typeof it === "string") m[it] = 1;
+        else if (it && typeof it === "object" && it.value) m[String(it.value)] = Math.max(1, Math.round(Number(it.qty) || 1));
+      }
+    }
+  } catch { /* leave empty */ }
+  return m;
+}
+
 // Price the selected add-ons for a stay of `nights` nights.
-export function priceAddons(p: Property, selected: string[], nights: number): AddonLine[] {
-  if (!selected.length || nights <= 0) return [];
+export function priceAddons(p: Property, selected: string[] | AddonSelection, nights: number): AddonLine[] {
+  const sel = toSelection(selected);
+  if (nights <= 0) return [];
   const lines: AddonLine[] = [];
   for (const a of p.addons || []) {
-    if (!selected.includes(a.value)) continue;
+    const chosen = sel[a.value];
+    if (!chosen || chosen < 1) continue;
     const unitPrice = Number(a.price_eur) || 0;
     if (!unitPrice) continue;
     const unit = (a.unit as AddonUnit) || "stay";
-    const qty = unit === "stay" ? 1 : nights;
-    lines.push({ value: a.value, title: a.title, unit, unitPrice, qty, total: unitPrice * qty });
+    let qty: number;
+    if (unit === "each") {
+      const min = Math.max(1, Number(a.min_qty) || 1);
+      const max = Math.max(min, Number(a.max_qty) || 99);
+      qty = Math.min(max, Math.max(min, Math.round(chosen)));
+    } else if (unit === "stay") qty = 1;
+    else qty = nights;
+    lines.push({ value: a.value, title: a.title, unit, unitPrice, qty, total: unitPrice * qty, qtyNoun: a.qty_noun });
   }
   return lines;
 }
@@ -98,7 +131,7 @@ export function quote(
   checkIn: string,
   checkOut: string,
   occupancyRatio = 0,
-  selectedAddons: string[] = [],
+  selectedAddons: string[] | AddonSelection = [],
   now?: Date,
 ): Quote {
   const nights = nightsBetween(checkIn, checkOut);

@@ -51,7 +51,9 @@ const schema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   guests: z.number().int().min(1).max(64),
-  addons: z.array(z.string()).default([]),
+  // Add-ons carry a quantity now (sessions/hours/etc.); still accept a bare
+  // string list for older clients.
+  addons: z.array(z.union([z.string(), z.object({ value: z.string(), qty: z.number().int().min(1).max(64) })])).default([]),
   note: z.string().max(2000).optional(),
   acceptContract: z.literal(true),
 });
@@ -69,7 +71,11 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Please complete the dates, guests and accept the contract." }, { status: 400 });
   }
-  const { slug, checkIn, checkOut, guests, addons, note } = parsed.data;
+  const { slug, checkIn, checkOut, guests, note } = parsed.data;
+  // Normalise add-ons to {value, qty} and to a value→qty map for pricing.
+  const addonSel: { value: string; qty: number }[] = parsed.data.addons.map((a) => (typeof a === "string" ? { value: a, qty: 1 } : a));
+  const addonMap: Record<string, number> = {};
+  for (const a of addonSel) addonMap[a.value] = a.qty;
 
   const property = await getProperty(slug);
   if (!property || property.status !== "live") {
@@ -81,7 +87,7 @@ export async function POST(req: Request) {
 
   const ratio = await occupancyRatio(property, checkIn, checkOut);
   // Add-ons are priced into the total, so the hold matches what the guest saw.
-  const q = quote(property, checkIn, checkOut, ratio, addons, new Date());
+  const q = quote(property, checkIn, checkOut, ratio, addonMap, new Date());
   if (!q.valid) {
     return NextResponse.json({ error: `Please choose at least ${q.minNights} night(s), with check-out after check-in.` }, { status: 400 });
   }
@@ -149,7 +155,7 @@ export async function POST(req: Request) {
         checkIn: new Date(checkIn),
         checkOut: new Date(checkOut),
         guests,
-        addons: JSON.stringify(addons),
+        addons: JSON.stringify(addonSel),
         // Snapshot of exactly how the price was built, so the guest and the host
         // always see what was quoted, even if rates change later.
         breakdown: JSON.stringify({

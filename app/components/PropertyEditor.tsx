@@ -5,7 +5,7 @@ import GalleryEditor from "./GalleryEditor";
 
 /* Minimal shapes for the fields the editor touches. The full object is passed
    through untouched, so advanced fields (features, amenities, etc.) are preserved. */
-type Addon = { icon?: string; title: string; value: string; text?: string; price_eur?: number; unit?: string };
+type Addon = { icon?: string; title: string; value: string; text?: string; price_eur?: number; unit?: string; min_qty?: number; max_qty?: number; qty_noun?: string };
 type Seasonal = { name: string; from: string; to: string; nightly_eur: number };
 type PropObj = {
   slug: string;
@@ -45,7 +45,7 @@ type PropObj = {
   [key: string]: unknown;
 };
 
-const UNITS = ["night", "day", "stay"];
+const UNITS = ["night", "day", "stay", "each"];
 
 export default function PropertyEditor({ initial, isNew }: { initial: PropObj; isNew: boolean }) {
   const router = useRouter();
@@ -304,6 +304,13 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
                 {UNITS.map((u) => <option key={u} value={u}>per {u}</option>)}
               </select>
             </div>
+            {a.unit === "each" && (
+              <>
+                <div><label>Guest picks (noun)</label><input value={a.qty_noun || ""} onChange={(e) => setAddon(i, { qty_noun: e.target.value })} placeholder="session / hour / person" /></div>
+                <div><label>Min</label><input type="number" min={1} value={a.min_qty ?? 1} onChange={(e) => setAddon(i, { min_qty: num(e.target.value) })} /></div>
+                <div><label>Max</label><input type="number" min={1} value={a.max_qty ?? 12} onChange={(e) => setAddon(i, { max_qty: num(e.target.value) })} /></div>
+              </>
+            )}
             <div className="full"><label>Description</label><input value={a.text || ""} onChange={(e) => setAddon(i, { text: e.target.value })} /></div>
             <div className="full"><button type="button" className="textlink" style={{ background: "none", border: 0, cursor: "pointer", color: "#a3412e" }} onClick={() => removeAddon(i)}>Remove this add-on</button></div>
           </div>

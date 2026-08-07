@@ -51,7 +51,7 @@ export type Property = {
   videos: { provider: string; id: string; title: string }[];
   amenities: { category: string; items: string[] }[];
   setting: { heading: string; lead: string; map_image: string; proximity: { value: string; text: string }[] };
-  addons: { icon: string; title: string; text: string; value: string; price_eur?: number; unit?: "night" | "day" | "stay" }[];
+  addons: { icon: string; title: string; text: string; value: string; price_eur?: number; unit?: "night" | "day" | "stay" | "each"; min_qty?: number; max_qty?: number; qty_noun?: string }[];
   card: { image: string; desc: string; tags: string[] };
   cross_sell: string;
   [key: string]: unknown;

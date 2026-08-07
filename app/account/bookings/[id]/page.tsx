@@ -9,6 +9,7 @@ import CancelStay from "../../../components/CancelStay";
 import MessageThread from "../../../components/MessageThread";
 import LocalTime from "../../../components/LocalTime";
 import { cancellationRefund } from "@/lib/policy";
+import { parseAddonSelection } from "@/lib/pricing";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
@@ -38,12 +39,13 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
     : null;
   const checkoutItems: { desc: string; amountCents: number }[] = checkoutReport ? JSON.parse(checkoutReport.items || "[]") : [];
   const chatMessages = await prisma.message.findMany({ where: { bookingId: b.id }, orderBy: { createdAt: "asc" } });
-  const current: string[] = JSON.parse(b.addons || "[]");
+  const addonSel = parseAddonSelection(b.addons);
+  const current: string[] = Object.keys(addonSel);
   let messages: { text: string; at: string }[] = [];
   try { messages = JSON.parse(b.guestMessages || "[]"); } catch { messages = []; }
   const canEdit = !["DECLINED", "CANCELLED", "EXPIRED"].includes(b.status);
   const hasBalance = b.balanceCents > 0;
-  const addonTitles = current.map((v) => p?.addons.find((a) => a.value === v)?.title || v).join(", ");
+  const addonTitles = current.map((v) => { const t = p?.addons.find((a) => a.value === v)?.title || v; const q = addonSel[v]; return q > 1 ? `${t} × ${q}` : t; }).join(", ");
   const depositLabel = `${money(b.depositCents ?? 0)}${b.status === "APPROVED" ? " charged" : " held"}`;
   const balanceLabel = `${money(b.balanceCents)}${b.balancePaidAt ? " paid" : b.balanceDueAt ? ` due ${fmt(b.balanceDueAt)}` : ""}`;
   const paymentLabel = b.status === "APPROVED" ? "Charged" : "Card held, not charged";

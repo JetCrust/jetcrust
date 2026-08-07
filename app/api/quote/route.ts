@@ -10,8 +10,13 @@ export async function GET(req: Request) {
   const slug = searchParams.get("slug") || "";
   const checkIn = searchParams.get("checkIn") || "";
   const checkOut = searchParams.get("checkOut") || "";
-  // Selected add-ons so the live price reflects them as the guest ticks boxes.
-  const addons = (searchParams.get("addons") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  // Selected add-ons (value or value:qty) so the live price reflects them as the
+  // guest ticks boxes and sets quantities.
+  const addons: Record<string, number> = {};
+  for (const part of (searchParams.get("addons") || "").split(",").map((s) => s.trim()).filter(Boolean)) {
+    const [value, qty] = part.split(":");
+    if (value) addons[value] = Math.max(1, Math.round(Number(qty) || 1));
+  }
 
   const p = await getProperty(slug);
   if (!p) return NextResponse.json({ error: "Unknown property." }, { status: 404 });
