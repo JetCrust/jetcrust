@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "./components/CookieBanner";
+import AssistantGate from "./components/AssistantGate";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_ORIGIN || "https://jetcrust.com"),
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <CookieBanner />
+        <AssistantGate />
       </body>
     </html>
   );
