@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { placeSecurityHold, chargeSecurityDeposit, secureDeposit, releaseSecurityHold, captureSecurityHold } from "@/lib/security-deposit";
+import { placeSecurityHold, chargeSecurityDeposit, secureDeposit, setBookingDeposit, releaseSecurityHold, captureSecurityHold } from "@/lib/security-deposit";
 
 const schema = z.object({
-  action: z.enum(["hold", "charge", "secure", "release", "capture"]),
+  action: z.enum(["set", "hold", "charge", "secure", "release", "capture"]),
   amountCents: z.number().int().positive().optional(),
 });
 
@@ -21,7 +21,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { action, amountCents } = parsed.data;
   let r;
-  if (action === "hold") r = await placeSecurityHold(id);
+  if (action === "set") r = await setBookingDeposit(id);
+  else if (action === "hold") r = await placeSecurityHold(id);
   else if (action === "charge") r = await chargeSecurityDeposit(id);
   else if (action === "secure") r = await secureDeposit(id);
   else if (action === "release") r = await releaseSecurityHold(id);

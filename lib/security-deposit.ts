@@ -1,5 +1,6 @@
 import { stripe } from "./stripe";
 import { prisma } from "./prisma";
+import { getProperty } from "./properties";
 
 const DAY = 86400000;
 export const HOLD_LEAD_DAYS = 2;    // for SHORT stays: place the hold this many days before check-OUT
@@ -97,6 +98,20 @@ export async function chargeSecurityDeposit(bookingId: string): Promise<Result> 
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+// Attach the home's configured deposit to a booking that was approved before the
+// deposit was set (so it snapshotted €0). Sets the amount only; the hold/charge
+// still happens on schedule (or via "Place hold now").
+export async function setBookingDeposit(bookingId: string): Promise<Result> {
+  const b = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!b) return { error: "Booking not found." };
+  if (b.securityStatus !== "none") return { error: "The deposit is already active or resolved for this booking." };
+  const prop = await getProperty(b.propertySlug);
+  const cents = Math.round((Number(prop?.pricing?.deposit_eur) || 0) * 100);
+  if (cents <= 0) return { error: "No deposit is configured for this home. Add one in Properties & pricing first." };
+  await prisma.booking.update({ where: { id: b.id }, data: { securityCents: cents } });
+  return { ok: true, capturedCents: cents };
 }
 
 // Secure the deposit the right way for the stay length: hold (short) or charge (long).

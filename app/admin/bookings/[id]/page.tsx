@@ -170,7 +170,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                 {b.status === "APPROVED" && (
                   <div className="panel">
                     <div className="panel__head"><h3>Security deposit</h3></div>
-                    <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} willCharge={depositIsCharge(b.checkIn, b.checkOut)} />
+                    <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} willCharge={depositIsCharge(b.checkIn, b.checkOut)} propertyDepositCents={Math.round((Number(p?.pricing?.deposit_eur) || 0) * 100)} />
                   </div>
                 )}
 

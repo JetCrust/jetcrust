@@ -19,19 +19,21 @@ export default function SecurityDeposit({
   status,
   capturedCents,
   willCharge,
+  propertyDepositCents = 0,
 }: {
   bookingId: string;
   cents: number;
   status: string;
   capturedCents: number;
   willCharge?: boolean;
+  propertyDepositCents?: number;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [captureEur, setCaptureEur] = useState<string>("");
 
-  async function act(action: "secure" | "release" | "capture") {
+  async function act(action: "set" | "secure" | "release" | "capture") {
     setBusy(action);
     setError(null);
     const body: { action: string; amountCents?: number } = { action };
@@ -55,6 +57,18 @@ export default function SecurityDeposit({
   }
 
   if (cents <= 0) {
+    // Booking approved before the home's deposit was configured — offer to attach it.
+    if (propertyDepositCents > 0) {
+      return (
+        <div>
+          <p className="panel__hint" style={{ marginTop: 0 }}>
+            This booking was taken before a deposit was set for this home, so no deposit is attached yet. The home&rsquo;s deposit is <strong>{money(propertyDepositCents)}</strong> — attach it to protect this stay (nothing is charged now; the hold lands near check-out).
+          </p>
+          <button className="btn btn--brass" disabled={!!busy} onClick={() => act("set")}>{busy === "set" ? "Attaching…" : `Attach ${money(propertyDepositCents)} deposit`}</button>
+          {error && <p style={{ color: "#a3412e", fontSize: "0.85rem", marginTop: "0.6rem", marginBottom: 0 }}>{error}</p>}
+        </div>
+      );
+    }
     return <p style={{ margin: 0, color: "var(--stone)" }}>No security deposit is set for this home. Add one in Properties &amp; pricing.</p>;
   }
 
