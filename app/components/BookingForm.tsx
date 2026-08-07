@@ -113,6 +113,7 @@ export default function BookingForm(props: Props) {
   const [over18, setOver18] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captured, setCaptured] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [deposit, setDeposit] = useState<{ depositCents: number; balanceCents: number; balanceDueAt: string | null } | null>(null);
@@ -168,6 +169,7 @@ export default function BookingForm(props: Props) {
       body: JSON.stringify({ slug: props.slug, checkIn, checkOut, guests, addons, note, acceptContract: true }),
     });
     const data = await res.json().catch(() => ({}));
+    if (data.captured) { setCaptured(data.message || "We have received your request and will confirm with you personally, shortly."); setBusy(false); return; }
     if (!res.ok) {
       if (res.status === 401) { toSignIn(); return; }
       setError(data.error || "Could not create the booking request.");
@@ -193,6 +195,17 @@ export default function BookingForm(props: Props) {
     () => ({ theme: "flat" as const, variables: { colorPrimary: "#B08D57", fontFamily: "Jost, sans-serif", borderRadius: "8px" } }),
     []
   );
+
+  if (captured) {
+    return (
+      <div className="pdp-aside" style={{ position: "static", textAlign: "center", padding: "2rem" }}>
+        <div style={{ fontSize: "2.4rem", marginBottom: "0.6rem" }}>✓</div>
+        <h3 style={{ fontSize: "1.4rem", marginBottom: "0.6rem" }}>Request received</h3>
+        <p className="lead" style={{ marginBottom: 0 }}>{captured}</p>
+        <p className="note" style={{ marginTop: "1rem", color: "var(--stone)", fontSize: "0.85rem" }}>We could not place the instant card hold just now, so nothing has been charged. Our team will be in touch to confirm your dates personally.</p>
+      </div>
+    );
+  }
 
   if (clientSecret && q) {
     return (

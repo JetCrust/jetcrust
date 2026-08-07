@@ -8,6 +8,43 @@ import { getProperty } from "@/lib/properties";
 import { quote } from "@/lib/pricing";
 import { occupancyRatio } from "@/lib/occupancy";
 import { depositPlan } from "@/lib/policy";
+import { sendEmail } from "@/lib/email";
+
+// Safety net: if the payment step can't complete (misconfigured keys, a Stripe
+// outage, a card problem), don't dead-end the guest — capture their request as a
+// lead and alert the team so the booking is taken by hand.
+async function captureBookingLead(opts: { userId: string; slug: string; propertyName: string; checkIn: string; checkOut: string; guests: number; note?: string }) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: opts.userId } });
+    const email = user?.email || undefined;
+    const ci = new Date(opts.checkIn + "T00:00:00Z");
+    const co = new Date(opts.checkOut + "T00:00:00Z");
+    const existing = email ? await prisma.lead.findFirst({ where: { email, propertySlug: opts.slug, checkIn: ci } }) : null;
+    if (!existing) {
+      await prisma.lead.create({
+        data: {
+          name: user?.name || email?.split("@")[0] || "Guest",
+          email: email || null, phone: user?.phone || null,
+          propertySlug: opts.slug, source: "WEB", status: "NEW",
+          message: `Tried to book online but the payment step failed — follow up to take the booking by hand.${opts.note ? ` Note: ${opts.note}` : ""}`,
+          checkIn: ci, checkOut: co, guests: opts.guests, userId: opts.userId,
+        },
+      });
+    }
+    const to = process.env.EMAIL_ADMIN || process.env.EMAIL_FROM;
+    if (to) {
+      await sendEmail({
+        to,
+        subject: `Booking needs manual follow-up: ${opts.propertyName}`,
+        html: `<p><strong>${user?.name || email || "A guest"}</strong> tried to book <strong>${opts.propertyName}</strong> (${opts.checkIn} to ${opts.checkOut}, ${opts.guests} guests) but the payment step failed.</p>` +
+          `<p>${email ? `Email: ${email}<br>` : ""}${user?.phone ? `Phone: ${user.phone}` : ""}</p>` +
+          `<p>Reach out and take the booking manually. It's saved under <strong>Leads &amp; CRM</strong>.</p>`,
+      }).catch(() => {});
+    }
+  } catch { /* best-effort — never throw from the safety net */ }
+}
+
+const CAPTURED = "We have received your request. Our team will confirm your dates with you personally, shortly.";
 
 const schema = z.object({
   slug: z.string(),
@@ -79,7 +116,8 @@ export async function POST(req: Request) {
   );
 
   if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: "Payments are not configured yet. Please contact us to complete your booking." }, { status: 500 });
+    await captureBookingLead({ userId, slug, propertyName: property.name, checkIn, checkOut, guests, note });
+    return NextResponse.json({ captured: true, message: CAPTURED }, { status: 200 });
   }
 
   try {
@@ -151,9 +189,10 @@ export async function POST(req: Request) {
       split: plan.split,
     });
   } catch (e) {
-    // Surface a real reason instead of a blank 500, and log the detail server-side.
+    // Log the real reason for us, but don't dead-end the guest: capture the
+    // request as a lead and confirm we'll follow up by hand.
     console.error("Booking creation failed:", e);
-    const detail = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: `Could not create the booking request. (${detail})` }, { status: 500 });
+    await captureBookingLead({ userId, slug, propertyName: property.name, checkIn, checkOut, guests, note });
+    return NextResponse.json({ captured: true, message: CAPTURED }, { status: 200 });
   }
 }
