@@ -61,7 +61,7 @@ export default async function AdminPage() {
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap">
           <div className="console">
-            <ConsoleNav pendingCount={pending.length} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
+            <ConsoleNav pendingCount={pending.length} role={scope.role} />
 
             <div>
               <div className="sec-head" style={{ marginBottom: "1.6rem" }}>

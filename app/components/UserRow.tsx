@@ -50,6 +50,7 @@ export default function UserRow({ userId, email, name, phone, role, managedSlugs
         <option value="GUEST">Guest</option>
         <option value="STAFF">Staff (tasks only)</option>
         <option value="MANAGER">Property Manager</option>
+        <option value="OPS">Operations (all bookings, no settings)</option>
         <option value="ADMIN">Super Admin</option>
       </select>
       {(r === "MANAGER" || r === "STAFF") && (

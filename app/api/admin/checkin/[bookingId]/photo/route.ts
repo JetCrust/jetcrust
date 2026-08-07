@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 
 async function requireAdmin() {
   const session = await auth();
-  return (session?.user as { role?: string } | undefined)?.role === "ADMIN";
+  { const r = (session?.user as { role?: string } | undefined)?.role; return r === "ADMIN" || r === "OPS"; }
 }
 
 // Store a check-in photo (ID / arrival) PRIVATELY in Vercel Blob and return a

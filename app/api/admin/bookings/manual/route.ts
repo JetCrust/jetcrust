@@ -23,7 +23,7 @@ const schema = z.object({
 // light guest account so the stay still lives in the CRM.
 export async function POST(req: Request) {
   const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
+  if (!["ADMIN", "OPS"].includes((session?.user as { role?: string } | undefined)?.role ?? "")) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const parsed = schema.safeParse(await req.json().catch(() => null));

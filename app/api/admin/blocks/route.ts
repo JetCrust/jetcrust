@@ -12,7 +12,7 @@ const schema = z.object({
 
 async function requireAdmin() {
   const session = await auth();
-  return (session?.user as { role?: string } | undefined)?.role === "ADMIN";
+  { const r = (session?.user as { role?: string } | undefined)?.role; return r === "ADMIN" || r === "OPS"; }
 }
 
 // Create a manual block (owner stay, maintenance, hold). Booking-owned blocks are

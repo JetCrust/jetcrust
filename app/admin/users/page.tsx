@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 
-const ROLE_ORDER: Record<string, number> = { ADMIN: 0, MANAGER: 1, GUEST: 2 };
+const ROLE_ORDER: Record<string, number> = { ADMIN: 0, OPS: 1, MANAGER: 2, STAFF: 3, GUEST: 4 };
 
 export default async function AdminUsers() {
   const session = await auth();

@@ -14,7 +14,7 @@ const schema = z.object({
 // dates and its availability block together, warning on any overlap first.
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
+  if (!["ADMIN", "OPS"].includes((session?.user as { role?: string } | undefined)?.role ?? "")) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const { id } = await params;

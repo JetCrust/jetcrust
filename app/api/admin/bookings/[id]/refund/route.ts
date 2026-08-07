@@ -11,7 +11,7 @@ const schema = z.object({ amountCents: z.number().int().positive() });
 // P&L nets it out. The security deposit is refunded separately, on its own hold.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
+  if (!["ADMIN", "OPS"].includes((session?.user as { role?: string } | undefined)?.role ?? "")) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const { id } = await params;

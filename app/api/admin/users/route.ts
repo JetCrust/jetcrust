@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
   userId: z.string(),
-  role: z.enum(["GUEST", "STAFF", "MANAGER", "ADMIN"]).optional(),
+  role: z.enum(["GUEST", "STAFF", "MANAGER", "OPS", "ADMIN"]).optional(),
   managedSlugs: z.array(z.string()).optional(),
   phone: z.string().max(40).optional(),
   resetPassword: z.boolean().optional(),
@@ -16,7 +16,7 @@ const schema = z.object({
 const createSchema = z.object({
   email: z.string().email(),
   name: z.string().max(120).optional(),
-  role: z.enum(["STAFF", "MANAGER", "ADMIN"]).default("MANAGER"),
+  role: z.enum(["STAFF", "MANAGER", "OPS", "ADMIN"]).default("MANAGER"),
   managedSlugs: z.array(z.string()).default([]),
   phone: z.string().max(40).optional(),
 });
@@ -64,7 +64,7 @@ export async function PATCH(req: Request) {
     if (admins <= 1) return NextResponse.json({ error: "There must be at least one Super Admin." }, { status: 400 });
   }
 
-  const data: { role?: "GUEST" | "STAFF" | "MANAGER" | "ADMIN"; managedSlugs?: string[]; phone?: string | null; passwordHash?: string } = {};
+  const data: { role?: "GUEST" | "STAFF" | "MANAGER" | "OPS" | "ADMIN"; managedSlugs?: string[]; phone?: string | null; passwordHash?: string } = {};
   if (role) data.role = role;
   if (managedSlugs) data.managedSlugs = managedSlugs;
   if (phone !== undefined) data.phone = phone.trim() || null;

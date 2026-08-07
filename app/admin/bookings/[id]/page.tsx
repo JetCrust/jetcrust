@@ -57,7 +57,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.role} />
 
             <div>
               <p style={{ margin: "0 0 1rem" }}>

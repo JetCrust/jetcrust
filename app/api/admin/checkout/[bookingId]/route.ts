@@ -22,7 +22,7 @@ const schema = z.object({
 // append the charges to the booking's extras ledger and email the guest.
 export async function POST(req: Request, { params }: { params: Promise<{ bookingId: string }> }) {
   const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
+  if (!["ADMIN", "OPS"].includes((session?.user as { role?: string } | undefined)?.role ?? "")) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
   const { bookingId } = await params;

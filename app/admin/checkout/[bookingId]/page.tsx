@@ -9,7 +9,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ booki
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
   if (!session) redirect("/account?next=/admin");
-  if (role !== "ADMIN") {
+  if (role !== "ADMIN" && role !== "OPS") {
     return (<><AppHeader /><main className="section section--cream" style={{ minHeight: "60vh" }}><div className="wrap"><h2>Not authorized</h2></div></main></>);
   }
 

@@ -53,7 +53,7 @@ export default function AddUser({ properties }: { properties: Prop[] }) {
             <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" /></label>
             <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" /></label>
             <label>Phone (for WhatsApp jobs)<input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+40 770 000 000" /></label>
-            <label>Role<select value={role} onChange={(e) => setRole(e.target.value)}><option value="STAFF">Staff (tasks only)</option><option value="MANAGER">Property Manager</option><option value="ADMIN">Super Admin</option></select></label>
+            <label>Role<select value={role} onChange={(e) => setRole(e.target.value)}><option value="STAFF">Staff (tasks only)</option><option value="MANAGER">Property Manager</option><option value="OPS">Operations (all bookings, no settings)</option><option value="ADMIN">Super Admin</option></select></label>
           </div>
           {(role === "MANAGER" || role === "STAFF") && (
             <div style={{ margin: "0.2rem 0 0.6rem" }}>

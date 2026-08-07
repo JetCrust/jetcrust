@@ -14,7 +14,8 @@ datasource db {
 
 enum Role {
   GUEST
-  ADMIN     // Super Admin — full access
+  ADMIN     // Super Admin — full access, all settings
+  OPS       // Operations — all properties, all day-to-day work, but no structural settings
   MANAGER   // Property / Location Manager — scoped to assigned properties
   STAFF     // Worker (cleaning, maintenance) — only the tasks board for their properties
 }

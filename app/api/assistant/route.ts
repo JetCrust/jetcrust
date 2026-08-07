@@ -23,7 +23,7 @@ export async function GET() {
   const session = await auth();
   const user = session?.user as { id?: string; role?: string; name?: string } | undefined;
   if (!user?.id) return NextResponse.json({ mode: null });
-  const isTeam = user.role === "ADMIN" || user.role === "MANAGER" || user.role === "STAFF";
+  const isTeam = user.role === "ADMIN" || user.role === "MANAGER" || user.role === "STAFF" || user.role === "OPS";
   return NextResponse.json({ mode: isTeam ? "admin" : "client", name: user.name?.split(" ")[0] || null });
 }
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Ask a question." }, { status: 400 });
   const { question, history } = parsed.data;
 
-  const isTeam = user.role === "ADMIN" || user.role === "MANAGER" || user.role === "STAFF";
+  const isTeam = user.role === "ADMIN" || user.role === "MANAGER" || user.role === "STAFF" || user.role === "OPS";
   const mode: "admin" | "client" = isTeam ? "admin" : "client";
 
   // Ground the answer in this person's real data.

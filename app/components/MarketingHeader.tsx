@@ -7,7 +7,7 @@ export default async function MarketingHeader() {
   const session = await auth();
   const signedIn = !!session;
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const isStaff = role === "ADMIN" || role === "MANAGER" || role === "STAFF";
+  const isStaff = role === "ADMIN" || role === "MANAGER" || role === "STAFF" || role === "OPS";
   const consoleHref = role === "STAFF" ? "/admin/tasks" : "/admin";
   return (
     <header className="site-header" id="header">

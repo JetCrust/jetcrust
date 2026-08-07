@@ -83,7 +83,7 @@ export default async function AdminCalendar({ searchParams }: { searchParams: Pr
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap wrap--wide">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.role} />
             <div>
               <CalendarGrid
                 monthKey={key}

@@ -37,7 +37,7 @@ export default async function GuestsList() {
       <main className="section section--cream" style={{ minHeight: "70vh" }}>
         <div className="wrap wrap--wide">
           <div className="console">
-            <ConsoleNav pendingCount={pendingCount} role={scope.isSuper ? "ADMIN" : "MANAGER"} />
+            <ConsoleNav pendingCount={pendingCount} role={scope.role} />
             <div>
               <div className="sec-head" style={{ marginBottom: "1.2rem" }}>
                 <p className="overline eyebrow-line">Admin</p>
