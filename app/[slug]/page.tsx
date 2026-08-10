@@ -11,6 +11,7 @@ import InquiryForm from "../components/InquiryForm";
 import PropertyAvailability from "../components/PropertyAvailability";
 import { blockedDates } from "@/lib/availability";
 import Gallery, { type GalleryImage } from "../components/Gallery";
+import { videoEmbedUrl } from "@/lib/guidebook";
 import { getProperties, getProperty, imageUrl, imageSet, type Property } from "@/lib/properties";
 import { prisma } from "@/lib/prisma";
 import { areaName, areaSlug } from "@/lib/seo";
@@ -128,6 +129,31 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           <Gallery images={galleryImages} />
         </div>
       </section>
+
+      {/* FILM / PRESENTATION VIDEOS */}
+      {p.videos && p.videos.length > 0 && (
+        <section className="section section--forest" id="film">
+          <div className="wrap">
+            <div className="sec-head center reveal"><p className="overline eyebrow-line" style={{ justifyContent: "center" }}>Film</p><h2>{p.name} in motion</h2></div>
+            <div className="video-grid">
+              {p.videos.map((v, i) => (
+                <figure key={i} className="video-card reveal">
+                  <div className="video-embed">
+                    <iframe
+                      src={videoEmbedUrl({ provider: v.provider === "youtube" ? "youtube" : "vimeo", id: v.id })}
+                      title={v.title || p.name}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  </div>
+                  {v.title && <figcaption>{v.title}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* AMENITIES */}
       <section className="section section--forest">

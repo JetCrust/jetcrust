@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import GalleryEditor from "./GalleryEditor";
+import { parseVideo } from "@/lib/guidebook";
 
 /* Minimal shapes for the fields the editor touches. The full object is passed
    through untouched, so advanced fields (features, amenities, etc.) are preserved. */
@@ -41,6 +42,7 @@ type PropObj = {
   story?: string[];
   gallery?: { max: number; images: { file: string; caption: string; area?: string }[] };
   card?: { image: string; desc: string; tags: string[] };
+  videos?: { provider: string; id: string; title: string }[];
   ical_urls?: string[];
   [key: string]: unknown;
 };
@@ -54,6 +56,8 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
   const [error, setError] = useState<string | null>(null);
   const [raw, setRaw] = useState<string>("");
   const [rawErr, setRawErr] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoErr, setVideoErr] = useState<string | null>(null);
 
   // Immutable-ish update helpers for nested paths.
   const set = (patch: Partial<PropObj>) => setO((s) => ({ ...s, ...patch }));
@@ -80,6 +84,18 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
     setO((s) => ({ ...s, addons: (s.addons as Addon[]).map((a, j) => (j === i ? { ...a, ...patch } : a)) }));
   const addAddon = () => setO((s) => ({ ...s, addons: [...((s.addons as Addon[]) || []), { title: "", value: "", text: "", price_eur: 0, unit: "stay", icon: "✦" }] }));
   const removeAddon = (i: number) => setO((s) => ({ ...s, addons: (s.addons as Addon[]).filter((_, j) => j !== i) }));
+
+  // Presentation videos (YouTube / Vimeo) shown on the public property page.
+  const videos = (o.videos as { provider: string; id: string; title: string }[] | undefined) || [];
+  const setVideo = (i: number, patch: Partial<{ provider: string; id: string; title: string }>) =>
+    setO((s) => ({ ...s, videos: (s.videos as typeof videos).map((v, j) => (j === i ? { ...v, ...patch } : v)) }));
+  const removeVideo = (i: number) => setO((s) => ({ ...s, videos: (s.videos as typeof videos).filter((_, j) => j !== i) }));
+  const addVideoFromUrl = () => {
+    const v = parseVideo(videoUrl);
+    if (!v) { setVideoErr("Not a recognised YouTube or Vimeo link."); return; }
+    setO((s) => ({ ...s, videos: [...((s.videos as typeof videos) || []), { provider: v.provider, id: v.id, title: "" }] }));
+    setVideoUrl(""); setVideoErr(null);
+  };
 
   // Seasonal rates
   const seasonal = o.pricing.seasonal || [];
@@ -316,6 +332,24 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           </div>
         ))}
         <button type="button" className="btn btn--ghost" onClick={addAddon}>Add an add-on</button>
+      </div>
+
+      {/* Presentation videos (public property page) */}
+      <div className="panel">
+        <div className="panel__head"><h3>Presentation videos</h3></div>
+        <p className="panel__hint" style={{ marginTop: 0 }}>YouTube or Vimeo films shown on the public property page, under the gallery. Paste a link to add one.</p>
+        {videos.map((v, i) => (
+          <div className="ef" key={i} style={{ marginBottom: "0.7rem", paddingBottom: "0.7rem", borderBottom: "1px solid var(--line)" }}>
+            <div><label>Source</label><input value={`${v.provider === "youtube" ? "YouTube" : "Vimeo"} · ${v.id}`} readOnly /></div>
+            <div><label>Caption (optional)</label><input value={v.title || ""} onChange={(e) => setVideo(i, { title: e.target.value })} placeholder="Aerial tour" /></div>
+            <div className="full"><button type="button" className="textlink" style={{ background: "none", border: 0, cursor: "pointer", color: "#a3412e" }} onClick={() => removeVideo(i)}>Remove this video</button></div>
+          </div>
+        ))}
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+          <input value={videoUrl} onChange={(e) => { setVideoUrl(e.target.value); setVideoErr(null); }} placeholder="https://youtu.be/… or https://vimeo.com/…" style={{ flex: 1, minWidth: 240 }} />
+          <button type="button" className="btn btn--ghost" onClick={addVideoFromUrl}>Add video</button>
+        </div>
+        {videoErr && <p style={{ color: "#a3412e", fontSize: "0.85rem", margin: "0.4rem 0 0" }}>{videoErr}</p>}
       </div>
 
       {/* Card, gallery & story */}
