@@ -350,7 +350,12 @@ p { margin: 0 0 1em; }
   .nav__toggle { display: block; z-index: 101; }
   .nav__cta { display: none; }
   .nav__right .nav__link { display: none; }
+  /* Reveal the account / console / book links inside the mobile menu. */
+  .nav__menu .nav__mobile-only { display: list-item; }
+  .nav__menu .nav__menu-divider { border-top: 1px solid rgba(246,241,231,0.18); padding-top: 1.6rem; margin-top: 0.2rem; }
 }
+/* Hidden on desktop (these links live in nav__right there). */
+.nav__mobile-only { display: none; }
 
 @media (max-width: 860px) {
   .edge { grid-template-columns: 1fr; }

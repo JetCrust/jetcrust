@@ -23,6 +23,10 @@ export default async function MarketingHeader() {
             <li><Link className="nav__link" href="/#experiences">Experiences</Link></li>
             <li><Link className="nav__link" href="/#destinations">Destinations</Link></li>
             <li><Link className="nav__link" href="/journal">Journal</Link></li>
+            {/* Shown only inside the mobile menu (on desktop these live in nav__right). */}
+            <li className="nav__mobile-only nav__menu-divider"><Link className="nav__link" href="/account">{signedIn ? "My Account" : "Sign In"}</Link></li>
+            {isStaff && <li className="nav__mobile-only"><Link className="nav__link" href={consoleHref}>Console</Link></li>}
+            <li className="nav__mobile-only"><Link className="nav__link" href="/#collection">Book a Stay</Link></li>
           </ul>
         </nav>
         <div className="nav__right">
