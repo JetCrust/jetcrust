@@ -14,6 +14,8 @@ type PropObj = {
   status: string;
   order: number;
   location: string;
+  address?: string;
+  coords?: string;
   img_key: string;
   hero_image: string;
   tagline: string;
@@ -161,6 +163,8 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
         <div className="ef">
           <div><label>Name</label><input value={o.name} onChange={(e) => set({ name: e.target.value })} /></div>
           <div><label>Location</label><input value={o.location} onChange={(e) => set({ location: e.target.value })} placeholder="Bran · Transylvania" /></div>
+          <div className="full"><label>Full address (shown to guests after confirmation)</label><textarea value={o.address || ""} onChange={(e) => set({ address: e.target.value })} placeholder="Strada …, nr …, Bran 507025, Romania" style={{ minHeight: 56 }} /></div>
+          <div className="full"><label>Map pin coordinates (optional, &quot;lat,lng&quot;)</label><input value={o.coords || ""} onChange={(e) => set({ coords: e.target.value })} placeholder="45.5149, 25.3671" /><p className="panel__hint" style={{ margin: "0.2rem 0 0" }}>Right-click the spot in Google Maps and copy the two numbers. More precise than the address for rural pins.</p></div>
           <div>
             <label>Status</label>
             <select value={o.status} onChange={(e) => set({ status: e.target.value })}>

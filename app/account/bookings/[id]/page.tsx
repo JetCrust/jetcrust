@@ -102,6 +102,17 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             <MessageThread bookingId={b.id} me="GUEST" messages={chatMessages.map((m) => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.createdAt.toISOString() }))} />
           </div>
 
+          {b.status === "APPROVED" && p?.address && (
+            <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>Getting there</h3>
+              <p style={{ color: "var(--ink-soft)", margin: "0 0 0.9rem", whiteSpace: "pre-wrap" }}>{p.address}</p>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                <a className="btn btn--dark" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.coords || p.address)}`} target="_blank" rel="noreferrer" style={{ flex: 1, justifyContent: "center", minWidth: 120 }}>Google Maps</a>
+                <a className="btn btn--ghost" href={p.coords ? `https://waze.com/ul?ll=${encodeURIComponent(p.coords)}&navigate=yes` : `https://waze.com/ul?q=${encodeURIComponent(p.address)}`} target="_blank" rel="noreferrer" style={{ flex: 1, justifyContent: "center", minWidth: 120 }}>Waze</a>
+              </div>
+            </div>
+          )}
+
           <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
             <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Your documents</h3>
             <ul className="kv">

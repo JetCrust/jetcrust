@@ -30,6 +30,8 @@ export type Property = {
   tier: string; // "estate" (flagship) | "residence" (city apartment tier)
   order: number;
   location: string;
+  address?: string;   // full arrival address, shown to the guest after confirmation
+  coords?: string;    // "lat,lng" for precise map pins (optional)
   img_key: string;
   hero_image: string;
   tagline: string;
@@ -73,6 +75,8 @@ function normalize(p: Partial<Property>): Property {
     tier: p.tier === "residence" ? "residence" : "estate",
     order: p.order ?? 99,
     location: p.location || "",
+    address: p.address || "",
+    coords: p.coords || "",
     img_key: p.img_key || "",
     hero_image: p.hero_image || "",
     tagline: p.tagline || "",
@@ -82,6 +86,9 @@ function normalize(p: Partial<Property>): Property {
       weekend_nightly_eur: pricing.weekend_nightly_eur,
       currency: pricing.currency || "eur",
       min_nights: pricing.min_nights || 1,
+      deposit_eur: pricing.deposit_eur,
+      charge_now_pct: pricing.charge_now_pct,
+      balance_days_before: pricing.balance_days_before,
       dynamic: dynamic
         ? {
             enabled: !!dynamic.enabled,
