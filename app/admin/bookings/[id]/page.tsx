@@ -14,7 +14,7 @@ import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBre
 import LocalTime from "../../../components/LocalTime";
 import { prisma } from "@/lib/prisma";
 import { getProperty, fmtInTz } from "@/lib/properties";
-import { parseExtras } from "@/lib/accounting";
+import { parseExtras, bookingProfit } from "@/lib/accounting";
 import { staffScope, slugFilter, canAccessProperty } from "@/lib/access";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -173,6 +173,24 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                     <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} willCharge={depositIsCharge(b.checkIn, b.checkOut)} propertyDepositCents={Math.round((Number(p?.pricing?.deposit_eur) || 0) * 100)} />
                   </div>
                 )}
+
+                {/* Profitability (Super Admin only, like Finance) */}
+                {b.status === "APPROVED" && scope.isSuper && (() => {
+                  const pf = bookingProfit(b, p?.costs);
+                  return (
+                    <div className="panel">
+                      <div className="panel__head"><h3>Profitability</h3></div>
+                      <ul className="kv">
+                        <li><span>Revenue (net)</span><span>{money(pf.revenueCents)}</span></li>
+                        <li><span>Stripe fee (est.)</span><span>−{money(pf.stripeFeeCents)}</span></li>
+                        <li><span>Running &amp; cleaning</span><span>−{money(pf.variableCents)}</span></li>
+                        <li style={{ fontWeight: 700, color: "var(--brass)" }}><span>Contribution</span><span>{money(pf.netCents)} · {pf.marginPct}%</span></li>
+                        <li><span>Length &amp; rate</span><span>{pf.nights} night{pf.nights === 1 ? "" : "s"} · {money(pf.avgNightlyCents)}/night</span></li>
+                      </ul>
+                      <p className="panel__hint" style={{ marginBottom: 0 }}>Contribution is after card fees and running costs, before fixed monthly overhead.</p>
+                    </div>
+                  );
+                })()}
 
                 {/* Check-in / check-out forms */}
                 {b.status === "APPROVED" && (

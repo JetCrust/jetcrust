@@ -135,6 +135,40 @@ function addOta(t: PLTotals, o: { netCents: number }) {
 const DAY = 86400000;
 const nightsOf = (a: Date, b: Date) => Math.max(0, Math.round((b.getTime() - a.getTime()) / DAY));
 
+// Per-booking profitability (contribution): revenue minus the two costs that
+// belong to this specific stay — the Stripe fee and the variable running/cleaning
+// cost. Fixed monthly overhead is NOT allocated here (it's time-based, not per
+// booking), so this is the booking's contribution margin.
+export type BookingProfit = {
+  revenueCents: number;      // net income (stay + card extras + captured deposit − refunds)
+  stripeFeeCents: number;
+  variableCents: number;     // cleaning + per-night running cost
+  netCents: number;          // contribution after fee + variable
+  marginPct: number;         // net ÷ revenue
+  nights: number;
+  avgNightlyCents: number;   // stay ÷ nights
+};
+
+export function bookingProfit(
+  b: Booking,
+  costs?: { cleaning_per_stay_eur: number; variable_per_night_eur: number } | null,
+): BookingProfit {
+  const inc = bookingIncome(b);
+  const stripeFeeCents = stripeFeeForBooking(b);
+  const nights = nightsOf(b.checkIn, b.checkOut);
+  const variableCents = costs ? Math.round((costs.cleaning_per_stay_eur + costs.variable_per_night_eur * nights) * 100) : 0;
+  const netCents = inc.netCents - stripeFeeCents - variableCents;
+  return {
+    revenueCents: inc.netCents,
+    stripeFeeCents,
+    variableCents,
+    netCents,
+    marginPct: inc.netCents > 0 ? Math.round((netCents / inc.netCents) * 100) : 0,
+    nights,
+    avgNightlyCents: nights > 0 ? Math.round(b.amountCents / nights) : b.amountCents,
+  };
+}
+
 function addOverhead(t: PLTotals, cents: number) { t.overheadCents += cents; t.costsCents += cents; }
 function addVariable(t: PLTotals, cents: number) { t.variableCents += cents; t.costsCents += cents; }
 
