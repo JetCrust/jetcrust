@@ -8,7 +8,7 @@ type Item = { desc: string; amountCents: number };
 type Initial = { photos: Photo[]; items: Item[]; depositStatus: string; depositNote: string; notes: string; staffName: string; signature: string; completedAt: string | null } | null;
 
 const money = (c: number) => `€${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const QUICK = [["Wine", 5000], ["Minibar", 3000], ["Late checkout", 8000], ["Extra cleaning", 6000], ["Damage", 0]] as const;
+const QUICK = [["Wine", 5000], ["Minibar", 3000], ["Late checkout", 8000], ["Extra cleaning", 6000], ["Chef groceries", 0], ["Flowers", 0], ["Damage", 0], ["Other", 0]] as const;
 
 export default function CheckoutForm({ bookingId, propertyName, guestName, security, initial }: {
   bookingId: string; propertyName: string; guestName: string;

@@ -97,7 +97,7 @@ export default async function AdminOverview() {
                             <span className="ov-row__name">{b.user.name || b.user.email.split("@")[0]}{isToday(b.checkIn) && <span className="ov-today">today</span>}</span>
                             <span className="ov-row__meta">{nameOf(b.propertySlug)} · {fmt(b.checkIn)} → {fmt(b.checkOut)} · {b.guests} guests</span>
                           </div>
-                          <Link href={`/admin/checkin/${b.id}`} className="chip">Check in</Link>
+                          <Link href={`/admin/bookings/${b.id}`} className="chip">Open booking</Link>
                         </li>
                       ))}
                     </ul>
@@ -114,7 +114,7 @@ export default async function AdminOverview() {
                             <span className="ov-row__name">{b.user.name || b.user.email.split("@")[0]}{isToday(b.checkOut) && <span className="ov-today">today</span>}</span>
                             <span className="ov-row__meta">{nameOf(b.propertySlug)} · leaves {fmt(b.checkOut)}</span>
                           </div>
-                          <Link href={`/admin/checkout/${b.id}`} className="chip">Check out</Link>
+                          <Link href={`/admin/bookings/${b.id}`} className="chip">Open booking</Link>
                         </li>
                       ))}
                     </ul>

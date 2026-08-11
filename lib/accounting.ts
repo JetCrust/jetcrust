@@ -33,6 +33,25 @@ export function extrasIncomeCents(extras: Extra[]): number {
     .reduce((s, e) => s + e.amountCents, 0);
 }
 
+// Estimated Stripe processing fee on direct (on-site) card revenue. Configurable
+// (EEA cards default ~1.5% + €0.25; set higher for a mostly-international guest
+// mix). OTA payouts are already net, so they carry no Stripe fee.
+const STRIPE_FEE_PCT = Number(process.env.STRIPE_FEE_PCT) || 1.5;
+const STRIPE_FEE_FIXED_CENTS = process.env.STRIPE_FEE_FIXED_CENTS != null ? Number(process.env.STRIPE_FEE_FIXED_CENTS) : 25;
+
+function cardExtrasCents(extras: Extra[]): number {
+  return extras.filter((e) => e.settled && e.settledVia === "card").reduce((s, e) => s + e.amountCents, 0);
+}
+
+// What one booking cost you in Stripe fees: a percentage of everything actually
+// charged to the card (the stay, card-settled extras, a captured deposit), plus
+// a fixed fee per booking. Returns 0 when nothing was charged to a card.
+export function stripeFeeForBooking(b: Booking): number {
+  const base = b.amountCents + cardExtrasCents(parseExtras(b.extras)) + b.securityCapturedCents;
+  if (base <= 0) return 0;
+  return Math.round((base * STRIPE_FEE_PCT) / 100) + STRIPE_FEE_FIXED_CENTS;
+}
+
 // What one approved booking contributes to the P&L.
 export function bookingIncome(b: Booking) {
   const extras = parseExtras(b.extras);
@@ -66,8 +85,9 @@ export type PLTotals = {
   variableCents: number;    // per-stay + per-night running costs (cleaning, heating…)
   costsCents: number;       // all non-commission costs (logged expenses + overhead + variable)
   commissionCents: number;  // commission expenses
-  expensesCents: number;    // costs + commission
-  plCents: number;          // net income − costs − commission
+  stripeFeesCents: number;  // estimated Stripe processing fees on direct card revenue
+  expensesCents: number;    // costs + commission + stripe fees
+  plCents: number;          // net income − costs − commission − stripe fees
 };
 
 export type PLByProperty = PLTotals & { propertySlug: string; name: string };
@@ -83,7 +103,7 @@ function emptyTotals(): PLTotals {
   return {
     bookings: 0, stayCents: 0, extrasCents: 0, depositCents: 0, otaCents: 0, grossCents: 0,
     refundsCents: 0, netIncomeCents: 0, overheadCents: 0, variableCents: 0, costsCents: 0, commissionCents: 0,
-    expensesCents: 0, plCents: 0,
+    stripeFeesCents: 0, expensesCents: 0, plCents: 0,
   };
 }
 
@@ -96,6 +116,7 @@ function addBooking(t: PLTotals, b: Booking) {
   t.grossCents += inc.grossCents;
   t.refundsCents += inc.refundsCents;
   t.netIncomeCents += inc.netCents;
+  t.stripeFeesCents += stripeFeeForBooking(b);
 }
 
 function addExpense(t: PLTotals, e: Expense) {
@@ -118,7 +139,7 @@ function addOverhead(t: PLTotals, cents: number) { t.overheadCents += cents; t.c
 function addVariable(t: PLTotals, cents: number) { t.variableCents += cents; t.costsCents += cents; }
 
 function finalize(t: PLTotals) {
-  t.expensesCents = t.costsCents + t.commissionCents;
+  t.expensesCents = t.costsCents + t.commissionCents + t.stripeFeesCents;
   t.plCents = t.netIncomeCents - t.expensesCents;
   return t;
 }

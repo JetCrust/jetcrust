@@ -47,7 +47,8 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
     { label: "Net income", value: money(t.netIncomeCents), hint: `${t.bookings} booking${t.bookings === 1 ? "" : "s"}` },
     { label: "Costs", value: money(t.costsCents), hint: "cleaning, upkeep, supplies" },
     { label: "Commissions", value: money(t.commissionCents), hint: "OTA / partner fees" },
-    { label: "Profit (P&L)", value: signed(t.plCents), hint: "income − costs − commissions", strong: true },
+    { label: "Stripe fees", value: money(t.stripeFeesCents), hint: "card processing (direct)" },
+    { label: "Profit (P&L)", value: signed(t.plCents), hint: "income − costs − commissions − fees", strong: true },
   ];
 
   return (
@@ -90,6 +91,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
                   {t.variableCents > 0 && <li><span>Running &amp; cleaning costs</span><span>−{money(t.variableCents)}</span></li>}
                   <li><span>Costs {(t.overheadCents > 0 || t.variableCents > 0) ? "(total)" : ""}</span><span>−{money(t.costsCents)}</span></li>
                   <li><span>Commissions</span><span>−{money(t.commissionCents)}</span></li>
+                  {t.stripeFeesCents > 0 && <li><span>Stripe fees (est.)</span><span>−{money(t.stripeFeesCents)}</span></li>}
                   <li style={{ fontWeight: 700, color: "var(--brass)" }}><span>Profit (P&amp;L)</span><span>{signed(t.plCents)}</span></li>
                 </ul>
               </div>
