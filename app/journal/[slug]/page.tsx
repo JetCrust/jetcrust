@@ -21,10 +21,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const p = await getPostBySlug(slug);
   if (!p || p.status !== "PUBLISHED") return {};
+  const SITE = process.env.SITE_ORIGIN || "https://jetcrust.com";
+  const img = p.coverImage || "/assets/img/castelaria-pool.jpg";
   return {
     title: p.seoTitle || `${p.title} | Jet Crust`,
     description: p.seoDescription || p.excerpt,
-    openGraph: { title: p.title, description: p.excerpt, images: p.coverImage ? [p.coverImage] : [] },
+    alternates: { canonical: `${SITE}/journal/${p.slug}` },
+    openGraph: {
+      type: "article", siteName: "Jet Crust", locale: "en_US",
+      url: `${SITE}/journal/${p.slug}`,
+      title: p.title, description: p.excerpt,
+      images: [{ url: img, alt: p.title }],
+    },
+    twitter: { card: "summary_large_image", title: p.title, description: p.excerpt, images: [img] },
   };
 }
 

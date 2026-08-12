@@ -6,11 +6,23 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import ClientInteractions from "./components/ClientInteractions";
 import { getProperties, imageUrl, priceLabel, type Property } from "@/lib/properties";
 
+const HOME_TITLE = "Luxury Villas & Penthouses in Transylvania & Bucharest | Jet Crust";
+const HOME_DESC = "Hand-selected luxury estates and penthouses in Transylvania and Bucharest. Historic villa near Bran Castle with a marble pool and private cinema. Direct booking, no platform fees.";
+
 export const metadata: Metadata = {
-  title: "Luxury Villas & Penthouses in Transylvania & Bucharest | Jet Crust",
-  description:
-    "Hand-selected luxury estates and penthouses in Transylvania and Bucharest. Historic villa near Bran Castle with a marble pool and private cinema. Direct booking, no platform fees.",
+  title: HOME_TITLE,
+  description: HOME_DESC,
   alternates: { canonical: process.env.SITE_ORIGIN || "https://jetcrust.com" },
+  openGraph: {
+    type: "website",
+    siteName: "Jet Crust",
+    locale: "en_US",
+    url: process.env.SITE_ORIGIN || "https://jetcrust.com",
+    title: HOME_TITLE,
+    description: HOME_DESC,
+    images: [{ url: "/assets/img/castelaria-pool.jpg", width: 1200, height: 800, alt: "Castelaria luxury villa near Bran Castle" }],
+  },
+  twitter: { card: "summary_large_image", title: HOME_TITLE, description: HOME_DESC, images: ["/assets/img/castelaria-pool.jpg"] },
 };
 
 export default async function Home() {

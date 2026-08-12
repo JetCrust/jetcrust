@@ -9,7 +9,7 @@ export default function PropertyJsonLd({ p, url, image, rating, reviewCount }: {
 }) {
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": "VacationRental",
+    "@type": "LodgingBusiness",
     name: p.name,
     description: p.seo?.description || p.tagline || undefined,
     url,
@@ -17,7 +17,6 @@ export default function PropertyJsonLd({ p, url, image, rating, reviewCount }: {
     address: { "@type": "PostalAddress", addressLocality: areaName(p.location), addressCountry: "RO" },
     priceRange: p.pricing?.base_nightly_eur ? `from €${p.pricing.base_nightly_eur}/night` : undefined,
     numberOfRooms: p.capacity?.bedrooms || undefined,
-    occupancy: p.capacity?.sleeps ? { "@type": "QuantitativeValue", value: p.capacity.sleeps } : undefined,
   };
   if (reviewCount > 0) {
     data.aggregateRating = { "@type": "AggregateRating", ratingValue: rating.toFixed(1), reviewCount, bestRating: 5, worstRating: 1 };

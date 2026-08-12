@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: p.seo.title,
     description: p.seo.description,
     alternates: { canonical: `${SITE}/${p.slug}` },
-    openGraph: { title: p.seo.title, description: p.seo.description, url: `${SITE}/${p.slug}`, type: "website", images: [{ url: og }] },
+    openGraph: { title: p.seo.title, description: p.seo.description, url: `${SITE}/${p.slug}`, type: "website", siteName: "Jet Crust", locale: "en_US", images: [{ url: og, width: 1200, height: 800, alt: p.name }] },
     twitter: { card: "summary_large_image", title: p.seo.title, description: p.seo.description, images: [og] },
   };
 }
