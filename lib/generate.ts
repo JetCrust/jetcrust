@@ -233,7 +233,9 @@ export async function generatePost(topic: string): Promise<GeneratedPost> {
 }
 
 // Save a generated post as a DRAFT for admin review. Ensures a unique slug.
-export async function generateAndSaveDraft(topic: string) {
+// `publish` = go live immediately (used by the scheduled job). The manual admin
+// button leaves it as a draft for review.
+export async function generateAndSaveDraft(topic: string, publish = false) {
   const { prisma } = await import("./prisma");
   const post = await generatePost(topic);
 
@@ -253,9 +255,9 @@ export async function generateAndSaveDraft(topic: string) {
       faq: JSON.stringify(post.faq),
       seoTitle: post.seoTitle || null,
       seoDescription: post.seoDescription || null,
-      status: "DRAFT",
+      status: publish ? "PUBLISHED" : "DRAFT",
       source: post.source,
-      publishedAt: null,
+      publishedAt: publish ? new Date() : null,
     },
   });
 }

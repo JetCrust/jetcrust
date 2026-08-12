@@ -36,6 +36,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not set." }, { status: 400 });
   }
   const topic = await pickNextTopic();
-  const post = await generateAndSaveDraft(topic);
+  // Scheduled runs publish straight to the Journal (hands-off).
+  const post = await generateAndSaveDraft(topic, true);
   return NextResponse.json({ ok: true, id: post.id, slug: post.slug, topic });
 }
