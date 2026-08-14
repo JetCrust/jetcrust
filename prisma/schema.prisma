@@ -228,6 +228,9 @@ model Task {
   costCents    Int          @default(0)  // what we pay the provider
   confirmed    Boolean      @default(false) // the provider confirmed the job
   expenseId    String?      // linked Expense once the cost is booked (on done)
+  paid         Boolean      @default(false) // the vendor has actually been paid
+  paidVia      String?      // cash | bank | card | other
+  paidAt       DateTime?
   notes        String?
   createdAt    DateTime     @default(now())
   completedAt  DateTime?

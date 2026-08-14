@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Task = { id: string; propertySlug: string; title: string; category: string; status: string; dueAt: string | null; assignedToId: string | null; notes: string | null; vendor?: string | null; vendorPhone?: string | null; costCents?: number; confirmed?: boolean };
+type Task = { id: string; propertySlug: string; title: string; category: string; status: string; dueAt: string | null; assignedToId: string | null; notes: string | null; vendor?: string | null; vendorPhone?: string | null; costCents?: number; confirmed?: boolean; paid?: boolean; paidVia?: string | null };
+const PAY_METHODS = ["cash", "bank", "card", "other"] as const;
 type Prop = { slug: string; name: string };
 type Staff = { id: string; name: string; phone?: string | null };
 
@@ -123,6 +124,23 @@ export default function TasksBoard({ tasks, properties, staff, isWorker = false 
                         <span style={{ color: t.confirmed ? "#25936b" : "#a3412e", fontWeight: 600 }}>{t.confirmed ? "confirmed" : "pending"}</span>
                         {t.status === "DONE" && (t.costCents || 0) > 0 ? <span style={{ color: "var(--stone)" }}> · booked to expenses</span> : null}
                       </p>
+                    )}
+                    {!isWorker && t.status === "DONE" && (t.vendor || (t.costCents || 0) > 0) && (
+                      <div className="task-meta" style={{ marginTop: 6 }}>
+                        {t.paid ? (
+                          <span style={{ color: "#25936b", fontWeight: 600 }}>
+                            Paid · {t.paidVia || "—"}
+                            <button className="chip" style={{ marginLeft: 6 }} onClick={() => patch(t.id, { paid: false })}>undo</button>
+                          </span>
+                        ) : (
+                          <span style={{ display: "inline-flex", gap: 4, alignItems: "center", flexWrap: "wrap" }}>
+                            <span style={{ color: "var(--stone)" }}>Mark paid:</span>
+                            {PAY_METHODS.map((m) => (
+                              <button key={m} className="chip" onClick={() => patch(t.id, { paid: true, paidVia: m })}>{m}</button>
+                            ))}
+                          </span>
+                        )}
+                      </div>
                     )}
                     <div className="task-row" style={{ display: isWorker ? "none" : undefined }}>
                       <select className="task-assign" value={t.assignedToId || ""} onChange={(e) => patch(t.id, { assignedToId: e.target.value })}>

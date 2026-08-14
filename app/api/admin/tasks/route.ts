@@ -30,6 +30,8 @@ const patchSchema = z.object({
   vendorPhone: z.string().max(40).optional().nullable(),
   costCents: z.number().int().min(0).optional(),
   confirmed: z.boolean().optional(),
+  paid: z.boolean().optional(),
+  paidVia: z.enum(["cash", "bank", "card", "other"]).optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
 });
 
@@ -80,6 +82,8 @@ export async function PATCH(req: Request) {
     if (d.vendorPhone !== undefined) data.vendorPhone = d.vendorPhone?.trim() || null;
     if (d.costCents !== undefined) data.costCents = d.costCents;
     if (d.confirmed !== undefined) data.confirmed = d.confirmed;
+    if (d.paid !== undefined) { data.paid = d.paid; data.paidAt = d.paid ? new Date() : null; if (!d.paid) data.paidVia = null; }
+    if (d.paidVia !== undefined) data.paidVia = d.paidVia;
   } else if (d.status === "IN_PROGRESS" && !task.assignedToId) {
     // A worker starting an unassigned job claims it.
     data.assignedToId = scope.userId;
@@ -90,12 +94,13 @@ export async function PATCH(req: Request) {
   // job is Done, removed if it's reopened.
   const after = await prisma.task.findUnique({ where: { id: d.id } });
   if (after) {
+    const expDesc = `Service: ${after.title}${after.vendor ? ` (${after.vendor})` : ""}${after.paid && after.paidVia ? ` [paid ${after.paidVia}]` : ""}`;
     if (after.status === "DONE" && after.costCents > 0 && !after.expenseId) {
       const exp = await prisma.expense.create({
         data: {
           propertySlug: after.propertySlug, bookingId: after.bookingId,
           category: "OTHER", amountCents: after.costCents,
-          description: `Service: ${after.title}${after.vendor ? ` (${after.vendor})` : ""}`,
+          description: expDesc,
           date: after.dueAt || new Date(),
         },
       });
@@ -103,6 +108,9 @@ export async function PATCH(req: Request) {
     } else if (after.status !== "DONE" && after.expenseId) {
       await prisma.expense.delete({ where: { id: after.expenseId } }).catch(() => {});
       await prisma.task.update({ where: { id: after.id }, data: { expenseId: null } });
+    } else if (after.expenseId) {
+      // Keep the ledger line in sync (e.g. the paid method was just set).
+      await prisma.expense.update({ where: { id: after.expenseId }, data: { description: expDesc, amountCents: after.costCents } }).catch(() => {});
     }
   }
   return NextResponse.json({ ok: true });

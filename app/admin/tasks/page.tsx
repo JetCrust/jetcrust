@@ -29,6 +29,7 @@ export default async function AdminTasks() {
     id: t.id, propertySlug: t.propertySlug, title: t.title, category: t.category, status: t.status,
     dueAt: t.dueAt ? t.dueAt.toISOString().slice(0, 10) : null, assignedToId: t.assignedToId, notes: t.notes,
     vendor: t.vendor, vendorPhone: t.vendorPhone, costCents: t.costCents, confirmed: t.confirmed,
+    paid: t.paid, paidVia: t.paidVia,
   }));
 
   return (
