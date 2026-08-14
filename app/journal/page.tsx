@@ -8,7 +8,7 @@ import { getPublishedPosts, parseJson } from "@/lib/posts";
 
 export const metadata: Metadata = {
   title: "The Journal | Jet Crust",
-  description: "Guides, itineraries and local insight for Bran, Transylvania, Bucharest and beyond, from Jet Crust.",
+  description: "Guides, itineraries and insider local insight for Bran, Bran Castle, the Transylvanian mountains and Bucharest, written by the Jet Crust team to help you plan an unforgettable luxury stay.",
 };
 
 // Read fresh from the DB so newly published posts appear without a redeploy.

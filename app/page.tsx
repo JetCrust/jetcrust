@@ -7,7 +7,7 @@ import ClientInteractions from "./components/ClientInteractions";
 import { getProperties, imageUrl, priceLabel, type Property } from "@/lib/properties";
 
 const HOME_TITLE = "Luxury Villas & Penthouses in Transylvania & Bucharest | Jet Crust";
-const HOME_DESC = "Hand-selected luxury estates and penthouses in Transylvania and Bucharest. Historic villa near Bran Castle with a marble pool and private cinema. Direct booking, no platform fees.";
+const HOME_DESC = "Hand-selected luxury estates and penthouses in Transylvania and Bucharest. Historic villa near Bran Castle with a marble pool and private cinema. Book direct.";
 
 export const metadata: Metadata = {
   title: HOME_TITLE,

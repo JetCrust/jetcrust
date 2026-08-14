@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import AppHeader from "../../components/AppHeader";
 import BookingForm from "../../components/BookingForm";
@@ -6,6 +7,9 @@ import { auth } from "@/auth";
 import { getProperty, imageUrl, type Property } from "@/lib/properties";
 import { blockedDates } from "@/lib/availability";
 import { CONTRACT_TEXT } from "@/lib/contract";
+
+// The booking form is transactional, not a landing page — keep it out of the index.
+export const metadata: Metadata = { robots: { index: false, follow: true } };
 
 export default async function BookPage({
   params,

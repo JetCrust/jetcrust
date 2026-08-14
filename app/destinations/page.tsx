@@ -9,7 +9,7 @@ const SITE = process.env.SITE_ORIGIN || "https://jetcrust.com";
 
 export const metadata: Metadata = {
   title: "Destinations | Jet Crust",
-  description: "Explore our luxury rentals by destination, from Transylvania to Bucharest.",
+  description: "Explore Jet Crust's hand-selected luxury villas, estates and penthouses by destination, from historic Bran and the Transylvanian mountains to lakeside Bucharest. Book directly, no platform fees.",
   alternates: { canonical: `${SITE}/destinations` },
 };
 

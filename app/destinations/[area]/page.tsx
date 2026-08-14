@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ area: str
   const d = await areaData(area);
   if (!d) return {};
   const title = `${d.label} villas & luxury stays | Jet Crust`;
-  const description = `Curated luxury rentals in ${d.label}, with stories and local guides. ${d.homes.map((h) => h.name).join(", ")}.`;
+  const description = `Curated luxury villas and stays in ${d.label}, with private amenities, stories and local guides from Jet Crust. Featuring ${d.homes.map((h) => h.name).join(", ")}. Book directly, no platform fees.`;
   return { title, description, alternates: { canonical: `${SITE}/destinations/${area}` }, openGraph: { title, description, url: `${SITE}/destinations/${area}`, type: "website" } };
 }
 
