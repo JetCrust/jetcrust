@@ -4,6 +4,7 @@ import AppHeader from "../../../components/AppHeader";
 import ConsoleNav from "../../../components/ConsoleNav";
 import LocalTime from "../../../components/LocalTime";
 import MessageThread from "../../../components/MessageThread";
+import PrivateOfferForm from "../../../components/PrivateOfferForm";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { bookingIncome } from "@/lib/accounting";
@@ -36,6 +37,8 @@ export default async function GuestProfile({ params }: { params: Promise<{ userI
   // messages tied to the bookings visible to them (user.bookings is already sf-scoped).
   const msgWhere = scope.isSuper ? { userId } : { userId, bookingId: { in: user.bookings.map((b) => b.id) } };
   const messages = await prisma.message.findMany({ where: msgWhere, orderBy: { createdAt: "asc" } });
+  const offerRows = await prisma.privateOffer.findMany({ where: { email: user.email.toLowerCase() }, orderBy: { createdAt: "desc" } });
+  const offers = offerRows.map((o) => ({ id: o.id, propertySlug: o.propertySlug, checkIn: o.checkIn.toISOString(), checkOut: o.checkOut.toISOString(), priceCents: o.priceCents, status: o.status, note: o.note }));
 
   return (
     <>
@@ -73,6 +76,13 @@ export default async function GuestProfile({ params }: { params: Promise<{ userI
                   </>
                 )}
               </div>
+
+              {(scope.role === "ADMIN" || scope.role === "OPS") && (
+                <div className="panel">
+                  <div className="panel__head"><h3>Private rate</h3></div>
+                  <PrivateOfferForm email={user.email} properties={props.map((p) => ({ slug: p.slug, name: p.name }))} offers={offers} />
+                </div>
+              )}
 
               <div className="panel">
                 <div className="panel__head"><h3>Messages</h3></div>

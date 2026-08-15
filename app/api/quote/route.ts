@@ -3,6 +3,8 @@ import { getProperty } from "@/lib/properties";
 import { quote } from "@/lib/pricing";
 import { occupancyRatio } from "@/lib/occupancy";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { matchOffer, applyOffer } from "@/lib/offers";
 
 // Public price quote so guests can see availability + price before signing in.
 export async function GET(req: Request) {
@@ -26,6 +28,14 @@ export async function GET(req: Request) {
 
   const ratio = await occupancyRatio(p, checkIn, checkOut);
   const q = quote(p, checkIn, checkOut, ratio, addons, new Date());
+
+  // A signed-in guest with a private rate for these exact dates sees it applied.
+  if (q.valid) {
+    const session = await auth().catch(() => null);
+    const email = (session?.user as { email?: string } | undefined)?.email;
+    const offer = await matchOffer(email, slug, checkIn, checkOut);
+    if (offer) applyOffer(q, offer.priceCents);
+  }
   // Record the date interest (fire-and-forget) for demand analytics.
   if (q.valid) {
     prisma.analyticsEvent.create({

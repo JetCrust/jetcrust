@@ -8,6 +8,7 @@ import { getProperty } from "@/lib/properties";
 import { quote } from "@/lib/pricing";
 import { occupancyRatio } from "@/lib/occupancy";
 import { depositPlan } from "@/lib/policy";
+import { matchOffer, applyOffer } from "@/lib/offers";
 import { sendEmail } from "@/lib/email";
 
 // Safety net: if the payment step can't complete (misconfigured keys, a Stripe
@@ -91,6 +92,11 @@ export async function POST(req: Request) {
   if (!q.valid) {
     return NextResponse.json({ error: `Please choose at least ${q.minNights} night(s), with check-out after check-in.` }, { status: 400 });
   }
+
+  // Private rate for this guest + these exact dates (e.g. matching an OTA price).
+  const offerEmail = (session?.user as { email?: string } | undefined)?.email;
+  const offer = await matchOffer(offerEmail, slug, checkIn, checkOut);
+  if (offer) applyOffer(q, offer.priceCents);
 
   // Availability: reject if the dates overlap an existing block or approved booking.
   const overlap = await prisma.availabilityBlock.findFirst({
@@ -185,6 +191,11 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    // A private rate is one-time — mark it used now that the booking exists.
+    if (offer) {
+      await prisma.privateOffer.update({ where: { id: offer.id }, data: { status: "used", usedAt: new Date(), usedBookingId: booking.id } }).catch(() => {});
+    }
 
     return NextResponse.json({
       bookingId: booking.id,

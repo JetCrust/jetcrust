@@ -347,6 +347,26 @@ model Lead {
   @@index([followUpAt])
 }
 
+// A private, invisible rate set by the team for one guest + dates (e.g. to match
+// an OTA price without a public coupon). Applied automatically when that guest,
+// signed in with this email, books the exact property + dates. One-time.
+model PrivateOffer {
+  id            String    @id @default(cuid())
+  email         String    // guest email, lowercased
+  propertySlug  String
+  checkIn       DateTime
+  checkOut      DateTime
+  priceCents    Int       // the total to charge for the stay (the matched rate)
+  note          String?   // why (e.g. "Match Booking.com Genius")
+  status        String    @default("active") // active | used | void
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  usedAt        DateTime?
+  usedBookingId String?
+
+  @@index([email, propertySlug, status])
+}
+
 // First-party demand analytics: a property page view or a date-range quote.
 // Feeds the analytics dashboard and, later, demand-aware pricing. No third party.
 model AnalyticsEvent {
