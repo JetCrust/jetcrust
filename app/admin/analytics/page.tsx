@@ -50,6 +50,16 @@ export default async function AdminAnalytics() {
   const totalViews = rows.reduce((s, r) => s + r.views30, 0);
   const totalQuotes = rows.reduce((s, r) => s + r.quotes, 0);
 
+  // Where the visitors came from (views only), by channel.
+  const sourceCounts = new Map<string, number>();
+  for (const e of events) {
+    if (e.type !== "view") continue;
+    const s = e.source || "Direct";
+    sourceCounts.set(s, (sourceCounts.get(s) || 0) + 1);
+  }
+  const sources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]);
+  const sourceTotal = sources.reduce((s, [, n]) => s + n, 0);
+
   return (
     <>
       <AppHeader />
@@ -92,6 +102,20 @@ export default async function AdminAnalytics() {
                       </tbody>
                     </table>
                   </div>
+                )}
+              </div>
+
+              <div className="panel" style={{ marginBottom: "1.4rem" }}>
+                <div className="panel__head"><h3>Where visitors come from</h3></div>
+                <p className="panel__hint" style={{ marginTop: 0 }}>How people reached your property pages (last 30 days). Google means search, Social means Instagram/Facebook and the like, Direct means they typed the address or came from a bookmark. Put your effort where it pays off.</p>
+                {sourceTotal === 0 ? (
+                  <p style={{ color: "var(--stone)", margin: 0 }}>No traffic recorded yet. Sources appear as visitors arrive.</p>
+                ) : (
+                  <ul className="kv" style={{ margin: 0 }}>
+                    {sources.map(([src, n]) => (
+                      <li key={src}><span>{src}</span><span>{n} · {Math.round((n / sourceTotal) * 100)}%</span></li>
+                    ))}
+                  </ul>
                 )}
               </div>
 

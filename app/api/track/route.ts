@@ -9,9 +9,35 @@ import { prisma } from "@/lib/prisma";
 const schema = z.object({
   type: z.enum(["view", "quote"]),
   slug: z.string().min(1).max(80),
+  ref: z.string().max(500).optional(),
+  utm: z.string().max(120).optional(),
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
+
+const SOCIAL = ["facebook.", "fb.com", "instagram.", "t.co", "twitter.", "x.com", "linkedin.", "lnkd.in", "pinterest.", "tiktok.", "youtube.", "youtu.be"];
+// Turn a referrer URL + UTM tag into a simple channel name.
+function classifySource(ref?: string, utm?: string): string {
+  const u = (utm || "").toLowerCase().trim();
+  if (u) {
+    if (u.includes("google")) return "Google";
+    if (u.includes("bing")) return "Bing";
+    if (u.includes("email") || u.includes("newsletter")) return "Email";
+    if (["facebook", "instagram", "tiktok", "twitter", "linkedin", "pinterest", "youtube", "social"].some((s) => u.includes(s))) return "Social";
+    return u.charAt(0).toUpperCase() + u.slice(1);
+  }
+  const r = (ref || "").toLowerCase();
+  if (!r) return "Direct";
+  let host = "";
+  try { host = new URL(r).hostname.replace(/^www\./, ""); } catch { return "Direct"; }
+  if (!host || host.includes("jetcrust.com")) return "Direct";
+  if (host.includes("google.")) return "Google";
+  if (host.includes("bing.")) return "Bing";
+  if (host.includes("duckduckgo")) return "DuckDuckGo";
+  if (host.includes("yahoo.")) return "Yahoo";
+  if (SOCIAL.some((s) => host.includes(s))) return "Social";
+  return "Referral";
+}
 
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -32,6 +58,7 @@ export async function POST(req: Request) {
   await prisma.analyticsEvent.create({
     data: {
       type: d.type, slug: d.slug, userId, session: sid,
+      source: classifySource(d.ref, d.utm),
       checkIn: d.checkIn ? new Date(d.checkIn + "T00:00:00Z") : null,
       checkOut: d.checkOut ? new Date(d.checkOut + "T00:00:00Z") : null,
     },

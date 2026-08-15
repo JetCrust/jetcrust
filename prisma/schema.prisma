@@ -353,6 +353,7 @@ model AnalyticsEvent {
   id        String   @id @default(cuid())
   type      String   // "view" | "quote"
   slug      String
+  source    String?  // where they came from: Google | Bing | Social | Email | Direct | Referral
   userId    String?  // set when the visitor is signed in
   session   String?  // anonymous cookie id, to estimate unique/repeat visitors
   checkIn   DateTime?
