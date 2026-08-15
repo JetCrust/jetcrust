@@ -85,6 +85,7 @@ export default async function Diagnostics() {
                   <Row ok={!!process.env.RESEND_API_KEY} warn={!process.env.RESEND_API_KEY} label="Email (Resend)" detail={process.env.RESEND_API_KEY ? "Configured — confirmations and alerts will send." : "No RESEND_API_KEY — emails won't send (bookings still work)."} />
                   <Row ok={!!process.env.BLOB_READ_WRITE_TOKEN} warn={!process.env.BLOB_READ_WRITE_TOKEN} label="Photo storage (Blob)" detail={process.env.BLOB_READ_WRITE_TOKEN ? "Configured — photo uploads work." : "No BLOB_READ_WRITE_TOKEN — photo uploads will fail."} />
                   <Row ok={!!process.env.CRON_SECRET} warn={!process.env.CRON_SECRET} label="Scheduled jobs" detail={process.env.CRON_SECRET ? "Cron secret set — OTA sync, balance charges and follow-ups run." : "No CRON_SECRET — scheduled jobs are unprotected/disabled."} />
+                  <Row ok={!!process.env.ANTHROPIC_API_KEY} warn={!process.env.ANTHROPIC_API_KEY} label="Journal auto-writer (Anthropic)" detail={process.env.ANTHROPIC_API_KEY ? "ANTHROPIC_API_KEY set — new articles publish automatically Mon/Wed/Fri." : "No ANTHROPIC_API_KEY in production — the Journal auto-writer is paused. Add it in Vercel → Settings → Environment Variables → Production, then redeploy."} />
                 </ul>
               </div>
             </div>
