@@ -164,3 +164,70 @@ export function searchGuide(sections: GuideSection[], query: string): GuideHit[]
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, 8).map(({ sectionIndex, title, snippet }) => ({ sectionIndex, title, snippet }));
 }
+
+// Everyday words → the terms actually used in a guidebook, so a guest typing
+// "wifi", "music" or "lights" still matches. Extend freely.
+const SYN: Record<string, string[]> = {
+  wifi: ["wifi", "wi-fi", "internet", "wireless", "network", "password"],
+  music: ["music", "sound", "speaker", "speakers", "sonos", "audio", "stereo", "bluetooth", "play"],
+  tv: ["tv", "television", "cinema", "theatre", "theater", "movie", "movies", "netflix", "projector", "alexa", "remote", "screen"],
+  pool: ["pool", "swim", "swimming", "jacuzzi", "hot tub"],
+  sauna: ["sauna", "saunas", "steam"],
+  gym: ["gym", "fitness", "weights", "workout"],
+  wine: ["wine", "cellar", "crama", "cigar", "cigars"],
+  lights: ["light", "lights", "lamp", "lamps", "dimmer", "switch"],
+  heat: ["heat", "heating", "thermostat", "temperature", "cold", "warm", "ac", "air conditioning"],
+  checkin: ["check-in", "checkin", "arrival", "arrive", "keys", "key", "code", "codes", "door", "gate", "entry", "enter"],
+  checkout: ["check-out", "checkout", "departure", "leave", "leaving"],
+  rules: ["rules", "smoking", "smoke", "quiet", "noise", "party", "pets", "children"],
+  local: ["restaurant", "restaurants", "eat", "food", "dinner", "nearby", "recommend", "attractions", "castle"],
+  kitchen: ["kitchen", "cook", "cooking", "coffee", "dishwasher", "oven"],
+  help: ["help", "broken", "not working", "problem", "emergency", "issue"],
+};
+
+function expandTerms(query: string): string[] {
+  const raw = query.toLowerCase().split(/\s+/).map((t) => t.replace(/[^a-z0-9-]/g, "")).filter(Boolean);
+  const out = new Set<string>();
+  for (const t of raw) {
+    out.add(t);
+    for (const group of Object.values(SYN)) if (group.includes(t)) group.forEach((g) => out.add(g));
+  }
+  return [...out];
+}
+
+// Build a complete, guest-ready answer for one entry (not a snippet).
+function sectionAnswer(s: GuideSection): string {
+  const parts: string[] = [];
+  if (s.body) parts.push(s.body);
+  if (s.wifi?.network) parts.push(`Wi-Fi network: ${s.wifi.network}${s.wifi.password ? `\nPassword: ${s.wifi.password}` : ""}${s.wifi.note ? `\n${s.wifi.note}` : ""}`);
+  for (const st of s.steps || []) if (st.text) parts.push(`• ${st.text}`);
+  for (const pl of s.places || []) parts.push(`• ${pl.name}${pl.note ? ` — ${pl.note}` : ""}`);
+  return parts.join("\n");
+}
+
+// The keyword knowledge base for the guest chat: find the best-matching guidebook
+// entry and return a full answer. Pure + instant — no AI, no network.
+export function answerFromGuide(sections: GuideSection[], query: string): { title: string; text: string } | null {
+  const T = expandTerms(query);
+  if (!T.length) return null;
+  const cands: { score: number; title: string; text: string }[] = [];
+  const add = (score: number, title: string, text: string) => { if (score > 0 && text) cands.push({ score, title, text }); };
+  for (const s of sections) {
+    const secHay = [s.title, s.body, ...(s.steps || []).map((x) => x.text), s.wifi?.note, s.wifi?.network,
+      ...(s.places || []).map((p) => `${p.name} ${p.category || ""} ${p.note || ""}`)].filter(Boolean).join(" ").toLowerCase();
+    add(T.reduce((n, t) => n + (secHay.includes(t) ? 1 : 0), 0), s.title, sectionAnswer(s));
+    for (const r of s.rooms || []) {
+      const roomHay = [r.name, r.body].filter(Boolean).join(" ").toLowerCase();
+      add(T.reduce((n, t) => n + (roomHay.includes(t) ? 1 : 0), 0), r.name, [r.name, r.body].filter(Boolean).join(": "));
+      for (const d of r.devices || []) {
+        const ts = (d.troubleshooting || []).map((t) => `${t.problem} ${t.fix}`).join(" ");
+        const devHay = [d.name, d.brand, d.model, d.notes, ts].filter(Boolean).join(" ").toLowerCase();
+        const devAns = [d.name + (d.notes ? `: ${d.notes}` : ""), ...(d.troubleshooting || []).map((t) => `If ${t.problem}: ${t.fix}`)].filter(Boolean).join("\n");
+        add(T.reduce((n, t) => n + (devHay.includes(t) ? 1 : 0), 0), `${r.name} · ${d.name}`, devAns);
+      }
+    }
+  }
+  if (!cands.length) return null;
+  cands.sort((a, b) => b.score - a.score);
+  return { title: cands[0].title, text: cands[0].text };
+}

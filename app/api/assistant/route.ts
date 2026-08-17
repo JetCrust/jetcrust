@@ -3,21 +3,15 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProperty } from "@/lib/properties";
-import { guidebookToText } from "@/lib/guidebook";
-import { askAssistant, type ChatTurn } from "@/lib/assistant";
+import { answerFromGuide, type GuideSection } from "@/lib/guidebook";
+import { askAssistant, fallbackAnswer, type ChatTurn } from "@/lib/assistant";
 
 const schema = z.object({
   question: z.string().min(1).max(1000),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(4000) })).max(12).optional(),
 });
 
-const money = (c: number) => `€${Math.round((c || 0) / 100).toLocaleString("en-US")}`;
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
-
-const DEPOSIT_STATE: Record<string, string> = {
-  none: "not secured yet", held: "held (nothing charged)", charged: "charged, refundable after a clean checkout",
-  released: "released back", captured: "partly kept for damage", expired: "expired",
-};
 
 // Lightweight probe so the client gate knows whether to show the widget and in
 // which mode — without forcing pages to render dynamically.
@@ -41,41 +35,25 @@ export async function POST(req: Request) {
   const isTeam = user.role === "ADMIN" || user.role === "MANAGER" || user.role === "STAFF" || user.role === "OPS";
   const mode: "admin" | "client" = isTeam ? "admin" : "client";
 
-  // Ground the answer in this person's real data.
-  let context = "";
+  // Guests: keyword knowledge base only — no AI credits. The guidebook for their
+  // stay answers "how things work" (Wi-Fi, music, saunas…); general policy covers
+  // deposits/payments; anything else invites them to message the host.
   if (mode === "client") {
-    const bookings = await prisma.booking.findMany({
-      where: { userId: user.id },
-      orderBy: { checkIn: "desc" },
-      take: 4,
-    });
-    if (bookings.length) {
-      context = "The guest's bookings:\n" + bookings.map((b) => {
-        const bits = [
-          `- ${b.propertySlug}: ${fmt(b.checkIn)} to ${fmt(b.checkOut)}, ${b.guests} guests, status ${b.status}`,
-          `  paid/held ${money(b.depositCents ?? 0)}${b.status === "APPROVED" ? " charged" : " held"}`,
-        ];
-        if (b.balanceCents > 0) bits.push(`  balance ${money(b.balanceCents)}${b.balancePaidAt ? " paid" : b.balanceDueAt ? ` due ${fmt(b.balanceDueAt)}` : ""}`);
-        if (b.securityCents > 0) bits.push(`  security deposit ${money(b.securityCents)}: ${DEPOSIT_STATE[b.securityStatus] || b.securityStatus}`);
-        return bits.join("\n");
-      }).join("\n");
-    } else {
-      context = "The guest has no bookings yet.";
-    }
-    context += `\nThe guest's name is ${user.name || "there"}. Today is ${fmt(new Date())}.`;
-    // Give the bot the guidebook for their current/upcoming stay so it can answer
-    // property questions (Wi-Fi, how things work, house rules, local picks).
+    const bookings = await prisma.booking.findMany({ where: { userId: user.id }, orderBy: { checkIn: "desc" }, take: 4 });
     const gbBooking = bookings.find((b) => b.status === "APPROVED") || bookings[0];
+    let sections: GuideSection[] = [];
     if (gbBooking) {
       const prop = await getProperty(gbBooking.propertySlug);
-      const gbText = guidebookToText(prop?.guidebook, prop?.name || gbBooking.propertySlug);
-      if (gbText) context += `\n\n${gbText}`;
+      if (prop?.guidebook?.enabled && Array.isArray(prop.guidebook.sections)) sections = prop.guidebook.sections;
     }
-  } else {
-    const pending = await prisma.booking.count({ where: { status: "REQUESTED" } }).catch(() => 0);
-    context = `There are ${pending} booking request(s) awaiting approval. Today is ${fmt(new Date())}. The person asking is a ${user.role}.`;
+    const gb = answerFromGuide(sections, question);
+    const answer = gb ? gb.text : fallbackAnswer(question);
+    return NextResponse.json({ answer, grounded: !!gb });
   }
 
+  // Team: AI-assisted (low volume, and worth the smarter help).
+  const pending = await prisma.booking.count({ where: { status: "REQUESTED" } }).catch(() => 0);
+  const context = `There are ${pending} booking request(s) awaiting approval. Today is ${fmt(new Date())}. The person asking is a ${user.role}.`;
   const { answer, grounded } = await askAssistant({ mode, question, history: history as ChatTurn[] | undefined, context });
   return NextResponse.json({ answer, grounded });
 }

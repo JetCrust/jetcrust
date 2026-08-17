@@ -87,7 +87,7 @@ const FALLBACK: { keys: string[]; a: string }[] = [
   { keys: ["status", "booking"], a: "Requested means your card is held while we confirm; Approved means it's confirmed and charged; Declined/Cancelled means the hold is released and nothing is charged." },
 ];
 
-function fallbackAnswer(question: string): string {
+export function fallbackAnswer(question: string): string {
   const q = question.toLowerCase();
   let best: { score: number; a: string } | null = null;
   for (const f of FALLBACK) {
