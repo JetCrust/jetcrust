@@ -70,7 +70,7 @@ EXPERIENCES / ADD-ONS (chef, massage, sauna, ski, etc.):
 
 OTHER:
 - Cancellation: unless stated otherwise, nights are non-refundable within 30 days of arrival; we'll confirm terms with you.
-- Your digital guidebook (Wi-Fi, how to get in, local tips) is on your booking once it's approved.
+- When the guest's guidebook is included in the context, answer their specific questions from it directly (Wi-Fi, getting in, how the pool/saunas/cinema/sound work, house rules, local picks). The full guidebook is also on their booking once approved.
 - You can message the host directly from your booking for anything else.
 - Check-in/check-out times are shown on your booking.`;
 

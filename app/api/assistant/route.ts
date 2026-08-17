@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getProperty } from "@/lib/properties";
+import { guidebookToText } from "@/lib/guidebook";
 import { askAssistant, type ChatTurn } from "@/lib/assistant";
 
 const schema = z.object({
@@ -61,6 +63,14 @@ export async function POST(req: Request) {
       context = "The guest has no bookings yet.";
     }
     context += `\nThe guest's name is ${user.name || "there"}. Today is ${fmt(new Date())}.`;
+    // Give the bot the guidebook for their current/upcoming stay so it can answer
+    // property questions (Wi-Fi, how things work, house rules, local picks).
+    const gbBooking = bookings.find((b) => b.status === "APPROVED") || bookings[0];
+    if (gbBooking) {
+      const prop = await getProperty(gbBooking.propertySlug);
+      const gbText = guidebookToText(prop?.guidebook, prop?.name || gbBooking.propertySlug);
+      if (gbText) context += `\n\n${gbText}`;
+    }
   } else {
     const pending = await prisma.booking.count({ where: { status: "REQUESTED" } }).catch(() => 0);
     context = `There are ${pending} booking request(s) awaiting approval. Today is ${fmt(new Date())}. The person asking is a ${user.role}.`;

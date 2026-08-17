@@ -74,6 +74,29 @@ export function parseVideo(url: string): GuideVideo | null {
   return null;
 }
 
+// Flatten a guidebook into plain text so the guest assistant can answer questions
+// from it (Wi-Fi, how things work, house rules, local picks).
+export function guidebookToText(gb: Guidebook | undefined, propertyName: string): string {
+  if (!gb?.enabled || !Array.isArray(gb.sections) || gb.sections.length === 0) return "";
+  const lines: string[] = [`Guidebook for ${propertyName} (use this to answer the guest's questions about the home):`];
+  if (gb.intro) lines.push(gb.intro);
+  for (const s of gb.sections) {
+    lines.push(`\n## ${s.title}`);
+    if (s.body) lines.push(s.body);
+    if (s.wifi?.network) lines.push(`Wi-Fi network: ${s.wifi.network}${s.wifi.password ? `, password: ${s.wifi.password}` : ""}${s.wifi.note ? `. ${s.wifi.note}` : ""}`);
+    if (s.steps?.length) s.steps.forEach((st, i) => { if (st.text) lines.push(`${i + 1}. ${st.text}`); });
+    for (const r of s.rooms || []) {
+      lines.push(`Room/area: ${r.name}${r.body ? ` — ${r.body}` : ""}`);
+      for (const d of r.devices || []) {
+        lines.push(`  ${d.name}${d.brand || d.model ? ` (${[d.brand, d.model].filter(Boolean).join(" ")})` : ""}${d.notes ? ` — ${d.notes}` : ""}`);
+        for (const t of d.troubleshooting || []) lines.push(`    If ${t.problem}: ${t.fix}`);
+      }
+    }
+    for (const pl of s.places || []) lines.push(`${pl.name}${pl.category ? ` (${pl.category})` : ""}${pl.note ? ` — ${pl.note}` : ""}`);
+  }
+  return lines.join("\n");
+}
+
 export function videoEmbedUrl(v: GuideVideo): string {
   return v.provider === "youtube"
     ? `https://www.youtube-nocookie.com/embed/${v.id}`
