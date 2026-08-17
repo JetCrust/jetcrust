@@ -196,6 +196,25 @@ export function adminNewRequestEmail(d: BookingData) {
   };
 }
 
+// Sent a day or two after checkout: invite the guest to review on our site first.
+// A great review then gets the "share on Google" prompt; a poor one comes to us.
+export function bookingReviewRequestEmail(d: { guestName: string; propertyName: string; bookingId: string }) {
+  const first = d.guestName.split(" ")[0] || "there";
+  return {
+    subject: `How was your stay at ${d.propertyName}?`,
+    html: layout({
+      preheader: `We would love to hear how your stay at ${d.propertyName} was.`,
+      heading: "How was your stay?",
+      accent: "#253026",
+      bodyHtml:
+        h2(`Thank you for staying with us, ${esc(first)}`) +
+        p(`We hope ${esc(d.propertyName)} was everything you were looking for. If you have a moment, we would be grateful for a few words about your stay. It helps future guests and means a great deal to our small team.`) +
+        button(`${SITE}/account/bookings/${d.bookingId}#review`, "Leave a review") +
+        p("If anything was less than perfect, please tell us there too. We genuinely want to make it right."),
+    }),
+  };
+}
+
 // Internal alert when a guest leaves a low private rating, so the team can
 // reach out and make it right before it ever becomes a public review.
 export function lowReviewAlertEmail(d: { propertyName: string; guestName: string; guestEmail: string; rating: number; text: string; bookingId: string }) {

@@ -154,6 +154,7 @@ model Booking {
   stayPreferences       String?                 // arrival time, occasion, requests for this stay
   reviewRating          Int?                     // 1..5, set after checkout
   reviewText            String?
+  reviewRequestedAt     DateTime?                // when the post-checkout review email was sent
   reviewedAt            DateTime?
 
   acceptance            ContractAcceptance?

@@ -22,6 +22,10 @@ export default function GuestStayForms({
   const [revBusy, setRevBusy] = useState(false);
   const [revMsg, setRevMsg] = useState<string | null>(null);
   const [editingReview, setEditingReview] = useState(!review);
+  const [copied, setCopied] = useState(false);
+  function copyReview() {
+    navigator.clipboard?.writeText(review?.text || "").then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => {});
+  }
 
   async function savePrefs() {
     setPrefBusy(true); setPrefMsg(null);
@@ -63,7 +67,7 @@ export default function GuestStayForms({
       )}
 
       {canReview && (
-        <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
+        <div id="review" className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
           <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>{review ? "Your review" : "Leave a review"}</h3>
           {!editingReview && review ? (
             <>
@@ -98,7 +102,14 @@ export default function GuestStayForms({
           {review.rating >= 4 ? (
             <>
               <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>Thank you</h3>
-              <p className="panel__hint" style={{ marginTop: 0 }}>We are so glad you enjoyed your stay. If you have a moment, sharing it publicly means a great deal to our small team.</p>
+              <p className="panel__hint" style={{ marginTop: 0 }}>We are so glad you enjoyed your stay. If you have a moment, sharing it on Google means a great deal to our small team.</p>
+              {review.text && googleReviewUrl && (
+                <div style={{ background: "var(--cream-2, #f4f0e6)", borderRadius: "var(--radius-sm)", padding: "0.7rem 0.9rem", marginBottom: "0.8rem" }}>
+                  <p style={{ margin: "0 0 0.4rem", fontSize: "0.8rem", color: "var(--stone)" }}>Copy your words, then paste them on Google:</p>
+                  <p style={{ margin: "0 0 0.6rem", fontStyle: "italic", color: "var(--ink-soft)" }}>&ldquo;{review.text}&rdquo;</p>
+                  <button type="button" className="btn btn--ghost" style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }} onClick={copyReview}>{copied ? "Copied ✓" : "Copy my review"}</button>
+                </div>
+              )}
               {googleReviewUrl
                 ? <a className="btn btn--brass" href={googleReviewUrl} target="_blank" rel="noopener noreferrer">Share your stay on Google</a>
                 : <p style={{ margin: 0, color: "var(--stone)", fontSize: "0.85rem" }}>Thank you again for your kind words.</p>}
