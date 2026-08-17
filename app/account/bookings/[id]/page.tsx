@@ -96,6 +96,14 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
             )}
           </div>
 
+          {p?.guidebook?.enabled && (
+            <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem", borderColor: "var(--brass, #9a7b3f)" }}>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>Your stay guide — everything you need</h3>
+              <p className="panel__hint" style={{ marginTop: 0, marginBottom: "0.9rem" }}>Getting in and door codes, Wi-Fi, house rules and check-in/out times, how the pool, saunas, cinema and sound systems work, plus our local picks. Most questions are answered here.</p>
+              <Link href={`/account/bookings/${b.id}/guide`} className="btn btn--dark" style={{ width: "100%", justifyContent: "center" }}>Open your guidebook →</Link>
+            </div>
+          )}
+
           <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
             <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Messages &amp; concierge</h3>
             <p className="panel__hint" style={{ marginTop: 0 }}>Message us directly about your stay. We reply here and by email.</p>
@@ -148,17 +156,15 @@ export default async function BookingDetail({ params }: { params: Promise<{ id: 
               <><p className="panel__hint" style={{ marginTop: "0.8rem", marginBottom: "0.3rem" }}>House rules</p><p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: 0 }}>{p.guest_info.house_rules}</p></>
             )}
             {!(b.status === "APPROVED" && p?.guest_info?.checkin_instructions) && (
-              <p className="note" style={{ margin: "0.6rem 0 0", color: "var(--stone)", fontSize: "0.8rem" }}>Arrival directions and access details are sent by our team before your stay.</p>
+              p?.guidebook?.enabled ? (
+                <p className="note" style={{ margin: "0.6rem 0 0", color: "var(--ink-soft)", fontSize: "0.85rem" }}>Check-in details, Wi-Fi, house rules and how everything in the home works are in your <strong>digital guidebook</strong> below.</p>
+              ) : (
+                <p className="note" style={{ margin: "0.6rem 0 0", color: "var(--stone)", fontSize: "0.8rem" }}>Arrival directions and access details are sent by our team before your stay.</p>
+              )
             )}
           </div>
 
-          {p?.guidebook?.enabled ? (
-            <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
-              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>Your digital guidebook</h3>
-              <p className="panel__hint" style={{ marginTop: 0, marginBottom: "0.9rem" }}>Getting in, Wi-Fi, how everything works, and our local picks — all in one place.</p>
-              <Link href={`/account/bookings/${b.id}/guide`} className="btn btn--dark" style={{ width: "100%", justifyContent: "center" }}>Open your guidebook →</Link>
-            </div>
-          ) : p?.guest_info?.guidebook ? (
+          {!p?.guidebook?.enabled && p?.guest_info?.guidebook ? (
             <div className="pdp-aside" style={{ position: "static", marginBottom: "1.6rem" }}>
               <h3 style={{ fontSize: "1.2rem", marginBottom: "0.6rem" }}>Local guidebook</h3>
               <p style={{ whiteSpace: "pre-wrap", color: "var(--ink-soft)", margin: 0 }}>{p.guest_info.guidebook}</p>
