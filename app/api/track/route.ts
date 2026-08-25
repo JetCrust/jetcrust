@@ -16,10 +16,14 @@ const schema = z.object({
 });
 
 const SOCIAL = ["facebook.", "fb.com", "instagram.", "t.co", "twitter.", "x.com", "linkedin.", "lnkd.in", "pinterest.", "tiktok.", "youtube.", "youtu.be"];
+// AI assistants that can recommend the site (checked before search engines, since
+// e.g. gemini.google.com would otherwise read as Google).
+const AI = ["chatgpt.com", "chat.openai.com", "openai.com", "perplexity.ai", "claude.ai", "gemini.google", "bard.google", "copilot.microsoft", "you.com", "poe.com", "phind.com"];
 // Turn a referrer URL + UTM tag into a simple channel name.
 function classifySource(ref?: string, utm?: string): string {
   const u = (utm || "").toLowerCase().trim();
   if (u) {
+    if (["chatgpt", "openai", "perplexity", "claude", "gemini", "copilot", "phind"].some((s) => u.includes(s)) || u === "ai") return "AI";
     if (u.includes("google")) return "Google";
     if (u.includes("bing")) return "Bing";
     if (u.includes("email") || u.includes("newsletter")) return "Email";
@@ -31,6 +35,7 @@ function classifySource(ref?: string, utm?: string): string {
   let host = "";
   try { host = new URL(r).hostname.replace(/^www\./, ""); } catch { return "Direct"; }
   if (!host || host.includes("jetcrust.com")) return "Direct";
+  if (AI.some((s) => host.includes(s))) return "AI";
   if (host.includes("google.")) return "Google";
   if (host.includes("bing.")) return "Bing";
   if (host.includes("duckduckgo")) return "DuckDuckGo";
@@ -48,6 +53,8 @@ export async function POST(req: Request) {
   const userId = (session?.user as { id?: string } | undefined)?.id || null;
 
   const jar = await cookies();
+  // Team members can opt out of their own visits (see /optout).
+  if (jar.get("jc_noanalytics")?.value === "1") return NextResponse.json({ ok: true, skipped: true });
   let sid = jar.get("jc_sid")?.value || null;
   const res = NextResponse.json({ ok: true });
   if (!sid) {

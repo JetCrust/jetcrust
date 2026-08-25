@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getProperty } from "@/lib/properties";
 import { quote } from "@/lib/pricing";
 import { occupancyRatio } from "@/lib/occupancy";
@@ -36,8 +37,10 @@ export async function GET(req: Request) {
     const offer = await matchOffer(email, slug, checkIn, checkOut);
     if (offer) applyOffer(q, offer.priceCents);
   }
-  // Record the date interest (fire-and-forget) for demand analytics.
-  if (q.valid) {
+  // Record the date interest (fire-and-forget) for demand analytics, unless this
+  // is a team member who has opted their own visits out (see /optout).
+  const optedOut = (await cookies()).get("jc_noanalytics")?.value === "1";
+  if (q.valid && !optedOut) {
     prisma.analyticsEvent.create({
       data: { type: "quote", slug, checkIn: new Date(checkIn + "T00:00:00Z"), checkOut: new Date(checkOut + "T00:00:00Z") },
     }).catch(() => {});
