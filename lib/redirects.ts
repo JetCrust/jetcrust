@@ -66,7 +66,7 @@ export const REDIRECTS: Record<string, string> = {
   "/%d7%90%d7%98%d7%a8%d7%a7%d7%a6%d7%99%d7%95%d7%aa-%d7%a0%d7%95%d7%a1%d7%a4%d7%95%d7%aa-%d7%91%d7%91%d7%a8%d7%90%d7%9f-%d7%95%d7%94%d7%a1%d7%91%d7%99%d7%91%d7%94": "/castelaria",
   "/%d7%a4%d7%a2%d7%99%d7%9c%d7%95%d7%99%d7%95%d7%aa-%d7%a2%d7%95%d7%a0%d7%aa%d7%99%d7%95%d7%aa-%d7%91%d7%91%d7%a8%d7%90%d7%9f": "/castelaria",
   "/cazare-premium-in-bran-transilvania-castelaria": "/castelaria",
-  "/vila-de-lux-cu-piscina-interioara-in-bran": "/castelaria",
+  "/vila-de-lux-cu-piscina-interioara-in-bran": "/cazare-bran-cu-piscina",
   "/experienta-unica-la-castelaria-vila-de-lux-in-transilvania": "/castelaria",
   "/cazare-exclusivista-langa-castelul-bran-castelaria": "/castelaria",
   "/vacante-de-lux-in-romania-castelaria-bran": "/castelaria",

@@ -16,6 +16,7 @@ export default function MarketingFooter() {
             <li><Link href="/soho-place">Soho Place</Link></li>
             <li><Link href="/destinations">Destinations</Link></li>
             <li><Link href="/journal">The Journal</Link></li>
+            <li><Link href="/cazare-bran-cu-piscina">Cazare Bran cu piscină</Link></li>
           </ul></div>
           <div className="footer__col"><h5>Visit</h5><ul>
             <li><a href="tel:+40770111555">+40 770 111 555</a></li>
