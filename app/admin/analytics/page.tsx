@@ -4,8 +4,15 @@ import ConsoleNav from "../../components/ConsoleNav";
 import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { staffScope } from "@/lib/access";
+import { searchPerformance } from "@/lib/gsc";
+
+export const dynamic = "force-dynamic";
 
 const DAY = 86400000;
+const gscPct = (n: number) => `${(n * 100).toFixed(1)}%`;
+const gscPos = (n: number) => n.toFixed(1);
+const gscNum = (n: number) => Math.round(n).toLocaleString("en-US");
+const gscShort = (u: string) => u.replace(/^https?:\/\/[^/]+/, "") || "/";
 const fmtWeek = (d: Date) => {
   const mon = new Date(d);
   const dow = (mon.getUTCDay() + 6) % 7; // 0 = Monday
@@ -17,6 +24,8 @@ export default async function AdminAnalytics() {
   const scope = await staffScope();
   if (!scope) redirect("/account?next=/admin");
   const slugs = scope.slugs; // null = all
+  // Google Search Console performance — Super Admin only.
+  const gsc = scope.isSuper ? await searchPerformance(28) : null;
 
   const since30 = new Date(Date.now() - 30 * DAY);
   const since7 = new Date(Date.now() - 7 * DAY);
@@ -132,6 +141,55 @@ export default async function AdminAnalytics() {
                   </ul>
                 )}
               </div>
+
+              {gsc && (
+                <div style={{ marginTop: "1.4rem" }}>
+                  <div className="sec-head" style={{ marginBottom: "1rem" }}>
+                    <p className="overline eyebrow-line">Google Search</p>
+                    <h3 style={{ fontSize: "clamp(1.4rem,3vw,1.8rem)", margin: 0 }}>Search performance</h3>
+                    <p className="lead" style={{ marginBottom: 0, fontSize: "0.95rem" }}>What people search on Google to find you, from Search Console. Last 28 days ({gsc.start} to {gsc.end}).</p>
+                  </div>
+
+                  {!gsc.configured ? (
+                    <div className="panel"><p style={{ margin: 0, color: "var(--stone)" }}>Not connected yet. Add <strong>GOOGLE_SERVICE_ACCOUNT_KEY</strong> in Vercel → Production (paste the whole service-account JSON), then redeploy.</p></div>
+                  ) : gsc.error ? (
+                    <div className="panel"><p style={{ margin: 0, color: "#a3412e" }}>Search Console error: {gsc.error}</p></div>
+                  ) : (
+                    <>
+                      <div className="rep-kpis" style={{ marginBottom: "1.4rem" }}>
+                        <div className="rep-kpi"><p className="rep-kpi__label">Clicks</p><p className="rep-kpi__value">{gscNum(gsc.totals.clicks)}</p></div>
+                        <div className="rep-kpi"><p className="rep-kpi__label">Impressions</p><p className="rep-kpi__value">{gscNum(gsc.totals.impressions)}</p></div>
+                        <div className="rep-kpi"><p className="rep-kpi__label">Avg. CTR</p><p className="rep-kpi__value">{gscPct(gsc.totals.ctr)}</p></div>
+                        <div className="rep-kpi"><p className="rep-kpi__label">Avg. position</p><p className="rep-kpi__value">{gscPos(gsc.totals.position)}</p></div>
+                      </div>
+
+                      <div className="panel" style={{ marginBottom: "1.4rem" }}>
+                        <div className="panel__head"><h3>Top search queries</h3></div>
+                        {gsc.queries.length === 0 ? <p style={{ color: "var(--stone)", margin: 0 }}>No query data yet.</p> : (
+                          <div style={{ overflowX: "auto" }}>
+                            <table className="ledger">
+                              <thead><tr><th>Query</th><th>Clicks</th><th>Impr.</th><th>CTR</th><th>Pos.</th></tr></thead>
+                              <tbody>{gsc.queries.map((q) => (<tr key={q.key}><td>{q.key}</td><td>{gscNum(q.clicks)}</td><td>{gscNum(q.impressions)}</td><td>{gscPct(q.ctr)}</td><td>{gscPos(q.position)}</td></tr>))}</tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="panel">
+                        <div className="panel__head"><h3>Top pages</h3></div>
+                        {gsc.pages.length === 0 ? <p style={{ color: "var(--stone)", margin: 0 }}>No page data yet.</p> : (
+                          <div style={{ overflowX: "auto" }}>
+                            <table className="ledger">
+                              <thead><tr><th>Page</th><th>Clicks</th><th>Impr.</th><th>CTR</th><th>Pos.</th></tr></thead>
+                              <tbody>{gsc.pages.map((p) => (<tr key={p.key}><td>{gscShort(p.key)}</td><td>{gscNum(p.clicks)}</td><td>{gscNum(p.impressions)}</td><td>{gscPct(p.ctr)}</td><td>{gscPos(p.position)}</td></tr>))}</tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
