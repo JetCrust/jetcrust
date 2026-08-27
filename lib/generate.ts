@@ -27,6 +27,7 @@ const EVERGREEN = [
   "Romanian food and wine: what to try and where",
   "Getting around Romania: airports, transfers and driving tips",
   "Quiet luxury in the Carpathians: how to plan a slow trip",
+  "Bran Castle: the history, the Dracula legend, and how to visit",
 ];
 
 export type GeneratedPost = {
@@ -93,22 +94,27 @@ function topicsForArea(area: string): string[] {
   ];
 }
 
-// Seasonal, high-interest topics (Bran Castle draws huge Halloween/Dracula search).
-const SEASONAL = [
-  "Halloween at Bran Castle: the real Dracula experience",
-  "Christmas and winter magic around Bran and Brasov",
-  "Bran Castle: the history, the Dracula legend, and how to visit",
+// Seasonal topics, written AHEAD of the event while search is ramping up. `from`
+// and `to` are [month, day] — the writer prioritises the topic while today is in
+// that window. `key` is matched against recent titles so it isn't repeated in the
+// same season. Windows END before the event so the piece is indexed in time.
+const SEASONAL_CALENDAR: { topic: string; key: string; from: [number, number]; to: [number, number] }[] = [
+  { topic: "Halloween at Bran Castle: the real Dracula experience", key: "halloween", from: [9, 1], to: [10, 26] },
+  { topic: "Christmas markets and winter magic around Bran and Brasov", key: "christmas", from: [11, 1], to: [12, 18] },
+  { topic: "New Year in the Carpathians: a Transylvanian celebration", key: "new year", from: [11, 20], to: [12, 27] },
+  { topic: "Easter traditions in Transylvania: a spring escape near Bran", key: "easter", from: [2, 20], to: [4, 5] },
+  { topic: "Summer by the indoor pool: a luxury Bran escape", key: "summer by the pool", from: [5, 10], to: [7, 5] },
+  { topic: "A Bucharest autumn city break: culture, food and long weekends", key: "bucharest autumn", from: [8, 20], to: [10, 10] },
 ];
 
 // The full rotating topic list. Areas are INTERLEAVED (Bran, Bucharest,
-// Transylvania, Bran, …) so every place gets covered from the start, then
-// seasonal and evergreen topics.
+// Transylvania, Bran, …) so every place gets covered from the start.
 export async function getTopics(): Promise<string[]> {
   const perArea = (await areasFromProperties()).map(topicsForArea);
   const interleaved: string[] = [];
   const max = Math.max(0, ...perArea.map((a) => a.length));
   for (let i = 0; i < max; i++) for (const arr of perArea) if (arr[i]) interleaved.push(arr[i]);
-  return [...interleaved, ...SEASONAL, ...EVERGREEN];
+  return [...interleaved, ...EVERGREEN];
 }
 
 // Match a topic to the property whose area it mentions, so the cover photo is
@@ -282,6 +288,20 @@ export async function generateAndSaveDraft(topic: string, publish = false) {
 // accumulate, so coverage spreads across every area (new homes included).
 export async function pickNextTopic(): Promise<string> {
   const { prisma } = await import("./prisma");
+
+  // Seasonal first: if a holiday/event window is open and we haven't covered it
+  // this season, write it now so it ranks before the event.
+  const now = new Date();
+  const md = (m: number, d: number) => m * 100 + d;
+  const today = md(now.getUTCMonth() + 1, now.getUTCDate());
+  for (const s of SEASONAL_CALENDAR) {
+    if (today < md(...s.from) || today > md(...s.to)) continue;
+    const recent = await prisma.post.findFirst({
+      where: { title: { contains: s.key, mode: "insensitive" }, createdAt: { gte: new Date(now.getTime() - 90 * 86400000) } },
+    }).catch(() => null);
+    if (!recent) return s.topic;
+  }
+
   const topics = await getTopics();
   if (topics.length === 0) return "A quiet luxury weekend in Romania";
   const count = await prisma.post.count();
