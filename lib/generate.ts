@@ -93,10 +93,22 @@ function topicsForArea(area: string): string[] {
   ];
 }
 
-// The full rotating topic list: every area's topics, then the evergreen ones.
+// Seasonal, high-interest topics (Bran Castle draws huge Halloween/Dracula search).
+const SEASONAL = [
+  "Halloween at Bran Castle: the real Dracula experience",
+  "Christmas and winter magic around Bran and Brasov",
+  "Bran Castle: the history, the Dracula legend, and how to visit",
+];
+
+// The full rotating topic list. Areas are INTERLEAVED (Bran, Bucharest,
+// Transylvania, Bran, …) so every place gets covered from the start, then
+// seasonal and evergreen topics.
 export async function getTopics(): Promise<string[]> {
-  const areaTopics = (await areasFromProperties()).flatMap(topicsForArea);
-  return [...areaTopics, ...EVERGREEN];
+  const perArea = (await areasFromProperties()).map(topicsForArea);
+  const interleaved: string[] = [];
+  const max = Math.max(0, ...perArea.map((a) => a.length));
+  for (let i = 0; i < max; i++) for (const arr of perArea) if (arr[i]) interleaved.push(arr[i]);
+  return [...interleaved, ...SEASONAL, ...EVERGREEN];
 }
 
 // Match a topic to the property whose area it mentions, so the cover photo is
@@ -108,11 +120,15 @@ async function coverForTopic(topic: string): Promise<string> {
       .split(/[·,/|]/)
       .some((part) => part.trim() && t.includes(part.trim().toLowerCase())),
   );
-  if (match?.card?.image) {
-    return imageUrl(match.img_key, match.card.image, 1400);
-  }
   let h = 0;
   for (const c of topic) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  if (match) {
+    // Rotate through the home's gallery so each article gets a different photo,
+    // not the same card image every time.
+    const files = (match.gallery?.images || []).map((g) => g.file).filter(Boolean);
+    if (files.length) return imageUrl(match.img_key, files[h % files.length], 1400);
+    if (match.card?.image) return imageUrl(match.img_key, match.card.image, 1400);
+  }
   return FALLBACK_COVERS[h % FALLBACK_COVERS.length];
 }
 
