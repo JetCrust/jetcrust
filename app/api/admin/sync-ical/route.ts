@@ -4,35 +4,75 @@ import { prisma } from "@/lib/prisma";
 import { getProperties } from "@/lib/properties";
 import { parseIcs, channelName, reservationMeta } from "@/lib/ical";
 
+// A single placeholder guest account that all OTA reservations attach to (iCal
+// never carries the guest's real email). The real name/code lives on the booking.
+const OTA_EMAIL = "ota-guest@jetcrust.internal";
+async function otaUserId(): Promise<string> {
+  const u = await prisma.user.upsert({
+    where: { email: OTA_EMAIL },
+    update: {},
+    create: { email: OTA_EMAIL, name: "OTA guest", role: "GUEST", passwordHash: "" },
+  });
+  return u.id;
+}
+
 // Pull external iCal feeds (Airbnb, Booking.com, VRBO, concierge) listed in each
-// property's data file (ical_urls) and refresh its imported AvailabilityBlocks.
+// property's data file (ical_urls). Refreshes the imported AvailabilityBlocks AND
+// upserts an OTA booking per reservation, so those stays appear under Bookings and
+// support check-in/check-out.
 async function runSync() {
-  const results: Record<string, { imported: number; feeds: number; errors: string[] }> = {};
+  const results: Record<string, { imported: number; feeds: number; errors: string[]; reservations: number }> = {};
+  const uid = await otaUserId();
   for (const property of await getProperties()) {
     const urls = (property.ical_urls as string[] | undefined) || [];
-    const summary = { imported: 0, feeds: urls.length, errors: [] as string[] };
+    const summary = { imported: 0, feeds: urls.length, errors: [] as string[], reservations: 0 };
     const rows: { propertySlug: string; start: Date; end: Date; source: "ICAL"; note: string; meta: string | null }[] = [];
+    const feedKeys = new Set<string>();
+    let anyFeedOk = false;
     for (const url of urls) {
       const channel = channelName(url);
       try {
         const res = await fetch(url, { headers: { "User-Agent": "JetCrust/1.0" } });
         if (!res.ok) { summary.errors.push(`${channel}: HTTP ${res.status}`); continue; }
+        anyFeedOk = true;
         for (const e of parseIcs(await res.text())) {
           const m = reservationMeta(e);
           rows.push({
             propertySlug: property.slug, start: e.start, end: e.end, source: "ICAL",
-            note: channel, // shows the platform (Airbnb / Booking.com / VRBO) on the calendar
-            meta: JSON.stringify({ channel, ...m }),
+            note: channel, meta: JSON.stringify({ channel, ...m }),
           });
+          // Stable id per reservation so it dedupes across syncs.
+          const key = `${channel}:${property.slug}:${e.uid || `${e.start.toISOString().slice(0, 10)}_${e.end.toISOString().slice(0, 10)}`}`;
+          feedKeys.add(key);
+          const guestName = (m.summary && m.summary.trim()) || `${channel} reservation`;
+          await prisma.booking.upsert({
+            where: { otaUid: key },
+            update: { checkIn: e.start, checkOut: e.end, guestName, channel, status: "APPROVED" },
+            create: {
+              otaUid: key, channel, guestName, propertySlug: property.slug, userId: uid,
+              checkIn: e.start, checkOut: e.end, guests: 2, amountCents: 0, currency: "eur",
+              status: "APPROVED", addons: "[]", breakdown: "{}", note: m.code ? `Reservation ${m.code}` : null,
+            },
+          }).catch(() => {});
+          summary.reservations += 1;
         }
       } catch (e) {
         summary.errors.push(`${channel}: ${(e as Error).message}`);
       }
     }
     await prisma.availabilityBlock.deleteMany({ where: { propertySlug: property.slug, source: "ICAL" } });
-    if (rows.length) {
-      await prisma.availabilityBlock.createMany({ data: rows });
-      summary.imported = rows.length;
+    if (rows.length) { await prisma.availabilityBlock.createMany({ data: rows }); summary.imported = rows.length; }
+    // Cancel upcoming OTA bookings that vanished from the feed (cancelled on the OTA).
+    // Only when a feed actually fetched, and only future stays, so a transient error
+    // or dropped past reservations never wrongly cancel anything.
+    if (anyFeedOk) {
+      await prisma.booking.updateMany({
+        where: {
+          propertySlug: property.slug, channel: { not: "DIRECT" }, status: { not: "CANCELLED" },
+          checkOut: { gte: new Date() }, otaUid: { notIn: [...feedKeys] },
+        },
+        data: { status: "CANCELLED" },
+      });
     }
     results[property.slug] = summary;
   }

@@ -185,6 +185,7 @@ export async function buildPL(start: Date, end: Date, propertySlug?: string): Pr
   const bookings = await prisma.booking.findMany({
     where: {
       status: "APPROVED",
+      channel: "DIRECT", // OTA reservations carry no on-site revenue; their payout is logged separately
       checkIn: { gte: start, lte: end },
       ...(propertySlug ? { propertySlug } : {}),
     },

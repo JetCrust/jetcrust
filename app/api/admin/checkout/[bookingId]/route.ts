@@ -51,7 +51,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
     depositNote: d.depositNote || null,
     notes: d.notes || null,
     staffName: d.staffName || null,
-    guestName: booking.user.name || booking.user.email,
+    guestName: booking.guestName || booking.user.name || booking.user.email,
     signature: d.signature || null,
     completedAt: d.complete ? new Date() : existing?.completedAt ?? null,
   };
@@ -76,7 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
     // Email the guest their signed summary.
     const property = await getProperty(booking.propertySlug);
     const mail = checkoutReportEmail({
-      guestName: booking.user.name || booking.user.email,
+      guestName: booking.guestName || booking.user.name || booking.user.email,
       propertyName: property?.name || booking.propertySlug,
       checkOut: booking.checkOut,
       items: d.items,
@@ -84,7 +84,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
       depositStatus: d.depositStatus,
       photos: d.photos.length,
     });
-    await sendEmail({ to: booking.user.email, subject: mail.subject, html: mail.html }).catch(() => {});
+    // OTA guests have no real email on file (placeholder), so only email direct guests.
+    if (booking.channel === "DIRECT") await sendEmail({ to: booking.user.email, subject: mail.subject, html: mail.html }).catch(() => {});
   }
 
   return NextResponse.json({ ok: true, id: report.id, completed: !!report.completedAt });

@@ -40,6 +40,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
 
   const pendingCount = await prisma.booking.count({ where: { status: "REQUESTED", ...slugFilter(scope) } });
   const p = await getProperty(b.propertySlug);
+  const ota = b.channel !== "DIRECT"; // Airbnb/Booking/VRBO: no payment on our side
   const [checkinReport, checkoutReport] = await Promise.all([
     prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKIN" }, orderBy: { createdAt: "desc" } }),
     prisma.stayReport.findFirst({ where: { bookingId: id, kind: "CHECKOUT" }, orderBy: { createdAt: "desc" } }),
@@ -76,7 +77,15 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
               <div className="stack">
                 {/* Who is booking */}
                 <div className="panel">
-                  <div className="panel__head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}><h3>Guest</h3><Link className="textlink" href={`/admin/guests/${b.userId}`}>Full profile &rarr;</Link></div>
+                  <div className="panel__head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}><h3>{ota ? "Reservation" : "Guest"}</h3>{!ota && <Link className="textlink" href={`/admin/guests/${b.userId}`}>Full profile &rarr;</Link>}</div>
+                  {ota ? (
+                    <ul className="kv">
+                      <li><span>Booked via</span><span><span className="pill" style={{ background: "#e7eef7", color: "#1a4a7a" }}>{b.channel}</span></span></li>
+                      <li><span>Guest</span><span>{b.guestName || "—"}</span></li>
+                      <li><span>Payment</span><span>Handled by {b.channel}</span></li>
+                      <li><span>Synced</span><span><LocalTime iso={b.createdAt.toISOString()} /></span></li>
+                    </ul>
+                  ) : (
                   <ul className="kv">
                     <li><span>Name</span><span>{[b.user.title, b.user.name].filter(Boolean).join(" ") || "—"}</span></li>
                     <li><span>Email</span><span><a className="textlink" href={`mailto:${b.user.email}`}>{b.user.email}</a></span></li>
@@ -84,6 +93,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                     <li><span>Account created</span><span><LocalTime iso={b.user.createdAt.toISOString()} /></span></li>
                     <li><span>Requested</span><span><LocalTime iso={b.createdAt.toISOString()} /></span></li>
                   </ul>
+                  )}
                   {b.user.preferences && (
                     <>
                       <p className="panel__hint" style={{ marginTop: "1rem", marginBottom: "0.3rem" }}>Guest preferences (account)</p>
@@ -124,11 +134,13 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   })()}
                 </div>
 
-                {/* Messages */}
+                {/* Messages (direct guests only) */}
+                {!ota && (
                 <div className="panel">
                   <div className="panel__head"><h3>Messages</h3></div>
                   <MessageThread bookingId={b.id} me="ADMIN" messages={chatMessages.map((m) => ({ id: m.id, sender: m.sender, body: m.body, createdAt: m.createdAt.toISOString() }))} />
                 </div>
+                )}
 
                 {/* Stay + add-ons */}
                 <div className="panel">
@@ -144,7 +156,8 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   </ul>
                 </div>
 
-                {/* Money */}
+                {/* Money (direct bookings only; OTA payment is on the platform) */}
+                {!ota && (
                 <div className="panel">
                   <div className="panel__head"><h3>Price</h3></div>
                   <BookingBreakdown breakdown={breakdown} fallbackTotal={b.amountCents / 100} />
@@ -165,9 +178,10 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                     <div style={{ marginTop: "1rem" }}><BalanceButton bookingId={b.id} /></div>
                   )}
                 </div>
+                )}
 
                 {/* Security deposit */}
-                {b.status === "APPROVED" && (
+                {!ota && b.status === "APPROVED" && (
                   <div className="panel">
                     <div className="panel__head"><h3>Security deposit</h3></div>
                     <SecurityDeposit bookingId={b.id} cents={b.securityCents} status={b.securityStatus} capturedCents={b.securityCapturedCents} willCharge={depositIsCharge(b.checkIn, b.checkOut)} propertyDepositCents={Math.round((Number(p?.pricing?.deposit_eur) || 0) * 100)} />
@@ -175,7 +189,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                 )}
 
                 {/* Profitability (Super Admin only, like Finance) */}
-                {b.status === "APPROVED" && scope.isSuper && (() => {
+                {!ota && b.status === "APPROVED" && scope.isSuper && (() => {
                   const pf = bookingProfit(b, p?.costs);
                   return (
                     <div className="panel">
@@ -217,8 +231,8 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   </div>
                 )}
 
-                {/* Refund */}
-                {b.status === "APPROVED" && (
+                {/* Refund (direct bookings only) */}
+                {!ota && b.status === "APPROVED" && (
                   <div className="panel">
                     <div className="panel__head"><h3>Refund</h3></div>
                     <p className="panel__hint">Refund part or all of the stay payment to the guest. The security deposit is handled above, on its own hold.</p>
@@ -226,7 +240,8 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                   </div>
                 )}
 
-                {/* Agreement / compliance */}
+                {/* Agreement / compliance (direct bookings only) */}
+                {!ota && (
                 <div className="panel">
                   <div className="panel__head"><h3>Agreement</h3></div>
                   {b.acceptance ? (
@@ -240,6 +255,7 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                     <p style={{ margin: 0, color: "var(--stone)" }}>No agreement recorded.</p>
                   )}
                 </div>
+                )}
 
                 {/* Internal notes */}
                 <div className="panel">

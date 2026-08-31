@@ -45,7 +45,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ booking
     depositStatus: d.acknowledged ? "acknowledged" : "pending",
     notes: d.notes || null,
     staffName: d.staffName || null,
-    guestName: booking.user.name || booking.user.email,
+    guestName: booking.guestName || booking.user.name || booking.user.email,
     signature: d.signature || null,
     completedAt: d.complete ? new Date() : existing?.completedAt ?? null,
   };

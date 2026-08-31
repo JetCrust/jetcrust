@@ -17,6 +17,7 @@ export async function GET(req: Request) {
   const bookings = await prisma.booking.findMany({
     where: {
       status: "APPROVED",
+      channel: "DIRECT", // OTA guests have no email on file; never request from the placeholder
       checkOut: { gte: new Date(now - 5 * DAY), lte: new Date(now - 1 * DAY) },
       reviewRating: null,
       reviewRequestedAt: null,

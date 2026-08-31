@@ -20,22 +20,25 @@ const fmt = (d: Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric
 async function Row({
   b,
 }: {
-  b: { id: string; propertySlug: string; checkIn: Date; checkOut: Date; guests: number; amountCents: number; status: string; user: { email: string; name: string | null } };
+  b: { id: string; propertySlug: string; checkIn: Date; checkOut: Date; guests: number; amountCents: number; status: string; channel: string; guestName: string | null; user: { email: string; name: string | null } };
 }) {
   const p = await getProperty(b.propertySlug);
+  const ota = b.channel !== "DIRECT";
   const statusClass = (STATUS_LABEL[b.status] || b.status).toLowerCase().replace(/\s+/g, "-");
+  const name = b.guestName || b.user.name || b.user.email;
   return (
     <Link href={`/admin/bookings/${b.id}`} className="bcard" style={{ gridTemplateColumns: "1fr auto" }}>
       <div className="bcard__body">
         <span className="bcard__loc">{p?.name || b.propertySlug}</span>
-        <h3 style={{ fontSize: "1.15rem" }}>{b.user.name || b.user.email}</h3>
+        <h3 style={{ fontSize: "1.15rem" }}>{name}</h3>
         <p className="bcard__meta">
-          {fmt(b.checkIn)} to {fmt(b.checkOut)} · {b.guests} guest{b.guests === 1 ? "" : "s"} · {b.user.email}
+          {fmt(b.checkIn)} to {fmt(b.checkOut)} · {b.guests} guest{b.guests === 1 ? "" : "s"}{ota ? "" : ` · ${b.user.email}`}
         </p>
       </div>
       <div className="bcard__side">
+        {ota && <span className="pill" style={{ background: "#e7eef7", color: "#1a4a7a" }}>{b.channel}</span>}
         <span className={`pill pill--${statusClass}`}>{STATUS_LABEL[b.status] || b.status}</span>
-        <span className="bcard__price">{money(b.amountCents)}</span>
+        {ota ? <span className="bcard__price" style={{ color: "var(--stone)" }}>via OTA</span> : <span className="bcard__price">{money(b.amountCents)}</span>}
         <span className="bcard__manage">Open &rarr;</span>
       </div>
     </Link>

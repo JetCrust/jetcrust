@@ -114,6 +114,9 @@ model Booking {
   propertySlug          String
   user                  User          @relation(fields: [userId], references: [id])
   userId                String
+  channel               String        @default("DIRECT") // DIRECT | Airbnb | Booking.com | VRBO | …
+  otaUid                String?       @unique             // iCal UID, so OTA reservations dedupe on sync
+  guestName             String?       // OTA guest name/code from the feed (no user account)
   checkIn               DateTime
   checkOut              DateTime
   guests                Int           @default(2)
