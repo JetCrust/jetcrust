@@ -84,3 +84,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   return NextResponse.json({ error: "Unknown action." }, { status: 400 });
 }
+
+// Remove a booking — ONLY OTA reservations (channel != DIRECT), so a real direct
+// booking with a payment can never be deleted here. Cleans up its stay reports too.
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!["ADMIN", "OPS"].includes((session?.user as { role?: string } | undefined)?.role ?? "")) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+  }
+  const { id } = await params;
+  const booking = await prisma.booking.findUnique({ where: { id } });
+  if (!booking) return NextResponse.json({ ok: true });
+  if (booking.channel === "DIRECT") {
+    return NextResponse.json({ error: "Direct bookings can't be removed here." }, { status: 400 });
+  }
+  await prisma.stayReport.deleteMany({ where: { bookingId: id } }).catch(() => {});
+  await prisma.message.deleteMany({ where: { bookingId: id } }).catch(() => {});
+  await prisma.booking.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

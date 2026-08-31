@@ -10,6 +10,7 @@ import SecurityDeposit from "../../../components/SecurityDeposit";
 import { depositIsCharge } from "@/lib/security-deposit";
 import ExtrasLedger from "../../../components/ExtrasLedger";
 import RefundControl from "../../../components/RefundControl";
+import RemoveOtaButton from "../../../components/RemoveOtaButton";
 import BookingBreakdown, { parseBreakdown } from "../../../components/BookingBreakdown";
 import LocalTime from "../../../components/LocalTime";
 import { prisma } from "@/lib/prisma";
@@ -255,6 +256,15 @@ export default async function AdminBookingDetail({ params }: { params: Promise<{
                     <p style={{ margin: 0, color: "var(--stone)" }}>No agreement recorded.</p>
                   )}
                 </div>
+                )}
+
+                {/* Remove an OTA booking (e.g. a stray calendar block) */}
+                {ota && (
+                  <div className="panel">
+                    <div className="panel__head"><h3>Remove booking</h3></div>
+                    <p className="panel__hint">This reservation came from a channel calendar. If it isn't a real booking (a blocked date that slipped through), remove it here.</p>
+                    <RemoveOtaButton bookingId={b.id} />
+                  </div>
                 )}
 
                 {/* Internal notes */}

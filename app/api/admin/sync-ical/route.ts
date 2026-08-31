@@ -37,10 +37,15 @@ async function runSync() {
         anyFeedOk = true;
         for (const e of parseIcs(await res.text())) {
           const m = reservationMeta(e);
+          // Always block the calendar for every event…
           rows.push({
             propertySlug: property.slug, start: e.start, end: e.end, source: "ICAL",
             note: channel, meta: JSON.stringify({ channel, ...m }),
           });
+          // …but only REAL reservations (a deep-link, confirmation code, or guest
+          // name) become bookings. Owner-blocks and "Not available" markers don't.
+          const isReservation = !!(m.link || m.code || m.summary);
+          if (!isReservation) continue;
           // Stable id per reservation so it dedupes across syncs.
           const key = `${channel}:${property.slug}:${e.uid || `${e.start.toISOString().slice(0, 10)}_${e.end.toISOString().slice(0, 10)}`}`;
           feedKeys.add(key);
