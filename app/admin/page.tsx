@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import AppHeader from "../components/AppHeader";
 import ConsoleNav from "../components/ConsoleNav";
 import { prisma } from "@/lib/prisma";
-import { getProperty } from "@/lib/properties";
+import { getProperty, getProperties } from "@/lib/properties";
 import { staffScope, slugFilter } from "@/lib/access";
+import AddOtaStay from "../components/AddOtaStay";
 
 const STATUS_LABEL: Record<string, string> = {
   REQUESTED: "Awaiting approval",
@@ -58,6 +59,14 @@ export default async function AdminPage() {
   const balances = bookings.filter((b) => b.status === "APPROVED" && b.balanceCents > 0 && !b.balancePaidAt);
   const rest = bookings.filter((b) => b.status !== "REQUESTED");
 
+  // Only ADMIN/OPS can add an OTA stay by hand (the API enforces this too).
+  const canAddOta = scope.role === "ADMIN" || scope.role === "OPS";
+  const propertyOptions = canAddOta
+    ? (await getProperties())
+        .filter((p) => !scope.slugs || scope.slugs.includes(p.slug))
+        .map((p) => ({ slug: p.slug, name: p.name }))
+    : [];
+
   return (
     <>
       <AppHeader />
@@ -75,6 +84,12 @@ export default async function AdminPage() {
                   decline or add private notes.
                 </p>
               </div>
+
+              {canAddOta && propertyOptions.length > 0 && (
+                <div style={{ marginBottom: "1.6rem" }}>
+                  <AddOtaStay properties={propertyOptions} />
+                </div>
+              )}
 
               <div className="panel" style={{ marginBottom: "1.6rem" }}>
                 <div className="panel__head">
