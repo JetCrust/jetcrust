@@ -150,12 +150,20 @@ export default async function AdminAnalytics() {
                     <p className="lead" style={{ marginBottom: 0, fontSize: "0.95rem" }}>What people search on Google to find you, from Search Console. Last 28 days ({gsc.start} to {gsc.end}).</p>
                   </div>
 
-                  {!gsc.configured ? (
-                    <div className="panel"><p style={{ margin: 0, color: "var(--stone)" }}>Not connected yet. Add <strong>GOOGLE_SERVICE_ACCOUNT_KEY</strong> in Vercel → Production (paste the whole service-account JSON), then redeploy.</p></div>
-                  ) : gsc.error ? (
-                    <div className="panel"><p style={{ margin: 0, color: "#a3412e" }}>Search Console error: {gsc.error}</p></div>
+                  {gsc.status === "no_key" ? (
+                    <div className="panel"><p style={{ margin: 0, color: "var(--stone)" }}>Not connected. <strong>GOOGLE_SERVICE_ACCOUNT_KEY</strong> isn&rsquo;t set in this environment. Add it in Vercel → Settings → Environment Variables (Production), paste the whole service-account JSON, then redeploy.</p></div>
+                  ) : gsc.status === "bad_key" ? (
+                    <div className="panel"><p style={{ margin: 0, color: "#a3412e" }}>The <strong>GOOGLE_SERVICE_ACCOUNT_KEY</strong> value isn&rsquo;t valid JSON. Re-paste the entire service-account file (curly brace to curly brace), with no extra surrounding quotes, then redeploy.</p></div>
+                  ) : gsc.status === "auth" ? (
+                    <div className="panel"><p style={{ margin: 0, color: "#a3412e" }}>Key loaded{gsc.keyEmail ? <> (<code>{gsc.keyEmail}</code>)</> : null}, but Google rejected the sign-in. Check the service account is active and the Search Console API is enabled for its project.</p></div>
+                  ) : gsc.status === "error" ? (
+                    <div className="panel"><p style={{ margin: 0, color: "#a3412e" }}>Connected{gsc.keyEmail ? <> as <code>{gsc.keyEmail}</code></> : null}, but the query failed: {gsc.error}. Usually this means that account hasn&rsquo;t been added as a user on the jetcrust.com Search Console property.</p></div>
                   ) : (
                     <>
+                      <p style={{ margin: "0 0 1.2rem", fontSize: "0.85rem", color: "var(--stone)" }}>
+                        <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 999, background: "#3f9d5a", marginRight: 6 }} />
+                        Live{gsc.keyEmail ? <> · connected as <code>{gsc.keyEmail}</code></> : null}. Latest finalized day is <strong>{gsc.end}</strong> — Google publishes complete data about 2 days late, so that&rsquo;s as current as Search Console gets. Refreshed on every visit.
+                      </p>
                       <div className="rep-kpis" style={{ marginBottom: "1.4rem" }}>
                         <div className="rep-kpi"><p className="rep-kpi__label">Clicks</p><p className="rep-kpi__value">{gscNum(gsc.totals.clicks)}</p></div>
                         <div className="rep-kpi"><p className="rep-kpi__label">Impressions</p><p className="rep-kpi__value">{gscNum(gsc.totals.impressions)}</p></div>

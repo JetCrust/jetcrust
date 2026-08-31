@@ -50,9 +50,19 @@ async function query(token: string, dims: string[], rowLimit: number, start: str
 }
 
 export type GscRow = { key: string; clicks: number; impressions: number; ctr: number; position: number };
+// status tells the admin exactly why nothing shows:
+//  no_key   — GOOGLE_SERVICE_ACCOUNT_KEY isn't set in this environment
+//  bad_key  — it's set but isn't valid service-account JSON (paste/format problem)
+//  auth     — the JSON is valid but Google rejected the sign-in
+//  error    — signed in, but the searchAnalytics query failed (usually no access to the property)
+//  ok       — live data
+export type GscStatus = "no_key" | "bad_key" | "auth" | "error" | "ok";
 export type GscReport = {
   configured: boolean;
+  status: GscStatus;
   error?: string;
+  keyEmail?: string;
+  fetchedAt: string;
   start: string; end: string;
   totals: { clicks: number; impressions: number; ctr: number; position: number };
   queries: GscRow[];
@@ -65,9 +75,22 @@ const d = (offset: number) => new Date(Date.now() - offset * 86400000).toISOStri
 export async function searchPerformance(days = 28): Promise<GscReport> {
   const end = d(2);
   const start = d(days + 2);
-  const empty: GscReport = { configured: false, start, end, totals: { clicks: 0, impressions: 0, ctr: 0, position: 0 }, queries: [], pages: [] };
+  const base = { start, end, fetchedAt: new Date().toISOString(), totals: { clicks: 0, impressions: 0, ctr: 0, position: 0 }, queries: [], pages: [] };
+
+  // Inspect the key up front so we can report a precise reason, not a blank panel.
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  let keyEmail: string | undefined;
+  if (!raw) return { ...base, configured: false, status: "no_key" };
+  try {
+    const k = JSON.parse(raw) as { client_email?: string; private_key?: string };
+    if (!k.client_email || !k.private_key) return { ...base, configured: false, status: "bad_key" };
+    keyEmail = k.client_email;
+  } catch {
+    return { ...base, configured: false, status: "bad_key" };
+  }
+
   const token = await getToken();
-  if (!token) return empty;
+  if (!token) return { ...base, configured: false, status: "auth", keyEmail };
   try {
     const [qRows, pRows, tRows] = await Promise.all([
       query(token, ["query"], 25, start, end),
@@ -76,8 +99,8 @@ export async function searchPerformance(days = 28): Promise<GscReport> {
     ]);
     const map = (r: Raw): GscRow => ({ key: r.keys[0], clicks: r.clicks, impressions: r.impressions, ctr: r.ctr, position: r.position });
     const t = tRows[0] || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
-    return { configured: true, start, end, totals: { clicks: t.clicks, impressions: t.impressions, ctr: t.ctr, position: t.position }, queries: qRows.map(map), pages: pRows.map(map) };
+    return { ...base, configured: true, status: "ok", keyEmail, totals: { clicks: t.clicks, impressions: t.impressions, ctr: t.ctr, position: t.position }, queries: qRows.map(map), pages: pRows.map(map) };
   } catch (e) {
-    return { ...empty, configured: true, error: (e as Error).message };
+    return { ...base, configured: true, status: "error", keyEmail, error: (e as Error).message };
   }
 }
