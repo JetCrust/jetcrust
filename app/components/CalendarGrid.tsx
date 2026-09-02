@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -211,9 +211,11 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
                     const w = dayWidth();
                     const tx = isDragged && drag?.mode === "move" ? drag.delta * w : 0;
                     const extraW = isDragged && drag?.mode === "resize" ? drag.delta * w : 0;
+                    // Checkout column within this month; drives the see-through morning wedge.
+                    const eRaw = diffDays(it.end, monthStartMs);
                     return (
+                      <Fragment key={it.id}>
                       <div
-                        key={it.id}
                         className={`cal-bar ${barColor[it.status]}${isDragged ? " is-dragging" : ""}`}
                         style={{
                           left: `${(s / N) * 100}%`,
@@ -232,6 +234,14 @@ export default function CalendarGrid({ monthKey, properties, items, prices, curr
                           <span className="cal-bar__handle" onPointerDown={(e) => onBarDown(e, it, "resize")} title="Drag to extend" />
                         )}
                       </div>
+                      {!isDragged && eRaw >= 0 && eRaw < N && (
+                        <div
+                          className={`cal-turn cal-turn--${it.status}`}
+                          style={{ left: `${(eRaw / N) * 100}%`, width: `${(0.55 / N) * 100}%`, top: lane * (rowH + gap) + 6, height: rowH }}
+                          title={`${it.label} checks out this morning — night is bookable`}
+                        />
+                      )}
+                      </Fragment>
                     );
                   })}
                 </div>

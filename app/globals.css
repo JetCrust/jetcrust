@@ -782,6 +782,12 @@ p { margin: 0 0 1em; }
 .cal-bar--confirmed { background: #3f6199; }
 .cal-bar--pending { background: var(--brass); color: #17160F; }
 .cal-bar--blocked { background: #8f8b7e; }
+/* Timeline checkout-morning wedge: a see-through tail on the departure day, the
+   stay's colour, tapering off so the night still reads as bookable. */
+.cal-turn { position: absolute; z-index: 1; pointer-events: none; border-radius: 7px 0 0 7px; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.cal-turn--confirmed { background: rgba(63, 97, 153, 0.32); }
+.cal-turn--pending { background: rgba(191, 150, 60, 0.36); }
+.cal-turn--blocked { background: rgba(143, 139, 126, 0.36); }
 
 .cal-hint { font-size: 0.78rem; color: var(--stone); margin: 0.8rem 0 0; }
 
