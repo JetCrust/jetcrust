@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getProperty } from "@/lib/properties";
 import { quote } from "@/lib/pricing";
 import { occupancyRatio } from "@/lib/occupancy";
+import { orphanDeal } from "@/lib/lastminute";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { matchOffer, applyOffer } from "@/lib/offers";
@@ -27,8 +28,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Pick your dates." }, { status: 400 });
   }
 
+  const now = new Date();
   const ratio = await occupancyRatio(p, checkIn, checkOut);
-  const q = quote(p, checkIn, checkOut, ratio, addons, new Date());
+  const deal = await orphanDeal(p, checkIn, checkOut, now);
+  const q = quote(p, checkIn, checkOut, ratio, addons, now, deal || undefined);
 
   // A signed-in guest with a private rate for these exact dates sees it applied.
   if (q.valid) {

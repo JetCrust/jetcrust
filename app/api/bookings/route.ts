@@ -7,6 +7,7 @@ import { stripe } from "@/lib/stripe";
 import { getProperty } from "@/lib/properties";
 import { quote } from "@/lib/pricing";
 import { occupancyRatio } from "@/lib/occupancy";
+import { orphanDeal } from "@/lib/lastminute";
 import { depositPlan } from "@/lib/policy";
 import { matchOffer, applyOffer } from "@/lib/offers";
 import { sendEmail } from "@/lib/email";
@@ -86,9 +87,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `This home sleeps up to ${property.capacity.sleeps}.` }, { status: 400 });
   }
 
+  const now = new Date();
   const ratio = await occupancyRatio(property, checkIn, checkOut);
+  const deal = await orphanDeal(property, checkIn, checkOut, now);
   // Add-ons are priced into the total, so the hold matches what the guest saw.
-  const q = quote(property, checkIn, checkOut, ratio, addonMap, new Date());
+  const q = quote(property, checkIn, checkOut, ratio, addonMap, now, deal || undefined);
   if (!q.valid) {
     return NextResponse.json({ error: `Please choose at least ${q.minNights} night(s), with check-out after check-in.` }, { status: 400 });
   }

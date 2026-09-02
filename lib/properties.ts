@@ -18,7 +18,13 @@ export type Pricing = {
   };
   seasonal?: { name: string; from: string; to: string; nightly_eur: number }[];
   los_discounts?: { weekly_pct: number; monthly_pct: number };   // 7+ / 28+ nights
-  lastminute?: { days: number; pct: number };                    // within N days of arrival
+  // Near-term "fill the valley" rate. Manual switch for a whole property; the
+  // discount only ever touches non-holiday nights inside the window, is clamped
+  // to floor_eur, and (with taper) deepens the emptier the window is.
+  lastminute?: { enabled?: boolean; days: number; pct: number; floor_eur?: number; taper?: boolean };
+  // Automatic filler for stranded 1-2 night holes wedged between two bookings.
+  // Those nights are dead weight empty, so they can take a deeper cut, quietly.
+  orphan?: { enabled?: boolean; max_gap_nights?: number; pct?: number; window_days?: number; floor_eur?: number };
 };
 
 import type { Guidebook } from "./guidebook";

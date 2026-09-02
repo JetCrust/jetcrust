@@ -32,7 +32,8 @@ type PropObj = {
     dynamic?: { enabled: boolean; floor_eur: number; ceiling_eur: number; occupancy?: { enabled: boolean; window_days: number; max_uplift_pct: number } };
     seasonal?: Seasonal[];
     los_discounts?: { weekly_pct: number; monthly_pct: number };
-    lastminute?: { days: number; pct: number };
+    lastminute?: { enabled?: boolean; days: number; pct: number; floor_eur?: number; taper?: boolean };
+    orphan?: { enabled?: boolean; max_gap_nights?: number; pct?: number; window_days?: number; floor_eur?: number };
   };
   capacity: { sleeps: number; max_adults: number; max_children: number; bedrooms: number; bathrooms: number };
   hours: { check_in: string; check_out: string };
@@ -66,6 +67,10 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
   const setPricing = (patch: Partial<PropObj["pricing"]>) => setO((s) => ({ ...s, pricing: { ...s.pricing, ...patch } }));
   const setDynamic = (patch: Partial<NonNullable<PropObj["pricing"]["dynamic"]>>) =>
     setO((s) => ({ ...s, pricing: { ...s.pricing, dynamic: { enabled: false, floor_eur: 0, ceiling_eur: 0, occupancy: { enabled: false, window_days: 30, max_uplift_pct: 0 }, ...s.pricing.dynamic, ...patch } } }));
+  const setLastminute = (patch: Partial<NonNullable<PropObj["pricing"]["lastminute"]>>) =>
+    setO((s) => ({ ...s, pricing: { ...s.pricing, lastminute: { enabled: false, days: 30, pct: 20, floor_eur: 0, taper: true, ...s.pricing.lastminute, ...patch } } }));
+  const setOrphan = (patch: Partial<NonNullable<PropObj["pricing"]["orphan"]>>) =>
+    setO((s) => ({ ...s, pricing: { ...s.pricing, orphan: { enabled: false, max_gap_nights: 2, pct: 30, window_days: 45, floor_eur: 0, ...s.pricing.orphan, ...patch } } }));
   const setOcc = (patch: Partial<{ enabled: boolean; window_days: number; max_uplift_pct: number }>) =>
     setDynamic({ occupancy: { enabled: false, window_days: 30, max_uplift_pct: 0, ...o.pricing.dynamic?.occupancy, ...patch } });
   const setCapacity = (patch: Partial<PropObj["capacity"]>) => setO((s) => ({ ...s, capacity: { ...s.capacity, ...patch } }));
@@ -227,10 +232,45 @@ export default function PropertyEditor({ initial, isNew }: { initial: PropObj; i
           <div><label>Monthly (28+ nights) %</label><input type="number" value={o.pricing.los_discounts?.monthly_pct || 0} onChange={(e) => setPricing({ los_discounts: { weekly_pct: o.pricing.los_discounts?.weekly_pct || 0, monthly_pct: num(e.target.value) } })} placeholder="e.g. 10" /></div>
         </div>
 
-        <p className="panel__hint" style={{ marginTop: "1.2rem", marginBottom: "0.4rem" }}>Last-minute discount (fills near, unsold dates)</p>
+        <p className="panel__hint" style={{ marginTop: "1.2rem", marginBottom: "0.4rem" }}>Last-minute rate (fills the near-term calendar; never touches holiday nights)</p>
         <div className="ef">
-          <div><label>Within (days of arrival)</label><input type="number" value={o.pricing.lastminute?.days || 0} onChange={(e) => setPricing({ lastminute: { days: num(e.target.value), pct: o.pricing.lastminute?.pct || 0 } })} placeholder="e.g. 7" /></div>
-          <div><label>Discount %</label><input type="number" value={o.pricing.lastminute?.pct || 0} onChange={(e) => setPricing({ lastminute: { days: o.pricing.lastminute?.days || 0, pct: num(e.target.value) } })} placeholder="e.g. 15" /></div>
+          <div className="full">
+            <label className="addon-check">
+              <input type="checkbox" checked={!!o.pricing.lastminute?.enabled} onChange={(e) => setLastminute({ enabled: e.target.checked })} />
+              <span>Turn on the last-minute rate for this home</span>
+            </label>
+          </div>
+          {o.pricing.lastminute?.enabled && (
+            <>
+              <div><label>Within (days of arrival)</label><input type="number" value={o.pricing.lastminute?.days || 0} onChange={(e) => setLastminute({ days: num(e.target.value) })} placeholder="e.g. 30" /></div>
+              <div><label>Max discount %</label><input type="number" value={o.pricing.lastminute?.pct || 0} onChange={(e) => setLastminute({ pct: num(e.target.value) })} placeholder="e.g. 20" /></div>
+              <div><label>Never below (€/night)</label><input type="number" value={o.pricing.lastminute?.floor_eur || 0} onChange={(e) => setLastminute({ floor_eur: num(e.target.value) })} placeholder="walk-away price" /></div>
+              <div className="full">
+                <label className="addon-check">
+                  <input type="checkbox" checked={o.pricing.lastminute?.taper !== false} onChange={(e) => setLastminute({ taper: e.target.checked })} />
+                  <span>Deepen the discount the emptier the week is (recommended)</span>
+                </label>
+              </div>
+            </>
+          )}
+        </div>
+
+        <p className="panel__hint" style={{ marginTop: "1.4rem", marginBottom: "0.4rem" }}>Orphan-night filler (auto-discounts the 1–2 night gaps stranded between bookings)</p>
+        <div className="ef">
+          <div className="full">
+            <label className="addon-check">
+              <input type="checkbox" checked={!!o.pricing.orphan?.enabled} onChange={(e) => setOrphan({ enabled: e.target.checked })} />
+              <span>Automatically discount stranded near-term gaps</span>
+            </label>
+          </div>
+          {o.pricing.orphan?.enabled && (
+            <>
+              <div><label>Gap up to (nights)</label><input type="number" value={o.pricing.orphan?.max_gap_nights || 2} onChange={(e) => setOrphan({ max_gap_nights: num(e.target.value) })} placeholder="e.g. 2" /></div>
+              <div><label>Discount %</label><input type="number" value={o.pricing.orphan?.pct || 0} onChange={(e) => setOrphan({ pct: num(e.target.value) })} placeholder="e.g. 30" /></div>
+              <div><label>Within (days out)</label><input type="number" value={o.pricing.orphan?.window_days || 45} onChange={(e) => setOrphan({ window_days: num(e.target.value) })} placeholder="e.g. 45" /></div>
+              <div><label>Never below (€/night)</label><input type="number" value={o.pricing.orphan?.floor_eur || 0} onChange={(e) => setOrphan({ floor_eur: num(e.target.value) })} placeholder="walk-away price" /></div>
+            </>
+          )}
         </div>
 
         <p className="panel__hint" style={{ marginTop: "1.4rem", marginBottom: "0.4rem" }}>Demand pricing (same price for everyone, rises as the calendar fills)</p>

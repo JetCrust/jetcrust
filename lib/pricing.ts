@@ -133,6 +133,9 @@ export function quote(
   occupancyRatio = 0,
   selectedAddons: string[] | AddonSelection = [],
   now?: Date,
+  // Resolved near-term deal from the caller (an orphan-gap filler). Overrides the
+  // property's own window rate. floorEur keeps any night from going below a walk-away price.
+  lastMinuteOverride?: { pct: number; floorEur: number },
 ): Quote {
   const nights = nightsBetween(checkIn, checkOut);
   const minNights = p.pricing.min_nights || 1;
@@ -147,6 +150,7 @@ export function quote(
 
   const start = new Date(checkIn + "T00:00:00Z");
   let stayTotal = 0;
+  let nonSeasonStayTotal = 0; // holiday/seasonal nights are never last-minute discounted
   let hasWeekend = false;
   let hasSeason = false;
   let demandApplied = false;
@@ -162,6 +166,7 @@ export function quote(
     const rate = applyDynamic(b.rate, p, occupancyRatio);
     if (rate !== b.rate) demandApplied = true;
     stayTotal += rate;
+    if (b.kind !== "season") nonSeasonStayTotal += rate;
 
     const label = b.kind === "season" ? b.label || RATE_LABEL.season : RATE_LABEL[b.kind];
     const key = `${b.kind}|${label}|${rate}`;
@@ -181,10 +186,29 @@ export function quote(
     if (nights >= 28 && los.monthly_pct > 0) discountLines.push({ label: "Monthly stay discount", pct: los.monthly_pct, amount: Math.round(stayTotal * los.monthly_pct / 100) });
     else if (nights >= 7 && los.weekly_pct > 0) discountLines.push({ label: "Weekly stay discount", pct: los.weekly_pct, amount: Math.round(stayTotal * los.weekly_pct / 100) });
   }
-  const lm = p.pricing.lastminute;
-  if (lm && lm.pct > 0 && now) {
-    const leadDays = Math.ceil((new Date(checkIn + "T00:00:00Z").getTime() - now.getTime()) / 86400000);
-    if (leadDays >= 0 && leadDays <= lm.days) discountLines.push({ label: "Last-minute", pct: lm.pct, amount: Math.round(stayTotal * lm.pct / 100) });
+  // Near-term rate. An orphan-gap override (from the caller) wins; otherwise the
+  // property's own window rate, if switched on and we're inside the window. Either
+  // way it only touches non-holiday nights and never dips a night below its floor.
+  let lmPct = 0;
+  let lmFloor = 0;
+  if (lastMinuteOverride && lastMinuteOverride.pct > 0) {
+    lmPct = lastMinuteOverride.pct;
+    lmFloor = lastMinuteOverride.floorEur || 0;
+  } else if (now) {
+    const lm = p.pricing.lastminute;
+    if (lm?.enabled && lm.pct > 0) {
+      const leadDays = Math.ceil((start.getTime() - now.getTime()) / 86400000);
+      if (leadDays >= 0 && leadDays <= lm.days) {
+        // Taper: the emptier the surrounding window, the deeper the cut.
+        lmPct = lm.taper ? lm.pct * (1 - Math.max(0, Math.min(1, occupancyRatio))) : lm.pct;
+        lmFloor = lm.floor_eur || 0;
+      }
+    }
+  }
+  if (lmPct > 0 && nonSeasonStayTotal > 0) {
+    let amount = Math.round(nonSeasonStayTotal * lmPct / 100);
+    if (lmFloor > 0) amount = Math.min(amount, Math.max(0, stayTotal - lmFloor * nights)); // keep avg nightly >= floor
+    if (amount > 0) discountLines.push({ label: "Last-minute rate", pct: Math.round(lmPct), amount });
   }
   let discountTotal = discountLines.reduce((s, l) => s + l.amount, 0);
   const cap = Math.round(stayTotal * 0.5); // never discount a stay by more than half

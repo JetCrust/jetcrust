@@ -24,6 +24,10 @@ export function blankProperty() {
         occupancy: { enabled: false, window_days: 30, max_uplift_pct: 0 },
       },
       seasonal: [] as { name: string; from: string; to: string; nightly_eur: number }[],
+      los_discounts: { weekly_pct: 0, monthly_pct: 0 },
+      // Near-term deals, both off until you switch them on per property.
+      lastminute: { enabled: false, days: 30, pct: 20, floor_eur: 0, taper: true },
+      orphan: { enabled: false, max_gap_nights: 2, pct: 30, window_days: 45, floor_eur: 0 },
     },
     capacity: { sleeps: 2, max_adults: 2, max_children: 0, bedrooms: 1, bathrooms: 1 },
     hours: { check_in: "16:00", check_out: "11:00" },
