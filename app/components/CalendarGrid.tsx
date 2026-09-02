@@ -266,10 +266,14 @@ function MonthCalendar({ yr, mon, N, firstWeekday, items, prices, currencySymbol
 
   // Which item (if any) covers each day of the month.
   const cover: (CalItem | null)[] = Array.from({ length: N }, () => null);
+  // The checkout day of each stay — a turnover morning: the guest leaves that
+  // day, so the night is bookable again, but it isn't a fully open day.
+  const checkout: (CalItem | null)[] = Array.from({ length: N }, () => null);
   for (const it of items) {
     const s = diffDays(it.start, monthStartMs);
     const e = diffDays(it.end, monthStartMs);
     for (let i = Math.max(0, s); i < Math.min(N, e); i++) if (!cover[i]) cover[i] = it;
+    if (e >= 0 && e < N && !checkout[e]) checkout[e] = it;
   }
 
   const trailing = (7 - ((firstWeekday + N) % 7)) % 7;
@@ -285,12 +289,20 @@ function MonthCalendar({ yr, mon, N, firstWeekday, items, prices, currencySymbol
           const weekend = col === 0 || col === 6;
           const isToday = `${yr}-${p2(mon)}-${p2(dayNum)}` === todayIso;
           const c = cover[i];
+          const co = checkout[i]; // stay departing this morning (only meaningful when the day is otherwise open)
           const isStart = !!c && (i === 0 || cover[i - 1] !== c);
           const isEnd = !!c && (i === N - 1 || cover[i + 1] !== c);
           const showLabel = !!c && (isStart || col === 0);
           const rate = prices?.[i];
           return (
             <div key={dayNum} className={`mc-cell${weekend ? " is-weekend" : ""}`}>
+              {!c && co && (
+                <div
+                  className={`mc-turn mc-turn--${co.status}`}
+                  onClick={() => onSelect(co)}
+                  title={`${co.label} checks out this morning — night is bookable`}
+                />
+              )}
               <span className={`mc-dn${isToday ? " is-today" : ""}`}>{dayNum}</span>
               {c ? (
                 <div

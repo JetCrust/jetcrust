@@ -870,9 +870,15 @@ p { margin: 0 0 1em; }
 .mc-cell { position: relative; min-height: 96px; border: 1px solid var(--line); border-radius: 12px; background: #FCFAF5; padding: 8px 10px; }
 .mc-cell--blank { border: none; background: transparent; }
 .mc-cell.is-weekend { background: rgba(23,22,15,0.025); }
-.mc-dn { font-family: var(--sans); font-weight: 600; font-size: 0.9rem; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; }
+.mc-dn { position: relative; z-index: 2; font-family: var(--sans); font-weight: 600; font-size: 0.9rem; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; }
 .mc-dn.is-today { background: #b3402e; color: #fff; border-radius: 50%; }
-.mc-price { position: absolute; left: 10px; bottom: 10px; font-size: 0.9rem; color: var(--ink-soft); }
+.mc-price { position: absolute; left: 10px; bottom: 10px; z-index: 2; font-size: 0.9rem; color: var(--ink-soft); }
+/* Checkout-morning wedge: the departing stay holds the morning (left half),
+   the afternoon/night is bookable. Diagonal fill in the stay's status colour. */
+.mc-turn { position: absolute; inset: 0; z-index: 0; border-radius: 12px; cursor: pointer; clip-path: polygon(0 0, 58% 0, 42% 100%, 0 100%); }
+.mc-turn--confirmed { background: rgba(63, 97, 153, 0.30); }
+.mc-turn--pending { background: rgba(191, 150, 60, 0.34); }
+.mc-turn--blocked { background: rgba(143, 139, 126, 0.34); }
 .mc-pill { position: absolute; left: -4px; right: -4px; bottom: 10px; height: 28px; display: flex; align-items: center; z-index: 1; cursor: pointer; box-shadow: 0 1px 3px rgba(23,22,15,0.14); }
 .mc-pill.is-start { left: 6px; border-top-left-radius: 14px; border-bottom-left-radius: 14px; }
 .mc-pill.is-end { right: 6px; border-top-right-radius: 14px; border-bottom-right-radius: 14px; }
