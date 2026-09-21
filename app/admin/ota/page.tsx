@@ -35,20 +35,25 @@ export default async function AdminOta() {
   const byDates = new Map(logged.map((o) => [`${o.propertySlug}|${ymd(o.checkIn)}|${ymd(o.checkOut)}`, o]));
   const usedIds = new Set<string>();
 
-  const reservations: OtaReservation[] = blocks.map((b) => {
-    let meta: { channel?: string; code?: string; phoneLast4?: string; link?: string } = {};
+  const reservations: OtaReservation[] = blocks.flatMap((b) => {
+    let meta: { channel?: string; code?: string; phoneLast4?: string; link?: string; summary?: string } = {};
     try { meta = b.meta ? JSON.parse(b.meta) : {}; } catch { /* ignore */ }
     const checkIn = ymd(b.start), checkOut = ymd(b.end);
     const match = (meta.code && byCode.get(`${b.propertySlug}|${meta.code}`)) || byDates.get(`${b.propertySlug}|${checkIn}|${checkOut}`);
+    // Only genuine reservations are payouts to log. Owner-blocks and
+    // "Not available" markers carry no reservation link, code or guest name, so
+    // they never appear here (unless a payout was already logged for those dates).
+    const isReservation = !!(meta.link || meta.code || (meta.summary && String(meta.summary).trim()));
+    if (!isReservation && !match) return [];
     if (match) usedIds.add(match.id);
-    return {
+    return [{
       propertySlug: b.propertySlug, propertyName: nameOf(b.propertySlug),
       channel: channelEnum(meta.channel || b.note || ""),
       confirmationCode: meta.code, phoneLast4: meta.phoneLast4, reservationLink: meta.link,
       checkIn, checkOut,
       id: match?.id, guestName: match?.guestName || undefined,
       grossCents: match?.grossCents, feeCents: match?.feeCents, netCents: match?.netCents, note: match?.note || undefined,
-    };
+    }];
   });
 
   // Logged rows with no current imported block (e.g. a past stay whose feed dropped it).
